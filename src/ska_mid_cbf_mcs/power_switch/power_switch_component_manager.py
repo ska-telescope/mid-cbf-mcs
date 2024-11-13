@@ -228,6 +228,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         False,
                         f"Outlet {outlet} failed to power on after sleep.",
                     )
+                else:
+                    return True, "TurnOnOutlet completed OK"
         elif mode == "off":
             if power_state == PowerState.OFF:
                 return True, "TurnOffOutlet completed OK"
@@ -243,6 +245,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
                         False,
                         f"Outlet {outlet} failed to power off after sleep.",
                     )
+                else:
+                    return True, "TurnOnOutlet completed OK"
 
     # -------------
     # Fast Commands
@@ -263,7 +267,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
         if self.simulation_mode:
             return self.power_switch_simulator.get_outlet_power_state(outlet)
         else:
-            return self.power_switch_driver.get_outlet_power_state(outlet)
+            outlet_state = self.power_switch_driver.get_outlet_power_state(
+                outlet
+            )
+            self.logger.debug(
+                f"PowerSwitch outlet {outlet}'s state: {outlet_state}"
+            )
+            return outlet_state
 
     # ---------------------
     # Long Running Commands

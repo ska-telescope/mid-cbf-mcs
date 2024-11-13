@@ -37,6 +37,8 @@ class Fsp(CbfDevice):
 
     FspCorrSubarray = device_property(dtype=("str",))
 
+    FspPstSubarray = device_property(dtype=("str",))
+
     HpsFspControllerAddress = device_property(dtype="str")
 
     # ----------
@@ -111,6 +113,7 @@ class Fsp(CbfDevice):
         return FspComponentManager(
             fsp_id=self.DeviceID,
             all_fsp_corr_subarray_fqdn=self.FspCorrSubarray,
+            all_fsp_pst_subarray_fqdn=self.FspPstSubarray,
             hps_fsp_controller_fqdn=self.HpsFspControllerAddress,
             logger=self.logger,
             attr_change_callback=self.push_change_event,
@@ -118,6 +121,7 @@ class Fsp(CbfDevice):
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
+            admin_mode_callback=self._admin_mode_perform_action,
         )
 
     # -------------

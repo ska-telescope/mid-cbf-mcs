@@ -70,6 +70,7 @@ class TestVcc:
             SW1Address="mid_csp_cbf/vcc_sw1/001",
             SW2Address="mid_csp_cbf/vcc_sw2/001",
             DeviceID="1",
+            LRCTimeout="3",
         )
         for name, mock in initial_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock)
@@ -80,6 +81,7 @@ class TestVcc:
     def device_online(
         self: TestVcc,
         device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
     ) -> bool:
         """
         Helper function to start up and turn on the DUT.
@@ -87,8 +89,15 @@ class TestVcc:
         :param device_under_test: DeviceProxy to the device under test.
         """
         # Set a given device to AdminMode.ONLINE and DevState.ON
-        device_under_test.simulationMode == SimulationMode.FALSE
+        device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
         return device_under_test.adminMode == AdminMode.ONLINE
 
     def test_State(
@@ -159,7 +168,7 @@ class TestVcc:
                              events from the device under test.
         """
         # Set a given device to AdminMode.ONLINE and DevState.ON
-        device_under_test.simulationMode == SimulationMode.FALSE
+        device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
 
         assert_that(event_tracer).within_timeout(
@@ -208,7 +217,7 @@ class TestVcc:
         :param success: A parameterized value used to test success and failure conditions.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test)
+        assert self.device_online(device_under_test, event_tracer)
 
         # Setting band configuration with invalid frequency band
 
@@ -281,7 +290,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test)
+        assert self.device_online(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -313,12 +322,41 @@ class TestVcc:
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
             json_str
         )
+
+        # Test last input scan configuration is correct, must be done before GoToIdle
+        command_name, return_value = (
+            "ConfigureScan",
+            command_dict["ConfigureScan"],
+        )
+        assert return_value[0] == ResultCode.QUEUED
+
+        # Check that the queued command succeeded
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{return_value[1][0]}",
+                f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+            ),
+        )
+
+        assert device_under_test.lastScanConfiguration == json_str
+
+        configuration["expected_dish_id"] = device_under_test.dishID
+        assert device_under_test.lastHpsScanConfiguration == json.dumps(
+            configuration
+        )
+
         command_dict["Scan"] = device_under_test.Scan(scan_id)
         command_dict["EndScan"] = device_under_test.EndScan()
         command_dict["GoToIdle"] = device_under_test.GoToIdle()
 
         # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
+            if command_name == "ConfigureScan":
+                pass
             # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
 
@@ -333,6 +371,8 @@ class TestVcc:
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 ),
             )
+        assert device_under_test.lastScanConfiguration == ""
+        assert device_under_test.lastHpsScanConfiguration == ""
 
         # Check all obsState transitions
         previous_state = ObsState.IDLE
@@ -383,7 +423,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test)
+        assert self.device_online(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -543,7 +583,7 @@ class TestVcc:
         :param config_file_name: file name for the configuration.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test)
+        assert self.device_online(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -694,7 +734,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test)
+        assert self.device_online(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:

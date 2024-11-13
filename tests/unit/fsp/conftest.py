@@ -72,13 +72,33 @@ def mock_fsp_corr_subarray_device() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
+def mock_fsp_pst_subarray_device() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
+    # add vccIDs to the mock pst subarray
+    # (this is required for test_UpdateBeamWeights)
+    builder.add_attribute("vccIDs", [1, 2, 3, 4])
+    return builder()
+
+
+@pytest.fixture()
+def mock_hps_fsp_corr_controller() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.add_command("SetFunctionMode", None)
+    return builder()
+
+
+@pytest.fixture()
 def initial_mocks(
     mock_fsp_corr_subarray_device: unittest.mock.Mock,
+    mock_fsp_pst_subarray_device: unittest.mock.Mock,
+    mock_hps_fsp_corr_controller: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
     :param mock_fsp_corr_subarray_device: a mock FspCorrSubarray.
+    :param mock_fsp_pst_subarray_device: a mock FspPstSubarray.
     :return: a dictionary of device proxy mocks to pre-register.
     """
     mocks = {}
@@ -86,4 +106,8 @@ def initial_mocks(
         mocks[
             f"mid_csp_cbf/fspCorrSubarray/01_{sub_id:02}"
         ] = mock_fsp_corr_subarray_device
+        mocks[
+            f"mid_csp_cbf/fspPstSubarray/01_{sub_id:02}"
+        ] = mock_fsp_pst_subarray_device
+    mocks["talondx-001/fsp-app/fsp-controller"] = mock_hps_fsp_corr_controller
     return mocks

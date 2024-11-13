@@ -54,6 +54,7 @@ class TestSlimLink:
         harness.add_device(
             device_name="mid_csp_cbf/fs_links/001",
             device_class=SlimLink,
+            LRCTimeout="10",
         )
         for name, mock in initial_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock)

@@ -20,6 +20,7 @@ from __future__ import annotations
 from typing import Any, Callable, Optional, cast
 
 from ska_control_model import (
+    AdminMode,
     ObsState,
     ObsStateModel,
     PowerState,
@@ -337,6 +338,41 @@ class CbfObsDevice(SKAObsDevice):
         self._simulation_mode = value
         self.component_manager.simulation_mode = value
 
+    @attribute(dtype=AdminMode, memorized=True, hw_memorized=True)
+    def adminMode(self: CbfObsDevice) -> AdminMode:
+        """
+        Read the Admin Mode of the device.
+
+        It may interpret the current device condition and condition of all managed
+         devices to set this. Most possibly an aggregate attribute.
+
+        :return: Admin Mode of the device
+        """
+        return self._admin_mode
+
+    @adminMode.write  # type: ignore[no-redef]
+    def adminMode(self: CbfObsDevice, value: AdminMode) -> None:
+        """
+        Set the Admin Mode of the device.
+
+        :param value: Admin Mode of the device.
+
+        :raises ValueError: for unknown adminMode
+        """
+        if value == AdminMode.NOT_FITTED:
+            self.admin_mode_model.perform_action("to_notfitted")
+        elif value == AdminMode.OFFLINE:
+            self.component_manager.stop_communicating()
+        elif value == AdminMode.ENGINEERING:
+            self.admin_mode_model.perform_action("to_engineering")
+            self.component_manager.start_communicating()
+        elif value == AdminMode.ONLINE:
+            self.component_manager.start_communicating()
+        elif value == AdminMode.RESERVED:
+            self.admin_mode_model.perform_action("to_reserved")
+        else:
+            raise ValueError(f"Unknown adminMode {value}")
+
     # ----------
     # Callbacks
     # ----------
@@ -401,6 +437,15 @@ class CbfObsDevice(SKAObsDevice):
         super()._update_obs_state(obs_state=obs_state)
         if hasattr(self, "component_manager"):
             self.component_manager.obs_state = obs_state
+
+    def _admin_mode_perform_action(self: CbfObsDevice, action: str) -> None:
+        """
+        Callback provided to perform an action on the state model from
+        component manager.
+
+        :param action: an action, as given in the transitions table
+        """
+        self.admin_mode_model.perform_action(action)
 
     # ---------------
     # General methods

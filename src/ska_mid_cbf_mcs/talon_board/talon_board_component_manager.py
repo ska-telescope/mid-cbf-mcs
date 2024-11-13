@@ -12,11 +12,11 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timedelta, timezone
 from threading import Event, Thread
+from typing import Optional
 
 import tango
-from ska_control_model import PowerState
+from ska_control_model import HealthState, PowerState
 from ska_tango_testing import context
-from tango import AttrQuality
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -25,9 +25,10 @@ from ska_mid_cbf_mcs.component.component_manager import (
 from ska_mid_cbf_mcs.talon_board.influxdb_query_client import (
     InfluxdbQueryClient,
 )
-from ska_mid_cbf_mcs.talon_board.talon_board_simulator import (
-    TalonBoardSimulator,
-)
+from ska_mid_cbf_mcs.talon_board.talon_board_simulator import SimulatedValues
+
+# Eth100g, HPS Master polling period in seconds
+POLLING_PERIOD = 2
 
 
 class Eth100gClient:
@@ -82,14 +83,11 @@ class Eth100gClient:
             self._txframeoctetsok = self._dp_eth_100g.TxFrameOctetsOK
             self._rxframeoctetsok = self._dp_eth_100g.RxFrameOctetsOK
         except tango.DevFailed as df:
+            self.logger.warning(f"Error reading 100g ethernet stats: {df}")
             self._tx_stats = []
             self._rx_stats = []
-            tango.Except.re_throw_exception(
-                df,
-                "100g_get_stats_failed",
-                f"failed to read counters from {self._eth_100g_fqdn}.",
-                "get_stats()",
-            )
+            self._txframeoctetsok = 0
+            self._rxframeoctetsok = 0
 
     def has_data_flow(self) -> bool:
         """
@@ -238,82 +236,119 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         self._eth_100g_0_client = None
         self._eth_100g_0_client = None
-        self._read_eth_100g_thread = None
 
-        self.talon_board_simulator = TalonBoardSimulator(self.logger)
+        self._poll_thread = None
+        self.ping_ok = False
 
     # -------------
     # Communication
     # -------------
-
-    # TODO: Refactor to push change events for TalonBoard attributes?
-    def _attr_change_callback(
-        self, fqdn: str, name: str, value: any, quality: AttrQuality
+    def _talon_attr_change_callback(
+        self: CbfComponentManager, event_data: Optional[tango.EventData]
     ) -> None:
         """
-        Callback for attribute change.
+        Thread to update latest state attribute events.
 
-        :param fqdn: The FQDN of the device
-        :param name: attribute name
-        :param value: attribute value
+        :param event_data: Tango attribute change event data
         """
+        if event_data.attr_value is None:
+            return
+        value = event_data.attr_value.value
         if value is None:
-            self.logger.warning(
-                f"None value for attribute {name} of device {fqdn}"
-            )
-        self.logger.debug(f"Attr Change callback: {name} -> {value}")
-        if fqdn == self._talon_sysid_fqdn:
-            self._talon_sysid_attrs[name] = value
-        elif fqdn == self._talon_status_fqdn:
-            self._talon_status_attrs[name] = value
-        else:
-            self.logger.warning(
-                f"Unexpected change callback from FQDN {fqdn}, attribute = {name}"
-            )
+            return
 
-    def _subscribe_change_events(self) -> None:
+        attr_name = event_data.attr_name
+        dev_name = event_data.device.dev_name()
+        self.logger.debug(
+            f"{dev_name}/{attr_name} EventData attr_value: {value}"
+        )
+
+        with self._attr_event_lock:
+            if dev_name == self._talon_sysid_fqdn:
+                self._talon_sysid_attrs[attr_name] = value
+            elif dev_name == self._talon_status_fqdn:
+                self._talon_status_attrs[attr_name] = value
+            else:
+                self.logger.warning(
+                    f"Unexpected change callback from FQDN {dev_name}/{attr_name}"
+                )
+
+    def talon_attr_change_callback(
+        self: CbfComponentManager, event_data: Optional[tango.EventData]
+    ) -> None:
+        """
+        Callback for state attribute events.
+
+        :param event_data: Tango attribute change event data
+        """
+        Thread(
+            target=self._talon_attr_change_callback, args=(event_data,)
+        ).start()
+
+    def _subscribe_change_events(self: TalonBoardComponentManager) -> None:
         """
         Subscribe to attribute change events from HPS device proxies
         """
+        for fqdn, attr_list in [
+            (self._talon_sysid_fqdn, ["version", "Bitstream"]),
+            (
+                self._talon_status_fqdn,
+                [
+                    "iopll_locked_fault",
+                    "fs_iopll_locked_fault",
+                    "comms_iopll_locked_fault",
+                    "system_clk_fault",
+                    "emif_bl_fault",
+                    "emif_br_fault",
+                    "emif_tr_fault",
+                    "e100g_0_pll_fault",
+                    "e100g_1_pll_fault",
+                    "slim_pll_fault",
+                ],
+            ),
+        ]:
+            if fqdn is not None:
+                for attr_name in attr_list:
+                    self.attr_event_subscribe(
+                        proxy=self._proxies[fqdn],
+                        attr_name=attr_name,
+                        callback=self.talon_attr_change_callback,
+                    )
 
-        # Talon System ID attributes
-        self._talon_sysid_events = {}
+    def _internal_polling_thread(
+        self: TalonBoardComponentManager,
+        eth0: Eth100gClient,
+        eth1: Eth100gClient,
+        db_client: InfluxdbQueryClient,
+        event: Event,
+    ):
+        self.logger.info("Started polling")
+        while True:
+            # polls until event is set
+            if event.wait(timeout=POLLING_PERIOD):
+                break
 
-        if self._talon_sysid_fqdn is not None:
-            for attr_name in ["version", "Bitstream"]:
-                self._talon_sysid_events[attr_name] = self._proxies[
-                    self._talon_sysid_fqdn
-                ].add_change_event_callback(
-                    attribute_name=attr_name,
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
+            # Ping InfluxDB
+            res = asyncio.run(db_client.ping())
+            if not res:
+                if self.ping_ok:
+                    self.logger.error(
+                        "Failed to ping Influxdb. Talon board may be down."
+                    )
+            else:
+                if not self.ping_ok:
+                    self.logger.info("Pinged influxdb successfully.")
+            self.ping_ok = res
 
-        # Talon Status attributes
-        self._talon_status_events = {}
+            # Poll eth100g stats
+            eth0.read_eth_100g_stats()
+            eth1.read_eth_100g_stats()
 
-        if self._talon_status_fqdn is not None:
-            for attr_name in [
-                "iopll_locked_fault",
-                "fs_iopll_locked_fault",
-                "comms_iopll_locked_fault",
-                "system_clk_fault",
-                "emif_bl_fault",
-                "emif_br_fault",
-                "emif_tr_fault",
-                "e100g_0_pll_fault",
-                "e100g_1_pll_fault",
-                "slim_pll_fault",
-            ]:
-                self._talon_status_events[attr_name] = self._proxies[
-                    self._talon_status_fqdn
-                ].add_change_event_callback(
-                    attribute_name=attr_name,
-                    callback=self._attr_change_callback,
-                    stateless=True,
-                )
-
-        return
+            # Poll HPS Master healthState
+            self.update_device_health_state(
+                self._proxies[self._hps_master_fqdn].healthState
+            )
+        self.logger.info("Stopped polling")
 
     def _start_communicating(
         self: TalonBoardComponentManager, *args, **kwargs
@@ -322,7 +357,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         Establish communication with the component, then start monitoring.
         """
         self.logger.debug(
-            "Entering TalonBoardComponentManager.start_communicating"
+            "Entering TalonBoardComponentManager._start_communicating"
         )
 
         if not self.simulation_mode:
@@ -346,31 +381,21 @@ class TalonBoardComponentManager(CbfComponentManager):
                         )
                         return
 
-                # init eth 100g proxies and start monitoring
                 self._eth_100g_0_client = Eth100gClient(self._eth_100g_0_fqdn)
                 self._eth_100g_1_client = Eth100gClient(self._eth_100g_1_fqdn)
 
-                def read_100g_counters_thread(
-                    eth0: Eth100gClient, eth1: Eth100gClient, event: Event
-                ):
-                    wait_t = 2  # seconds
-                    while True:
-                        eth0.read_eth_100g_stats()
-                        eth1.read_eth_100g_stats()
-                        # polls every 2 seconds until event is set
-                        if event.wait(timeout=wait_t):
-                            break
-
-                self._eth_100g_thread_event = Event()
-                self._read_eth_100g_thread = Thread(
-                    target=read_100g_counters_thread,
+                # Begin the polling thread
+                self._poll_thread_event = Event()
+                self._poll_thread = Thread(
+                    target=self._internal_polling_thread,
                     args=[
                         self._eth_100g_0_client,
                         self._eth_100g_1_client,
-                        self._eth_100g_thread_event,
+                        self._db_client,
+                        self._poll_thread_event,
                     ],
                 )
-                self._read_eth_100g_thread.start()
+                self._poll_thread.start()
 
                 self._subscribe_change_events()
             except tango.DevFailed as df:
@@ -379,16 +404,6 @@ class TalonBoardComponentManager(CbfComponentManager):
                     CommunicationStatus.NOT_ESTABLISHED
                 )
                 return
-
-            ping_res = asyncio.run(self._db_client.ping())
-
-            if not ping_res:
-                self.logger.error(f"Cannot ping InfluxDB: {ping_res}")
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
-                return
-
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
 
@@ -399,39 +414,30 @@ class TalonBoardComponentManager(CbfComponentManager):
         Thread for stop_communicating operation.
         """
         self.logger.debug(
-            "Entering TalonBoardComponentManager.stop_communicating"
+            "Entering TalonBoardComponentManager._stop_communicating"
         )
         if not self.simulation_mode:
-            for attr_name, event_id in self._talon_sysid_events.items():
-                self.logger.info(
-                    f"Unsubscribing from {self._talon_sysid_fqdn}/{attr_name} event ID {event_id}"
-                )
-                try:
-                    self._proxies[self._talon_sysid_fqdn].unsubscribe_event(
-                        event_id
+            for fqdn, events in [
+                (self._talon_sysid_fqdn, self._talon_sysid_events),
+                (self._talon_status_fqdn, self._talon_status_events),
+            ]:
+                for attr_name, event_id in events.items():
+                    self.logger.info(
+                        f"Unsubscribing from {fqdn}/{attr_name} event ID {event_id}"
                     )
-                except tango.DevFailed as df:
-                    # Log exception but allow stop_communicating to continue
-                    self.logger.error(f"{df}")
-                    continue
+                    try:
+                        self._proxies[fqdn].unsubscribe_event(event_id)
+                    except tango.DevFailed as df:
+                        # Log exception but allow stop_communicating to continue
+                        self.logger.error(f"{df}")
+                        continue
 
-            for attr_name, event_id in self._talon_status_events.items():
-                self.logger.info(
-                    f"Unsubscribing from {self._talon_status_fqdn}/{attr_name} event ID {event_id}"
-                )
-                try:
-                    self._proxies[self._talon_status_fqdn].unsubscribe_event(
-                        event_id
-                    )
-                except tango.DevFailed as df:
-                    # Log exception but allow stop_communicating to continue
-                    self.logger.error(f"{df}")
-                    continue
-
-            self._eth_100g_thread_event.set()
-            self._read_eth_100g_thread.join()
+            if self._poll_thread is not None:
+                self._poll_thread_event.set()
+                self._poll_thread.join()
             self._eth_100g_0_client = None
             self._eth_100g_1_client = None
+            self.update_device_health_state(HealthState.UNKNOWN)
 
         self._proxies = {}
         self._talon_sysid_attrs = {}
@@ -462,7 +468,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_sysid_version(self) -> str:
         """Returns the bitstream version string"""
         if self.simulation_mode:
-            return self.talon_board_simulator.sysid_version
+            return SimulatedValues.get("talon_sysid_version")
 
         if self._talon_sysid_fqdn is None:
             tango.Except.throw_exception(
@@ -481,7 +487,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_sysid_bitstream(self) -> int:
         """Returns the least 32 bits of md5 checksum of the bitstream name"""
         if self.simulation_mode:
-            return self.talon_board_simulator.sysid_bitstream
+            return SimulatedValues.get("talon_sysid_bitstream")
 
         if self._talon_sysid_fqdn is None:
             tango.Except.throw_exception(
@@ -500,7 +506,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_iopll_locked_fault(self) -> bool:
         """Returns the iopll_locked_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_iopll_locked_fault
+            return SimulatedValues.get("talon_status_iopll_locked_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -519,7 +525,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_fs_iopll_locked_fault(self) -> bool:
         """Returns the fs_iopll_locked_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_fs_iopll_locked_fault
+            return SimulatedValues.get("talon_status_fs_iopll_locked_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -538,7 +544,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_comms_iopll_locked_fault(self) -> bool:
         """Returns the comms_iopll_locked_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_comms_iopll_locked_fault
+            return SimulatedValues.get("talon_status_comms_iopll_locked_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -557,7 +563,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_system_clk_fault(self) -> bool:
         """Returns the system_clk_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_system_clk_fault
+            return SimulatedValues.get("talon_status_system_clk_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -576,7 +582,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_emif_bl_fault(self) -> bool:
         """Returns the emif_bl_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_emif_bl_fault
+            return SimulatedValues.get("talon_status_emif_bl_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -595,7 +601,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_emif_br_fault(self) -> bool:
         """Returns the emif_br_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_emif_br_fault
+            return SimulatedValues.get("talon_status_emif_br_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -614,7 +620,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_emif_tr_fault(self) -> bool:
         """Returns the emif_tr_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_emif_tr_fault
+            return SimulatedValues.get("talon_status_emif_tr_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -633,7 +639,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_e100g_0_pll_fault(self) -> bool:
         """Returns the e100g_0_pll_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_e100g_0_pll_fault
+            return SimulatedValues.get("talon_status_e100g_0_pll_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -652,7 +658,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_e100g_1_pll_fault(self) -> bool:
         """Returns the e100g_1_pll_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_e100g_1_pll_fault
+            return SimulatedValues.get("talon_status_e100g_1_pll_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -671,7 +677,7 @@ class TalonBoardComponentManager(CbfComponentManager):
     def talon_status_slim_pll_fault(self) -> bool:
         """Returns the slim_pll_fault"""
         if self.simulation_mode:
-            return self.talon_board_simulator.status_slim_pll_fault
+            return SimulatedValues.get("talon_status_slim_pll_fault")
 
         if self._talon_status_fqdn is None:
             tango.Except.throw_exception(
@@ -689,49 +695,112 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     # 100g Ethernet
     def eth100g_0_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_counters")
         return self._eth_100g_0_client.get_data_counters()
 
     def eth100g_0_error_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_error_counters")
         return self._eth_100g_0_client.get_error_counters()
 
     def eth100g_0_data_flow_active(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_data_flow_active")
         return self._eth_100g_0_client.has_data_flow()
 
     def eth100g_0_has_data_error(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_has_data_error")
         return self._eth_100g_0_client.has_error()
 
     def eth100g_0_all_tx_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_all_tx_counters")
         return self._eth_100g_0_client.get_all_tx_counters()
 
     def eth100g_0_all_rx_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_0_all_rx_counters")
         return self._eth_100g_0_client.get_all_rx_counters()
 
     def eth100g_1_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_counters")
         return self._eth_100g_1_client.get_data_counters()
 
     def eth100g_1_error_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_error_counters")
         return self._eth_100g_1_client.get_error_counters()
 
     def eth100g_1_data_flow_active(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_data_flow_active")
         return self._eth_100g_1_client.has_data_flow()
 
     def eth100g_1_has_data_error(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_has_data_error")
         return self._eth_100g_1_client.has_error()
 
     def eth100g_1_all_tx_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_all_tx_counters")
         return self._eth_100g_1_client.get_all_tx_counters()
 
     def eth100g_1_all_rx_counters(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("eth100g_1_all_rx_counters")
         return self._eth_100g_1_client.get_all_rx_counters()
+
+    # ----------------
+    # Helper Functions
+    # ----------------
+
+    def _query_if_needed(self) -> None:
+        td = datetime.now() - self._last_check
+        if td.total_seconds() > 10:
+            try:
+                res = asyncio.run(self._db_client.do_queries())
+                self._last_check = datetime.now()
+                for result in res:
+                    for r in result:
+                        # each result is a tuple of (field, time, value)
+                        self._telemetry[r[0]] = (r[1], r[2])
+            except (
+                asyncio.exceptions.TimeoutError,
+                asyncio.exceptions.CancelledError,
+                Exception,
+            ) as e:
+                msg = f"Failed to query Influxdb of {self._db_client._hostname}: {e}"  # avoid repeated error logs
+                self.logger.error(msg)
+                tango.Except.throw_exception(
+                    "Query_Influxdb_Error", msg, "query_if_needed()"
+                )
+
+    def _validate_time(self, field, t) -> None:
+        """
+        Checks if the query result is too old. When this happens, it means
+        Influxdb hasn't received a new entry in the time series recently.
+
+        :param record: a record from Influxdb query result
+        """
+        td = datetime.now(timezone.utc) - t
+        if td.total_seconds() > 240:
+            msg = f"Time of record {field} is too old. Currently not able to monitor device."
+            self.logger.error(msg)
+            tango.Except.throw_exception(
+                "No new record available", msg, "validate_time()"
+            )
 
     # ----------------------------------------------
     # Talon Board Telemetry and Status from Influxdb
     # ----------------------------------------------
 
     def fpga_die_temperature(self) -> float:
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            return self.talon_board_simulator.fpga_die_temperature
+            return SimulatedValues.get("fpga_die_temperature")
         self._query_if_needed()
         field = "temperature-sensors_fpga-die-temp"
         t, val = self._telemetry[field]
@@ -745,10 +814,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[0]
+            return SimulatedValues.get("fpga_die_voltage_0")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-0"
         t, val = self._telemetry[field]
@@ -762,10 +829,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[1]
+            return SimulatedValues.get("fpga_die_voltage_1")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-1"
         t, val = self._telemetry[field]
@@ -779,10 +844,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[2]
+            return SimulatedValues.get("fpga_die_voltage_2")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-2"
         t, val = self._telemetry[field]
@@ -796,10 +859,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[3]
+            return SimulatedValues.get("fpga_die_voltage_3")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-3"
         t, val = self._telemetry[field]
@@ -813,10 +874,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[4]
+            return SimulatedValues.get("fpga_die_voltage_4")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-4"
         t, val = self._telemetry[field]
@@ -830,10 +889,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[5]
+            return SimulatedValues.get("fpga_die_voltage_5")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-5"
         t, val = self._telemetry[field]
@@ -847,10 +904,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         :return: The Sensor Reading in Volts
         :rtype: float
         """
-        # To prevent null readings while a talon board is not connected
         if self.simulation_mode:
-            die_voltages = self.talon_board_simulator.fpga_die_voltages
-            return die_voltages[6]
+            return SimulatedValues.get("fpga_die_voltage_6")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-6"
         t, val = self._telemetry[field]
@@ -858,6 +913,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def humidity_sensor_temperature(self) -> float:
+        if self.simulation_mode:
+            return SimulatedValues.get("humidity_sensor_temperature")
         self._query_if_needed()
         field = "temperature-sensors_humidity-temp"
         t, val = self._telemetry[field]
@@ -865,6 +922,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return val
 
     def dimm_temperatures(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("dimm_temperatures")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -879,6 +938,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_temperatures(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_tx_temperatures")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -893,6 +954,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_tx_vcc_voltages(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_tx_vcc_voltages")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -906,7 +969,9 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(0)
         return res
 
-    def mbo_tx_fault_status(self) -> bool:
+    def mbo_tx_fault_status(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_tx_fault_status")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -920,7 +985,9 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(False)
         return res
 
-    def mbo_tx_lol_status(self) -> bool:
+    def mbo_tx_lol_status(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_tx_lol_status")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -934,7 +1001,9 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(False)
         return res
 
-    def mbo_tx_los_status(self) -> bool:
+    def mbo_tx_los_status(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_tx_los_status")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -949,6 +1018,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def mbo_rx_vcc_voltages(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_rx_vcc_voltages")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -962,7 +1033,9 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(0)
         return res
 
-    def mbo_rx_lol_status(self) -> bool:
+    def mbo_rx_lol_status(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_rx_lol_status")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -976,7 +1049,9 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(False)
         return res
 
-    def mbo_rx_los_status(self) -> bool:
+    def mbo_rx_los_status(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("mbo_rx_los_status")
         self._query_if_needed()
         res = []
         # Not all may be available.
@@ -991,6 +1066,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def has_fan_control(self) -> bool:
+        if self.simulation_mode:
+            return SimulatedValues.get("has_fan_control")
         # the fan*_input in the fans' MAX31790 driver will return 0
         # if tachometers cannot be read, which either means reading tachometers
         # is not yet enabled, or there is no fan control on this board. Either
@@ -999,6 +1076,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return any(x > 0 for x in fans_input)
 
     def fans_pwm(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("fans_pwm")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1014,6 +1093,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def fans_pwm_enable(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("fans_pwm_enable")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1029,6 +1110,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def fans_input(self) -> list[int]:
+        if self.simulation_mode:
+            return SimulatedValues.get("fans_input")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1044,6 +1127,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def fans_fault(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("fans_fault")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1059,6 +1144,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_input_voltage(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_input_voltage")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1076,6 +1163,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_voltage_1(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_output_voltage_1")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1093,6 +1182,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_voltage_2(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_output_voltage_2")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1110,6 +1201,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_input_current(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_input_current")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1127,6 +1220,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_current_1(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_output_current_1")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1144,6 +1239,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_output_current_2(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_output_current_2")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1161,6 +1258,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_temperature_1(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_temperature_1")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1178,6 +1277,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_temperature_2(self) -> list[float]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_temperature_2")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1195,6 +1296,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_voltage_warning(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_voltage_warning")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1216,6 +1319,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_current_warning(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_current_warning")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1237,6 +1342,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         return res
 
     def ltm_temperature_warning(self) -> list[bool]:
+        if self.simulation_mode:
+            return SimulatedValues.get("ltm_temperature_warning")
         self._query_if_needed()
         res = []
         for i in range(0, 4):
@@ -1255,39 +1362,3 @@ class TalonBoardComponentManager(CbfComponentManager):
                         break
             res.append(flag)
         return res
-
-    # ----------------
-    # Helper Functions
-    # ----------------
-
-    def _query_if_needed(self) -> None:
-        td = datetime.now() - self._last_check
-        if td.total_seconds() > 10:
-            try:
-                res = asyncio.run(self._db_client.do_queries())
-                self._last_check = datetime.now()
-                for result in res:
-                    for r in result:
-                        # each result is a tuple of (field, time, value)
-                        self._telemetry[r[0]] = (r[1], r[2])
-            except Exception as e:
-                msg = f"Failed to query Influxdb of {self._db_client._hostname}: {e}"
-                self.logger.error(msg)
-                tango.Except.throw_exception(
-                    "Query_Influxdb_Error", msg, "query_if_needed()"
-                )
-
-    def _validate_time(self, field, t) -> None:
-        """
-        Checks if the query result is too old. When this happens, it means
-        Influxdb hasn't received a new entry in the time series recently.
-
-        :param record: a record from Influxdb query result
-        """
-        td = datetime.now(timezone.utc) - t
-        if td.total_seconds() > 240:
-            msg = f"Time of record {field} is too old. Currently not able to monitor device."
-            self.logger.error(msg)
-            tango.Except.throw_exception(
-                "No new record available", msg, "validate_time()"
-            )

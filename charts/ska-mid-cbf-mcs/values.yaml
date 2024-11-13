@@ -88,6 +88,9 @@ deviceServers:
     file: "data/talondxlogconsumer.yaml"
 
 controllerTimeout: 60
+fspTimeout: 15
+slimLinkTimeout: 10
+vccTimeout: 3
 
 nodeSelector: {}
 

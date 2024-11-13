@@ -144,7 +144,7 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def rx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
         """
-        The last idle control word received in the datastream by the HPS rx device.
+        The last idle control word received in the data stream by the HPS rx device.
 
         :return: the rx idle control word.
         :raise Tango exception: if the rx device is not set.
@@ -529,7 +529,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         Link the HPS Tx and Rx devices by synchronizing their idle control words
         and disabling serial loopback. Begin monitoring the Tx and Rx.
 
-        :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
+        :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
         :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -564,8 +564,14 @@ class SlimLinkComponentManager(CbfComponentManager):
                 self._tx_device_proxy = context.DeviceProxy(
                     device_name=self._tx_device_name
                 )
+                self._tx_device_proxy.set_timeout_millis(
+                    self._lrc_timeout * 1000
+                )
                 self._rx_device_proxy = context.DeviceProxy(
                     device_name=self._rx_device_name
+                )
+                self._rx_device_proxy.set_timeout_millis(
+                    self._lrc_timeout * 1000
                 )
                 self.logger.debug("DsSlimTxRx device proxies acquired.")
 
@@ -606,7 +612,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        df,
+                        f"{df}",
                     ),
                 )
                 return
@@ -654,7 +660,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         Stops controlling and monitoring the HPS tx and rx devices. The link
         becomes inactive. Serial loopback is re-established.
 
-        :param task_callback: Calls device's _command_tracker.update_comand_info(). Set by SumbittedSlowCommand's do().
+        :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
         :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -687,7 +693,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 return
 
             try:
-                # Fetch the tx fqdn required to initialize link in serial loopbaack
+                # Fetch the tx fqdn required to initialize link in serial loopback
                 loopback_tx = self.get_tx_loopback_fqdn()
                 self._tx_device_proxy = context.DeviceProxy(
                     device_name=loopback_tx
@@ -716,7 +722,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        df,
+                        f"{df}",
                     ),
                 )
                 return

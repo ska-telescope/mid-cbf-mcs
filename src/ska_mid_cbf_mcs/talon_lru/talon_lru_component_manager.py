@@ -140,7 +140,11 @@ class TalonLRUComponentManager(CbfComponentManager):
             device_proxies.append(self._proxy_power_switch2)
 
         for dp in device_proxies:
-            self.subscribe_command_results(dp)
+            self.attr_event_subscribe(
+                proxy=dp,
+                attr_name="longRunningCommandResult",
+                callback=self.results_callback,
+            )
 
         self.logger.info(
             f"event_ids after subscribing = {len(self.event_ids)}"
@@ -168,20 +172,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
-    def _unsubscribe_from_subdevices(self: TalonLRUComponentManager) -> None:
-        """
-        Unsubscribe to command results of the subdevices (power switches).
-        """
-        device_proxies = [
-            self._proxy_power_switch1,
-        ]
-
-        if self._proxy_power_switch1 != self._proxy_power_switch2:
-            device_proxies.append(self._proxy_power_switch2)
-
-        for dp in device_proxies:
-            self.unsubscribe_command_results(dp)
-
     def _stop_communicating(
         self: TalonLRUComponentManager, *args, **kwargs
     ) -> None:
@@ -191,15 +181,22 @@ class TalonLRUComponentManager(CbfComponentManager):
         self.logger.debug(
             "Entering TalonLRUComponentManager.stop_communicating"
         )
+        device_proxies = [
+            self._proxy_power_switch1,
+        ]
+        if self._proxy_power_switch1 != self._proxy_power_switch2:
+            device_proxies.append(self._proxy_power_switch2)
 
-        self._unsubscribe_from_subdevices()
-        self.blocking_commands = set()
+        for dp in device_proxies:
+            self.unsubscribe_all_events(dp)
 
         super()._stop_communicating()
 
-    # -------------
-    # Fast Commands
-    # -------------
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    # --- Helper Methods --- #
 
     def _get_outlet_power_state(
         self: TalonLRUComponentManager, proxy_power_switch, outlet
@@ -214,9 +211,16 @@ class TalonLRUComponentManager(CbfComponentManager):
             proxy_power_switch is not None
             and proxy_power_switch.numOutlets != 0
         ):
-            return proxy_power_switch.GetOutletPowerState(outlet)
+            try:
+                outlet_state = proxy_power_switch.GetOutletPowerState(outlet)
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to read outlet {outlet}'s power state: {df}"
+                )
+                outlet_state = PowerState.UNKNOWN
         else:
-            return PowerState.UNKNOWN
+            outlet_state = PowerState.UNKNOWN
+        return outlet_state
 
     def _update_pdu_power_states(self: TalonLRUComponentManager) -> None:
         """
@@ -258,10 +262,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             lru_power_state = PowerState.OFF
 
         return lru_power_state
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
 
     # --- On Command --- #
 
