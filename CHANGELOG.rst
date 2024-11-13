@@ -33,6 +33,7 @@ UNRELEASED CHANGES
   * Removes support for configurescan 3.0
   * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
   * Add 'vcc_id_to_rdt_freq_shifts' to hps_fsp_corr config to support work on CIP-2662
+* CIP-3100 fix sending all subarray vcc shift values in hps fsp config value vcc_id_to_rdt_freq_shifts
 
 1.0.0
 ******
