@@ -1826,3 +1826,146 @@ class TestCbfSubarray:
             event_tracer, subarray, subarray_params, vcc
         )
         self.test_Offline(event_tracer, subarray, subarray_params)
+
+    @pytest.mark.dependency(
+        depends=["CbfSubarray_Reconfigure_1"],
+        name="CbfSubarray_Scan_2",
+    )
+    def test_Scan_twice_same_configuration(
+        self: TestCbfSubarray,
+        controller: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        fsp: dict[int, context.DeviceProxy],
+        fsp_corr: dict[int, context.DeviceProxy],
+        subarray: dict[int, context.DeviceProxy],
+        subarray_params: dict[any],
+        vcc: dict[int, context.DeviceProxy],
+    ) -> None:
+        """
+        Test re-scanning using the same ConfigureScan input
+
+        :param controller: DeviceProxy to CbfController device
+        :param event_tracer: TangoEventTracer
+        :param fsp: dict of DeviceProxy to Fsp devices
+        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param subarray: list of proxies to subarray devices
+        :param subarray_params: dict containing all test input parameters
+        :param vcc: dict of DeviceProxy to Vcc devices
+        """
+        if "alt_params" not in subarray_params:
+            pytest.skip("No alternate configuration provided.")
+
+        alt_params = subarray_params["alt_params"]
+        sub_id = subarray_params["sub_id"]
+
+        self.test_Online(event_tracer, subarray, subarray_params)
+        self.test_sysParam(event_tracer, subarray, subarray_params)
+        self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
+        self.test_ConfigureScan(
+            controller,
+            event_tracer,
+            fsp,
+            fsp_corr,
+            subarray,
+            subarray_params,
+            vcc,
+        )
+        self.test_Scan(
+            event_tracer,
+            fsp_corr,
+            subarray,
+            subarray_params,
+            vcc,
+        )
+        self.test_EndScan(
+            event_tracer,
+            fsp_corr,
+            subarray,
+            subarray_params,
+            vcc,
+        )
+
+        # ---------------------
+        # Scan again from READY
+        # ---------------------
+
+        # Prepare test data
+        with open(test_data_path + alt_params["scan_file"]) as f:
+            alt_scan = json.load(f)
+
+        # Issue Scan command
+        [[result_code], [command_id]] = subarray[sub_id].Scan(
+            json.dumps(alt_scan)
+        )
+        assert result_code == ResultCode.QUEUED
+
+        # -------------------
+        # Event tracer checks
+        # -------------------
+
+        # --- VCC checks --- #
+
+        for vcc_id in subarray_params["vcc_ids"]:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=vcc[vcc_id],
+                attribute_name="obsState",
+                attribute_value=ObsState.SCANNING,
+                previous_value=ObsState.READY,
+                min_n_events=2,
+            )
+
+        # --- FSP checks --- #
+
+        for fsp_id in subarray_params["fsp_modes"].keys():
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=fsp_corr[fsp_id],
+                attribute_name="obsState",
+                attribute_value=ObsState.SCANNING,
+                previous_value=ObsState.READY,
+                min_n_events=2,
+            )
+
+        # --- Subarray checks --- #
+
+        expected_events = [
+            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{command_id}",
+                    f'[{ResultCode.OK.value}, "Scan completed OK"]',
+                ),
+                None,
+                2,
+            ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                min_n_events=n,
+            )
+
+        # --- Cleanup --- #
+        self.test_EndScan(
+            event_tracer,
+            fsp_corr,
+            subarray,
+            subarray_params,
+            vcc,
+        )
+        self.test_GoToIdle(
+            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+        )
+        self.test_RemoveAllReceptors(
+            event_tracer, subarray, subarray_params, vcc
+        )
+        self.test_Offline(event_tracer, subarray, subarray_params)

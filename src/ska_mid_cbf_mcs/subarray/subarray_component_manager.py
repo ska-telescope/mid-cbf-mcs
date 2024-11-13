@@ -363,7 +363,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         try:
             delay_model_json = json.loads(model)
 
-            self.logger.info(
+            self.logger.debug(
                 f"Attempting to validate the following delay model JSON against the telescope model: {delay_model_json}"
             )
             telmodel_validate(
@@ -371,7 +371,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 config=delay_model_json,
                 strictness=1,
             )
-            self.logger.info("Delay model is valid!")
+            self.logger.debug("Delay model is valid!")
         except json.JSONDecodeError as je:
             self.logger.error(
                 f"Delay model object is not a valid JSON object; {je}"
