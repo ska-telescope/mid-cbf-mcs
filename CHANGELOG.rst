@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-3100 fix sending all subarray vcc shift values in hps fsp config value vcc_id_to_rdt_freq_shifts
 
 1.1.0-rc.2
 **********
@@ -17,7 +18,6 @@ UNRELEASED CHANGES
 * CIP-2240: ExpectedDishID field is added to the ConfigureScan
 * CIP-3068: fix validation output_host
   * difference between channel_ids is a multiple of 20, not the value itself
-* CIP-3100 fix sending all subarray vcc shift values in hps fsp config value vcc_id_to_rdt_freq_shifts
 
 1.1.0-rc.1
 **********
