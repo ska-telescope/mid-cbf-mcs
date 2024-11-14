@@ -1110,11 +1110,16 @@ class TestCbfSubarray:
         # --- FSP events --- #
 
         fsp_expected_events = [
-            # TODO: see subarrayMembership comment above
-            # ("subarrayMembership", [], [sub_id], 1),
-            ("functionMode", FspModes.IDLE.value, None, 1),
-            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
-            ("state", DevState.DISABLE, DevState.ON, 1),
+            (
+                "subarrayMembership",
+                lambda e: list(e.attribute_value) == [],
+                None,
+                None,
+                1,
+            ),
+            ("functionMode", None, FspModes.IDLE.value, None, 1),
+            ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+            ("state", None, DevState.DISABLE, DevState.ON, 1),
         ]
 
         fsp_corr_expected_events = [
@@ -1191,11 +1196,16 @@ class TestCbfSubarray:
 
         fsp_expected_events.extend(
             [
-                # TODO: see subarrayMembership comment above
-                # ("subarrayMembership", [], [sub_id], 2),
-                ("functionMode", FspModes.IDLE.value, None, 2),
-                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 2),
-                ("state", DevState.DISABLE, DevState.ON, 2),
+                (
+                    "subarrayMembership",
+                    lambda e: list(e.attribute_value) == [],
+                    None,
+                    None,
+                    2,
+                ),
+                ("functionMode", None, FspModes.IDLE.value, None, 2),
+                ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 2),
+                ("state", None, DevState.DISABLE, DevState.ON, 2),
             ]
         )
 
@@ -1231,11 +1241,12 @@ class TestCbfSubarray:
         # --- FSP checks --- #
 
         for fsp_id in subarray_params["fsp_modes"].keys():
-            for name, value, previous, n in fsp_expected_events:
+            for name, custom, value, previous, n in fsp_expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
                     device_name=fsp[fsp_id],
+                    custom_matcher=custom,
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
@@ -1455,11 +1466,16 @@ class TestCbfSubarray:
         # --- FSP events --- #
 
         fsp_expected_events = [
-            # TODO: see subarrayMembership comment above
-            # ("subarrayMembership", [], [sub_id], 1),
-            ("functionMode", FspModes.IDLE.value, None, 1),
-            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
-            ("state", DevState.DISABLE, DevState.ON, 1),
+            (
+                "subarrayMembership",
+                lambda e: list(e.attribute_value) == [],
+                None,
+                None,
+                1,
+            ),
+            ("functionMode", None, FspModes.IDLE.value, None, 1),
+            ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+            ("state", None, DevState.DISABLE, DevState.ON, 1),
         ]
 
         fsp_corr_expected_events = [
@@ -1540,11 +1556,16 @@ class TestCbfSubarray:
 
         fsp_expected_events.extend(
             [
-                # TODO: see subarrayMembership comment above
-                # ("subarrayMembership", [], [sub_id], 2),
-                ("functionMode", FspModes.IDLE.value, None, 2),
-                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 2),
-                ("state", DevState.DISABLE, DevState.ON, 2),
+                (
+                    "subarrayMembership",
+                    lambda e: list(e.attribute_value) == [],
+                    None,
+                    None,
+                    2,
+                ),
+                ("functionMode", None, FspModes.IDLE.value, None, 2),
+                ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 2),
+                ("state", None, DevState.DISABLE, DevState.ON, 2),
             ]
         )
 
@@ -1580,11 +1601,12 @@ class TestCbfSubarray:
         # --- FSP checks --- #
 
         for fsp_id in subarray_params["fsp_modes"].keys():
-            for name, value, previous, n in fsp_expected_events:
+            for name, custom, value, previous, n in fsp_expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
                     device_name=fsp[fsp_id],
+                    custom_matcher=custom,
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,

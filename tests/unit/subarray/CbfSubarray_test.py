@@ -344,12 +344,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.parametrize(
@@ -400,12 +400,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.parametrize(
@@ -485,12 +485,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
         assert device_under_test.receptors == tuple(receptors)
@@ -576,12 +576,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.parametrize(
@@ -647,12 +647,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -737,12 +737,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -860,12 +860,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -941,12 +941,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -1028,12 +1028,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -1087,12 +1087,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -1149,12 +1149,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -1209,12 +1209,12 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
@@ -1273,10 +1273,10 @@ class TestCbfSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
