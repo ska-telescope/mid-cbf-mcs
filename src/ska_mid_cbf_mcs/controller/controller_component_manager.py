@@ -936,6 +936,13 @@ class ControllerComponentManager(CbfComponentManager):
 
                 fsp_proxy = self._proxies[fsp]
 
+                # Turn on FSP
+                [[result_code], [command_id]] = fsp_proxy.On()
+                if result_code == ResultCode.REJECTED:
+                    raise tango.DevFailed("On command rejected")
+                self.blocking_command_ids.add(command_id)
+
+                # Set functionMode of FSP
                 current_function_mode = fsp_proxy.functionMode
                 if current_function_mode != FspModes[fsp_mode].value:
                     if current_function_mode != FspModes.IDLE.value:
