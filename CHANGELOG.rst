@@ -32,8 +32,6 @@ UNRELEASED CHANGES
 * CIP-3068: fix validation output_host
   * difference between channel_ids is a multiple of 20, not the value itself
 
-
-
 1.1.0-rc.1
 **********
 * CIP-2799 Refactored wait_for_blocking_results to verify all incoming events
