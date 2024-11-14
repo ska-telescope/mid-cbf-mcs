@@ -1940,7 +1940,7 @@ class TestCbfSubarray:
                     f'[{ResultCode.OK.value}, "Scan completed OK"]',
                 ),
                 None,
-                2,
+                1,
             ),
         ]
         for name, value, previous, n in expected_events:
