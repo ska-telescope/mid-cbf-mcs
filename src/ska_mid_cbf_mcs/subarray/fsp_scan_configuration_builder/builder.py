@@ -39,7 +39,7 @@ class FspScanConfigurationBuilder:
         frequency_band: str,
     ):
         """Constructor for the FspScanConfigurationBuilder. Constructs FSP
-        Configurations from a fuction modes (CORR, PST, etc.) configuration.
+        Configurations from a function modes (CORR, PST, etc.) configuration.
 
         :param self: FspScanConfigurationBuilder object
         :param function_mode: FSP function mode enum
@@ -48,7 +48,7 @@ class FspScanConfigurationBuilder:
         :param subarray_dish_ids: List of dish_ids that are a member of the subarray
         :param wideband_shift: Wideband shift (Hz)
         :param frequency_band: The name of the frequency band ("1", "2", "5a", etc.)
-        :raises ValueError: If the function_configuration does not contain a "proccessing_regions" key in
+        :raises ValueError: If the function_configuration does not contain a "processing_regions" key in
         """
         self._function_mode = function_mode
         if "processing_regions" not in function_configuration:
@@ -214,9 +214,9 @@ class FspScanConfigurationBuilder:
         #
         # Example: PR has sdp_start_channel_id = 100, and num_channels = 100,
         # we have have 3 FSPs (fsp_ids = [3, 4, 5]), the partition gives us:
-        # FSP 3 - sdp_start_channeld_id = 0
-        # FSP 4 - sdp_start_channeld_id = 40
-        # FSP 5 - sdp_start_channeld_id = 80
+        # FSP 3 - sdp_start_channel_id = 0
+        # FSP 4 - sdp_start_channel_id = 40
+        # FSP 5 - sdp_start_channel_id = 80
         #
         # The partitioner doesn't know about the processing regions
         # sdp_start_channel_id so it always starts at 0, add the PR

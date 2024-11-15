@@ -1438,14 +1438,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     def _fsp_configure_scan(
         self: CbfSubarrayComponentManager,
         common_configuration: dict[any],
-        configuration: dict[any],
         fsp_configurations: list[dict[any]],
     ) -> bool:
         """
         Issue FSP function mode subarray ConfigureScan command
 
         :param common_configuration: common Mid.CSP scan configuration dict
-        :param configuration: Mid.CBF scan configuration dict
         :param fsp_configuration: FSP scan configuration dict
 
         :return: True if successfully configured all FSP devices, otherwise False
@@ -1823,7 +1821,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         fsp_configure_scan_success = self._fsp_configure_scan(
             common_configuration=common_configuration,
-            configuration=configuration,
             fsp_configurations=fsp_configs,
         )
         if not fsp_configure_scan_success:
