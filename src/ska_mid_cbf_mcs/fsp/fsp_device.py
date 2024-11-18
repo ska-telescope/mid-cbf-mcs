@@ -160,6 +160,12 @@ class Fsp(CbfDevice):
     # Long Running Commands
     # ---------------------
 
+    def is_SetFunctionMode_allowed(self: Fsp) -> bool:
+        """
+        Overwrite base class's is_SetFunctionMode_allowed method.
+        """
+        return True
+
     @command(
         dtype_in="str",
         dtype_out="DevVarLongStringArray",

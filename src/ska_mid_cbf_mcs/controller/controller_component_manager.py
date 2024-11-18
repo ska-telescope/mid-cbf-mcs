@@ -382,10 +382,6 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
         if fqdn in used_fqdns:
-            # Skip FSP, should set online during On sequence
-            if fqdn in self._fsp_fqdn:
-                return True
-
             return self._set_proxy_online(fqdn)
         else:
             return self._set_proxy_not_fitted(fqdn)
@@ -421,10 +417,6 @@ class ControllerComponentManager(CbfComponentManager):
                 init_success = False
 
         for fqdn in self._vcc_fqdns_all:
-            if not self._init_device_proxy(fqdn=fqdn):
-                init_success = False
-
-        for fqdn in self._fsp_fqdns_all:
             if not self._init_device_proxy(fqdn=fqdn):
                 init_success = False
 
@@ -913,7 +905,7 @@ class ControllerComponentManager(CbfComponentManager):
         else:
             self.logger.info("Some/all Slim devices successfully configured.")
 
-    def _assign_fsp(self: ControllerComponentManager) -> bool:
+    def _init_fsp(self: ControllerComponentManager) -> bool:
         """
         Set FSP function mode
 
@@ -925,31 +917,17 @@ class ControllerComponentManager(CbfComponentManager):
             ].upper()
             self.logger.info(f"Setting FSP function mode to {fsp_mode}")
 
-            for fsp in self._fsp_fqdn:
-                # Only set function mode if FSP is both IDLE and not configured for another mode
-                if not self._set_proxy_online(fsp):
-                    message = (
-                        f"Failed to set {fsp} simulationMode and adminMode"
-                    )
+            for fqdn in self._fsp_fqdns_all:
+                if not self._init_device_proxy(fqdn=fqdn):
+                    message = f"Failed to _init_device_proxy for FSP."
                     self.logger.error(message)
                     return (False, message)
 
+            for fsp in self._fsp_fqdn:
+                # Only set function mode if FSP is both IDLE and not configured for another mode
                 fsp_proxy = self._proxies[fsp]
 
-                # Turn on FSP
-                [[result_code], [command_id]] = fsp_proxy.On()
-                if result_code == ResultCode.REJECTED:
-                    raise tango.DevFailed("On command rejected")
-                self.blocking_command_ids.add(command_id)
-
                 # Set functionMode of FSP
-                current_function_mode = fsp_proxy.functionMode
-                if current_function_mode != FspModes[fsp_mode].value:
-                    if current_function_mode != FspModes.IDLE.value:
-                        message = f"Unable to configure FSP {fsp_proxy.dev_name()} for function mode {fsp_mode}, as it is currently configured for function mode {current_function_mode}"
-                        self.logger.error(message)
-                        return (False, message)
-
                 [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
                     fsp_mode
                 )
@@ -960,6 +938,8 @@ class ControllerComponentManager(CbfComponentManager):
                     return (False, message)
 
                 self.blocking_command_ids.add(command_id)
+                # Subarray controls FSP afterwords
+                fsp_proxy.adminMode = AdminMode.OFFLINE
 
         except Exception as e:
             message = f"Error in assigning FSP Mode: {e}"
@@ -1058,7 +1038,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._configure_slim_devices(task_abort_event)
 
         # Send SetFunctionMode to FSP
-        assign_fsp_status, msg = self._assign_fsp()
+        assign_fsp_status, msg = self._init_fsp()
         if not assign_fsp_status:
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
