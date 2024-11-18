@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import gc
 import os
-import random
 from typing import Iterator
 from unittest.mock import Mock
 
@@ -54,7 +53,6 @@ class TestSlim:
         :return: A test context for the Slim tests.
         """
         harness = context.ThreadedTestTangoContextManager()
-        random.seed()
         # This device is set up as expected
         harness.add_device(
             device_name="mid_csp_cbf/slim/001",
@@ -79,7 +77,7 @@ class TestSlim:
         )
 
         for name, mock in initial_mocks.items():
-            harness.add_mock_device(device_name=name, device_mock=mock())
+            harness.add_mock_device(device_name=name, device_mock=mock(name))
 
         with harness as test_context:
             yield test_context
@@ -123,7 +121,7 @@ class TestSlim:
         Test the On() command's happy path.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         """
         # prepare device
@@ -157,7 +155,6 @@ class TestSlim:
             attribute_value=DevState.ON,
         )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "mesh_config_filename",
         [
@@ -175,7 +172,7 @@ class TestSlim:
         Test the Configure() command's happy path.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
@@ -198,7 +195,6 @@ class TestSlim:
             ),
         )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "mesh_config_filename",
         [("./tests/data/slim_test_fail_config.yaml")],
@@ -213,7 +209,7 @@ class TestSlim:
         Test the Configure() command when the configuration contains more links than there are SlimLink mocks.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
@@ -253,7 +249,7 @@ class TestSlim:
         Test the Configure() command using SlimLink mocks set to reject the nested ConnectTxRx call.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
@@ -293,7 +289,7 @@ class TestSlim:
         Test the Configure() command before Slim has started up.
 
         :param device_under_test_fail: DeviceProxy to the device under test for failure conditions.
-        :param event_tracer_fail: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer_fail: A TangoEventTracer used to receive subscribed change
                                   events from the device under test, for failure conditions.
         :param mesh_config_filename: A JSON file for the configuration.
         """
@@ -334,7 +330,7 @@ class TestSlim:
         Test the Off() command's happy path.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
@@ -379,7 +375,7 @@ class TestSlim:
         Test the Off() command when Slim has gone offline after configuring.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
@@ -394,7 +390,6 @@ class TestSlim:
         ):
             device_under_test.Off()
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "mesh_config_filename",
         [("./tests/data/slim_test_config.yaml")],
@@ -409,7 +404,7 @@ class TestSlim:
         Test the Off() command when it is already off.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
@@ -452,7 +447,6 @@ class TestSlim:
             ),
         )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "mesh_config_filename",
         [("./tests/data/slim_test_config.yaml")],
@@ -467,7 +461,7 @@ class TestSlim:
         Test the SlimTest() command's happy path.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """
@@ -479,7 +473,6 @@ class TestSlim:
         result_code, message = device_under_test.SlimTest()
         assert result_code == ResultCode.OK, message
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "mesh_config_filename",
         [("./tests/data/slim_test_config_inactive.yaml")],
@@ -494,7 +487,7 @@ class TestSlim:
         Test the SlimTest() command when the configuration does not activate any links.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param mesh_config_filename: A JSON file for the configuration.
         """

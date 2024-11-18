@@ -5,7 +5,7 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 
 # Event Tracer's timeout in seconds
-EVENT_TIMEOUT = 60
+EVENT_TIMEOUT = 20
 
 
 def device_online_and_on(
@@ -19,7 +19,7 @@ def device_online_and_on(
     :param device_under_test: A fixture that provides a
         :py:class:`CbfDeviceProxy` to the device under test, in a
         :py:class:`tango.test_context.DeviceTestContext`.
-    :param event_tracer: A :py:class:`TangoEventTracer` used to recieve subscribed change events from the device under test.
+    :param event_tracer: A :py:class:`TangoEventTracer` used to receive subscribed change events from the device under test.
     """
     # Set a given device to AdminMode.ONLINE and DevState.ON
     device_under_test.simulationMode = SimulationMode.FALSE
