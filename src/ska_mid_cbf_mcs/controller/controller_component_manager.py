@@ -919,7 +919,7 @@ class ControllerComponentManager(CbfComponentManager):
 
             for fqdn in self._fsp_fqdns_all:
                 if not self._init_device_proxy(fqdn=fqdn):
-                    message = f"Failed to _init_device_proxy for FSP."
+                    message = "Failed to _init_device_proxy for FSP."
                     self.logger.error(message)
                     return (False, message)
 
