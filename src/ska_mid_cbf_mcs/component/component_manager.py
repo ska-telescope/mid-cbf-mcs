@@ -464,7 +464,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         value = event_data.attr_value.value
         if value is None or value == ("", ""):
             return
-        self.logger.info(
+        self.logger.debug(
             f"{event_data.device.dev_name()} EventData attr_value: {value}"
         )
 
@@ -578,6 +578,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         # Loop is exited when no blocking command IDs remain
         successes = []
+        self.logger.debug(
+            f"wait_for_blocking_results invoked; current received events: {self._received_lrc_results}"
+        )
         while len(self.blocking_command_ids):
             if task_abort_event and task_abort_event.is_set():
                 self.logger.warning(
@@ -611,6 +614,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
                     successes.append(False)
                     continue
 
+                self.logger.debug(
+                    f"Received LRC event for command ID {command_id}"
+                )
                 successes.append(True)
                 self.blocking_command_ids.remove(command_id)
 
@@ -671,7 +677,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
                     f"Skipping repeated {attr_name} event subscription: {dev_name}"
                 )
                 return
-        self.logger.debug(f"Subscribing to {dev_name} LRC results.")
+        self.logger.debug(f"Subscribing to {dev_name}/{attr_name}")
 
         event_id = proxy.subscribe_event(
             attr_name=attr_name,
