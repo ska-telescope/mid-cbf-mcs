@@ -32,13 +32,12 @@ from ska_tango_base.executor.executor_component_manager import (
 )
 from ska_tango_testing import context
 
-# Maximum number worker threads for group commands set to const.DEFAULT_COUNT_VCC for now
-from ska_mid_cbf_mcs.commons.global_enum import const
-
 __all__ = ["CbfComponentManager"]
 
 # 10 ms resolution
 TIMEOUT_RESOLUTION = 0.01
+
+DEFAULT_COUNT_VCC = 4
 
 
 class CbfComponentManager(TaskExecutorComponentManager):
@@ -279,7 +278,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         command_name: str,
         proxies: list[context.DeviceProxy],
         argin: any = None,
-        max_workers: int = const.DEFAULT_COUNT_VCC,
+        max_workers: int = DEFAULT_COUNT_VCC,
     ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded command issuance.
@@ -338,7 +337,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         attr_name: str,
         proxies: list[context.DeviceProxy],
-        max_workers: int = const.DEFAULT_COUNT_VCC,
+        max_workers: int = DEFAULT_COUNT_VCC,
     ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded read_attribute().
@@ -391,7 +390,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         attr_name: str,
         value: any,
         proxies: list[context.DeviceProxy],
-        max_workers: int = const.DEFAULT_COUNT_VCC,
+        max_workers: int = DEFAULT_COUNT_VCC,
     ) -> bool:
         """
         Helper function to perform tango.Group-like threaded write_attribute().
