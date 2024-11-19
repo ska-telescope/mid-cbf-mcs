@@ -28,6 +28,7 @@ UNRELEASED CHANGES
   * Configurable HPS device timeouts in charts: CbfController, FspCorrSubarray, SlimLink, Vcc
 * CIP-2828 Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
 * CIP-2899: Refactored adminMode push event to be changed after communication has been established
+* 19-11-2024: Added attribute change event mocking for unit tests to MockDeviceBuilder, MockCommand
 
 1.1.0-rc.1
 **********
