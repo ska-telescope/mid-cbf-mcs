@@ -365,7 +365,7 @@ class MockDeviceBuilder:
             # Generate the subscription event
             _mock_event(attr_name, attr_value, cb_or_queuesize)
 
-            # Store the callback
+            # Store the callback, to be used by MockCommand later
             mock_device.attr_change_event_callbacks[
                 attr_name
             ] = cb_or_queuesize

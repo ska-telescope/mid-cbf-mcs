@@ -55,9 +55,12 @@ class MockCommand:
         called_mock = unittest.mock.Mock()
         called_mock(*args, **kwargs)
 
+        # If FastCommand, simply return the return value
         if not self._is_lrc:
             return self._return_value
 
+        # If LRC, return value should be a dict to parse
+        # First check if we want to return ResultCode.QUEUED or REJECTED
         if self._return_value["queued"]:
             name = self._return_value["name"]
             result_code = self._return_value["result_code"]
