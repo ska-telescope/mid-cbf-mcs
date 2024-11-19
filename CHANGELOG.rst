@@ -7,7 +7,7 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
-* CIP-2953 increase SV pod storage from 375Mi to 1Gi
+* CIP-2953 increase SV pod storage from 375Mi to 2Gi
 * CIP-3035: fix errors when sending channel_offset to Host-LUT and SPEAD
   * fix sending proper channel offset values to SPEAD and Host-LUT
   * fix splitting up output_port, output_host, and output_link_map in fsp configs
