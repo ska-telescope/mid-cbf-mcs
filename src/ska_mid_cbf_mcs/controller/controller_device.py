@@ -271,7 +271,7 @@ class CbfController(CbfDevice):
             for capability in capabilities:
                 if capability not in max_capabilities:
                     self.logger.error(
-                        f"{capability} capabilities not defined; look into updating charts to define this capability"
+                        f"{capability} capabilities not defined; MaxCapabilities device property must be updated in charts"
                     )
                     # TODO: Exit this command
                     # self.logger.error("returning empty")
