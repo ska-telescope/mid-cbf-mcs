@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta, timezone
-from threading import Event, Thread
+from threading import Event, Lock, Thread
 from typing import Optional
 
 import tango
@@ -240,6 +240,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._poll_thread = None
         self.ping_ok = False
 
+        self._polled_attr_lock = Lock()
+        self._polled_attr = dict()
+
     # -------------
     # Communication
     # -------------
@@ -272,6 +275,9 @@ class TalonBoardComponentManager(CbfComponentManager):
                 self.logger.warning(
                     f"Unexpected change callback from FQDN {dev_name}/{attr_name}"
                 )
+                return  # TODO: Do we want this or should change events generate regardless?
+            self.device_attr_change_callback(attr_name, value)
+            self.device_attr_archive_callback(attr_name, value)
 
     def talon_attr_change_callback(
         self: CbfComponentManager, event_data: Optional[tango.EventData]
@@ -315,6 +321,73 @@ class TalonBoardComponentManager(CbfComponentManager):
                         callback=self.talon_attr_change_callback,
                     )
 
+    def update_polled_attr(self: TalonBoardComponentManager) -> None:
+        """
+        Update the class member dict that maintains a copy of all the
+        attributes managed by InfluxdbQueryClient and Eth100gClient.
+        """
+        for attr_name, getter_fn in [
+            # InfluxdbQueryClient managed attr
+            ("fpgaDieTemperature", self.fpga_die_temperature),
+            ("fpgaDieVoltage0", self.fpga_die_voltage_0),
+            ("fpgaDieVoltage1", self.fpga_die_voltage_1),
+            ("fpgaDieVoltage2", self.fpga_die_voltage_2),
+            ("fpgaDieVoltage3", self.fpga_die_voltage_3),
+            ("fpgaDieVoltage4", self.fpga_die_voltage_4),
+            ("fpgaDieVoltage5", self.fpga_die_voltage_5),
+            ("fpgaDieVoltage6", self.fpga_die_voltage_6),
+            ("humiditySensorTemperature", self.humidity_sensor_temperature),
+            ("dimmTemperatures", self.dimm_temperatures),
+            ("mboTxTemperatures", self.mbo_tx_temperatures),
+            ("mboTxVccVoltages", self.mbo_tx_vcc_voltages),
+            ("mboTxFaultStatus", self.mbo_tx_fault_status),
+            ("mboTxLolStatus", self.mbo_tx_lol_status),
+            ("mboTxLosStatus", self.mbo_tx_los_status),
+            ("mboRxVccVoltages", self.mbo_rx_vcc_voltages),
+            ("mboRxLolStatus", self.mbo_rx_lol_status),
+            ("mboRxLosStatus", self.mbo_rx_los_status),
+            ("hasFanControl", self.has_fan_control),
+            ("fansPwm", self.fans_pwm),
+            ("fansPwmEnable", self.fans_pwm_enable),
+            ("fansRpm", self.fans_input),
+            ("fansFault", self.fans_fault),
+            ("ltmInputVoltage", self.ltm_input_voltage),
+            ("ltmOutputVoltage1", self.ltm_output_voltage_1),
+            ("ltmOutputVoltage2", self.ltm_output_voltage_2),
+            ("ltmInputCurrent", self.ltm_input_current),
+            ("ltmOutputCurrent1", self.ltm_output_current_1),
+            ("ltmOutputCurrent2", self.ltm_output_current_2),
+            ("ltmTemperature1", self.ltm_temperature_1),
+            ("ltmTemperature2", self.ltm_temperature_2),
+            ("ltmVoltageWarning", self.ltm_voltage_warning),
+            ("ltmCurrentWarning", self.ltm_current_warning),
+            ("ltmTemperatureWarning", self.ltm_temperature_warning),
+            # Eth100gClient managed attrs
+            ("eth100g0Counters", self.eth100g_0_counters),
+            ("eth100g0ErrorCounters", self.eth100g_0_error_counters),
+            ("eth100g0DataFlowActive", self.eth100g_0_data_flow_active),
+            ("eth100g0HasDataError", self.eth100g_0_has_data_error),
+            ("eth100g0AllTxCounters", self.eth100g_0_all_tx_counters),
+            ("eth100g0AllRxCounters", self.eth100g_0_all_rx_counters),
+            ("eth100g1Counters", self.eth100g_1_counters),
+            ("eth100g1ErrorCounters", self.eth100g_1_error_counters),
+            ("eth100g1DataFlowActive", self.eth100g_1_data_flow_active),
+            ("eth100g1HasDataError", self.eth100g_1_has_data_error),
+            ("eth100g1AllTxCounters", self.eth100g_1_all_tx_counters),
+            ("eth100g1AllRxCounters", self.eth100g_1_all_rx_counters),
+        ]:
+            cur_val = getter_fn()
+            with self._polled_attr_lock:
+                try:
+                    if cur_val != self._polled_attr[attr_name]:
+                        self.device_attr_change_callback(attr_name, cur_val)
+                        self.device_attr_archive_callback(attr_name, cur_val)
+                except KeyError:
+                    self.logger.debug(
+                        f"{attr_name} not currently monitored for changes; starting now."
+                    )
+                self._polled_attr[attr_name] = cur_val
+
     def _internal_polling_thread(
         self: TalonBoardComponentManager,
         eth0: Eth100gClient,
@@ -338,11 +411,17 @@ class TalonBoardComponentManager(CbfComponentManager):
             else:
                 if not self.ping_ok:
                     self.logger.info("Pinged influxdb successfully.")
+
+            if res != self.ping_ok:
+                self.device_attr_change_callback("pingResult", res)
+                self.device_attr_archive_callback("pingResult", res)
             self.ping_ok = res
 
             # Poll eth100g stats
             eth0.read_eth_100g_stats()
             eth1.read_eth_100g_stats()
+            # Maintain a local copy for comparison when generating change events
+            self.update_polled_attr()
 
             # Poll HPS Master healthState
             self.update_device_health_state(

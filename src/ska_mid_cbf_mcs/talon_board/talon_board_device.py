@@ -92,7 +92,11 @@ class TalonBoard(CbfDevice):
 
         :param value: the vcc ID
         """
-        self._subarrayID = value
+        if self._subarrayID != value:
+            self._subarrayID = value
+            self.push_change_event("subarrayID", value)
+            self.push_archive_event("subarrayID", value)
+            self.logger.info(f"New value for subarrayID: {value}")
 
     @attribute(
         dtype=str,
@@ -144,7 +148,11 @@ class TalonBoard(CbfDevice):
 
         :param value: the VCC ID
         """
-        self._vccID = value
+        if self._vccID != value:
+            self._vccID = value
+            self.push_change_event("vccID", value)
+            self.push_archive_event("vccID", value)
+            self.logger.info(f"New value for vccID: {value}")
 
     @attribute(dtype=str, label="IP", doc="IP Address")
     def ipAddr(self: TalonBoard) -> str:
@@ -1285,6 +1293,8 @@ class TalonBoard(CbfDevice):
             talon_status_address=self.TalonStatusAddress,
             hps_master_address=self.HpsMasterAddress,
             logger=self.logger,
+            attr_change_callback=self.push_change_event,
+            attr_archive_callback=self.push_archive_event,
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
@@ -1318,8 +1328,195 @@ class TalonBoard(CbfDevice):
             self._device._dishID = ""
             self._device._vccID = ""
 
+            # Local Attr
+            self._device.set_change_event("subarrayID", True)
+            self._device.set_archive_event("subarrayID", True)
+
             self._device.set_change_event("dishID", True)
             self._device.set_archive_event("dishID", True)
+
+            self._device.set_change_event("vccID", True)
+            self._device.set_archive_event("vccID", True)
+
+            self._device.set_change_event("pingResult", True)
+            self._device.set_archive_event("pingResult", True)
+
+            # TalonSysID Attr
+            self._device.set_change_event("bitstreamVersion", True)
+            self._device.set_archive_event("bitstreamVersion", True)
+
+            self._device.set_change_event("bitstreamChecksum", True)
+            self._device.set_archive_event("bitstreamChecksum", True)
+
+            # TalonStatus Attr
+            self._device.set_change_event("iopllLockedFault", True)
+            self._device.set_archive_event("iopllLockedFault", True)
+
+            self._device.set_change_event("fsIopllLockedFault", True)
+            self._device.set_archive_event("fsIopllLockedFault", True)
+
+            self._device.set_change_event("commsIopllLockedFault", True)
+            self._device.set_archive_event("commsIopllLockedFault", True)
+
+            self._device.set_change_event("systemClkFault", True)
+            self._device.set_archive_event("systemClkFault", True)
+
+            self._device.set_change_event("emifBlFault", True)
+            self._device.set_archive_event("emifBlFault", True)
+
+            self._device.set_change_event("emifBrFault", True)
+            self._device.set_archive_event("emifBrFault", True)
+
+            self._device.set_change_event("emifTrFault", True)
+            self._device.set_archive_event("emifTrFault", True)
+
+            self._device.set_change_event("ethernet0PllFault", True)
+            self._device.set_archive_event("ethernet0PllFault", True)
+
+            self._device.set_change_event("ethernet1PllFault", True)
+            self._device.set_archive_event("ethernet1PllFault", True)
+
+            self._device.set_change_event("slimPllFault", True)
+            self._device.set_archive_event("slimPllFault", True)
+
+            # InfluxDB Attr
+            self._device.set_change_event("fpgaDieTemperature", True)
+            self._device.set_archive_event("fpgaDieTemperature", True)
+
+            self._device.set_change_event("fpgaDieVoltage0", True)
+            self._device.set_archive_event("fpgaDieVoltage0", True)
+
+            self._device.set_change_event("fpgaDieVoltage1", True)
+            self._device.set_archive_event("fpgaDieVoltage1", True)
+
+            self._device.set_change_event("fpgaDieVoltage2", True)
+            self._device.set_archive_event("fpgaDieVoltage2", True)
+
+            self._device.set_change_event("fpgaDieVoltage3", True)
+            self._device.set_archive_event("fpgaDieVoltage3", True)
+
+            self._device.set_change_event("fpgaDieVoltage4", True)
+            self._device.set_archive_event("fpgaDieVoltage4", True)
+
+            self._device.set_change_event("fpgaDieVoltage5", True)
+            self._device.set_archive_event("fpgaDieVoltage5", True)
+
+            self._device.set_change_event("fpgaDieVoltage6", True)
+            self._device.set_archive_event("fpgaDieVoltage6", True)
+
+            self._device.set_change_event("humiditySensorTemperature", True)
+            self._device.set_archive_event("humiditySensorTemperature", True)
+
+            self._device.set_change_event("dimmTemperatures", True)
+            self._device.set_archive_event("dimmTemperatures", True)
+
+            self._device.set_change_event("mboTxTemperatures", True)
+            self._device.set_archive_event("mboTxTemperatures", True)
+
+            self._device.set_change_event("mboTxVccVoltages", True)
+            self._device.set_archive_event("mboTxVccVoltages", True)
+
+            self._device.set_change_event("mboTxFaultStatus", True)
+            self._device.set_archive_event("mboTxFaultStatus", True)
+
+            self._device.set_change_event("mboTxLolStatus", True)
+            self._device.set_archive_event("mboTxLolStatus", True)
+
+            self._device.set_change_event("mboTxLosStatus", True)
+            self._device.set_archive_event("mboTxLosStatus", True)
+
+            self._device.set_change_event("mboRxVccVoltages", True)
+            self._device.set_archive_event("mboRxVccVoltages", True)
+
+            self._device.set_change_event("mboRxLolStatus", True)
+            self._device.set_archive_event("mboRxLolStatus", True)
+
+            self._device.set_change_event("mboRxLosStatus", True)
+            self._device.set_archive_event("mboRxLosStatus", True)
+
+            self._device.set_change_event("hasFanControl", True)
+            self._device.set_archive_event("hasFanControl", True)
+
+            self._device.set_change_event("fansPwm", True)
+            self._device.set_archive_event("fansPwm", True)
+
+            self._device.set_change_event("fansPwmEnable", True)
+            self._device.set_archive_event("fansPwmEnable", True)
+
+            self._device.set_change_event("fansRpm", True)
+            self._device.set_archive_event("fansRpm", True)
+
+            self._device.set_change_event("fansFault", True)
+            self._device.set_archive_event("fansFault", True)
+
+            self._device.set_change_event("ltmInputVoltage", True)
+            self._device.set_archive_event("ltmInputVoltage", True)
+
+            self._device.set_change_event("ltmOutputVoltage1", True)
+            self._device.set_archive_event("ltmOutputVoltage1", True)
+
+            self._device.set_change_event("ltmOutputVoltage2", True)
+            self._device.set_archive_event("ltmOutputVoltage2", True)
+
+            self._device.set_change_event("ltmInputCurrent", True)
+            self._device.set_archive_event("ltmInputCurrent", True)
+
+            self._device.set_change_event("ltmOutputCurrent1", True)
+            self._device.set_archive_event("ltmOutputCurrent1", True)
+
+            self._device.set_change_event("ltmOutputCurrent2", True)
+            self._device.set_archive_event("ltmOutputCurrent2", True)
+
+            self._device.set_change_event("ltmTemperature1", True)
+            self._device.set_archive_event("ltmTemperature1", True)
+
+            self._device.set_change_event("ltmTemperature2", True)
+            self._device.set_archive_event("ltmTemperature2", True)
+
+            self._device.set_change_event("ltmVoltageWarning", True)
+            self._device.set_archive_event("ltmVoltageWarning", True)
+
+            self._device.set_change_event("ltmCurrentWarning", True)
+            self._device.set_archive_event("ltmCurrentWarning", True)
+
+            self._device.set_change_event("ltmTemperatureWarning", True)
+            self._device.set_archive_event("ltmTemperatureWarning", True)
+
+            self._device.set_change_event("eth100g0Counters", True)
+            self._device.set_archive_event("eth100g0Counters", True)
+
+            self._device.set_change_event("eth100g0ErrorCounters", True)
+            self._device.set_archive_event("eth100g0ErrorCounters", True)
+
+            self._device.set_change_event("eth100g0DataFlowActive", True)
+            self._device.set_archive_event("eth100g0DataFlowActive", True)
+
+            self._device.set_change_event("eth100g0HasDataError", True)
+            self._device.set_archive_event("eth100g0HasDataError", True)
+
+            self._device.set_change_event("eth100g0AllTxCounters", True)
+            self._device.set_archive_event("eth100g0AllTxCounters", True)
+
+            self._device.set_change_event("eth100g0AllRxCounters", True)
+            self._device.set_archive_event("eth100g0AllRxCounters", True)
+
+            self._device.set_change_event("eth100g1Counters", True)
+            self._device.set_archive_event("eth100g1Counters", True)
+
+            self._device.set_change_event("eth100g1ErrorCounters", True)
+            self._device.set_archive_event("eth100g1ErrorCounters", True)
+
+            self._device.set_change_event("eth100g1DataFlowActive", True)
+            self._device.set_archive_event("eth100g1DataFlowActive", True)
+
+            self._device.set_change_event("eth100g1HasDataError", True)
+            self._device.set_archive_event("eth100g1HasDataError", True)
+
+            self._device.set_change_event("eth100g1AllTxCounters", True)
+            self._device.set_archive_event("eth100g1AllTxCounters", True)
+
+            self._device.set_change_event("eth100g1AllRxCounters", True)
+            self._device.set_archive_event("eth100g1AllRxCounters", True)
 
             return (result_code, msg)
 

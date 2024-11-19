@@ -671,7 +671,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
                     f"Skipping repeated {attr_name} event subscription: {dev_name}"
                 )
                 return
-        self.logger.debug(f"Subscribing to {dev_name} LRC results.")
+        self.logger.debug(f"Subscribing to {dev_name}/{attr_name}")
 
         event_id = proxy.subscribe_event(
             attr_name=attr_name,
@@ -690,7 +690,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
         """
-        Unsubscribe from a proxy's longRunningCommandResult attribute.
+        Unsubscribe from all of a proxy's attribute subscriptions.
 
         :param proxy: DeviceProxy
         """
@@ -698,9 +698,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         dev_name = proxy.dev_name()
         dev_events = self.event_ids.pop(dev_name, None)
         if dev_events is None:
-            self.logger.debug(
-                f"No longRunningCommandResult event subscription for {dev_name}"
-            )
+            self.logger.debug(f"No change event subscription for {dev_name}")
             return
         for attr_name, event_id in dev_events.items():
             self.logger.debug(

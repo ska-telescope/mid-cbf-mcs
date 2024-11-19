@@ -50,26 +50,6 @@ class PowerSwitch(CbfDevice):
     # Attributes
     # ----------
 
-    @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
-    def simulationMode(self: PowerSwitch) -> SimulationMode:
-        """
-        Read the Simulation Mode of the device.
-
-        :return: Simulation Mode of the device.
-        """
-        return self._simulation_mode
-
-    @simulationMode.write
-    def simulationMode(self: PowerSwitch, value: SimulationMode) -> None:
-        """
-        Set the simulation mode of the device.
-
-        :param value: SimulationMode
-        """
-        self.logger.info(f"Writing simulationMode to {value}")
-        self._simulation_mode = value
-        self.component_manager.simulation_mode = value
-
     @attribute(dtype=int)
     def numOutlets(self: PowerSwitch) -> int:
         """
