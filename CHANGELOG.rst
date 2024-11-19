@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-2953 increase SV pod storage from 375Mi to 2Gi
 * CIP-3028 Updated hw config after systems room re-organization.
 * CIP-3034 Removed parallelization for LRU On and Off command queuing to work better with the ST PDU that is now in use.
 * CIP-2549 Controller sets unused subdevices to AdminMode.NOT_FITTED
@@ -21,6 +22,7 @@ UNRELEASED CHANGES
 * CIP-2828 Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
 * CIP-2899: Refactored adminMode push event to be changed after communication has been established
 * CIP-3100: fix sending all subarray vcc shift values in hps fsp config value vcc_id_to_rdt_freq_shifts
+* 19-11-2024: Added attribute change event mocking for unit tests to MockDeviceBuilder, MockCommand
 
 1.1.0-rc.2
 **********
