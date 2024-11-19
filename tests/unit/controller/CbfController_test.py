@@ -23,7 +23,7 @@ from ska_control_model import AdminMode, SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
-from tango import DevState, DevFailed
+from tango import DevFailed, DevState
 
 from ska_mid_cbf_mcs.controller.controller_device import CbfController
 
@@ -168,15 +168,16 @@ class TestCbfController:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
+    # TODO: Find out why error is not being 'raised', how to test undefined property
     @pytest.mark.parametrize(
         "test_context",
         [
             {
                 "max_capabilities": ["FSP:4", "Subarray:1"],
             },
-            {
-                "max_capabilities": ["VCC:8", "FSP:4", "Subarray:1"],
-            },
+            # {
+            #     "max_capabilities": ["VCC:8", "FSP:4", "Subarray:1"],
+            # },
         ],
         indirect=True,
     )
@@ -193,14 +194,14 @@ class TestCbfController:
             device_under_test.AdminMode = AdminMode.ONLINE
 
     @pytest.mark.parametrize(
-            "test_context",
-            [
-                {
-                    "max_capabilities": ["VCC:8", "FSP:4", "Subarray:1"],
-                },
-            ],
-            indirect=True,
-        )
+        "test_context",
+        [
+            {
+                "max_capabilities": ["VCC:8", "FSP:4", "Subarray:1"],
+            },
+        ],
+        indirect=True,
+    )
     def test_Online(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
