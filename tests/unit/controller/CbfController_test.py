@@ -16,6 +16,7 @@ import gc
 import os
 from typing import Iterator
 from unittest.mock import Mock
+from tango import DevFailed
 
 import pytest
 from assertpy import assert_that
@@ -46,6 +47,7 @@ class TestCbfController:
     def cbf_controller_test_context(
         self: TestCbfController,
         initial_mocks: dict[str, Mock],
+        # request: pytest.FixtureRequest,
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
         """
         Fixture that creates a test context for the CbfController.
@@ -102,6 +104,7 @@ class TestCbfController:
             VisSLIMConfigPath="mnt/slim/vis/slim_config.yaml",
             LRCTimeout="30",
             MaxCapabilities=["VCC:8", "FSP:4", "Subarray:1"],
+            # MaxCapabilities=request.param["MaxCapabilities"]
         )
 
         for name, mock in initial_mocks.items():
@@ -110,6 +113,15 @@ class TestCbfController:
         with harness as test_context:
             yield test_context
 
+    # @pytest.mark.parametrize(
+    #     "test_context",
+    #     [
+    #         {
+    #             "MaxCapabilities": ["VCC:8", "FSP:4", "Subarray:1"],
+    #         },
+    #     ],
+    #     indirect=True,
+    # )
     def test_State(
         self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
@@ -119,7 +131,15 @@ class TestCbfController:
         :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.State() == DevState.DISABLE
-
+    # @pytest.mark.parametrize(
+    #     "test_context",
+    #     [
+    #         {
+    #             "MaxCapabilities": ["VCC:8", "FSP:4", "Subarray:1"],
+    #         },
+    #     ],
+    #     indirect=True,
+    # )
     def test_Status(
         self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
@@ -129,7 +149,15 @@ class TestCbfController:
         :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
-
+    # @pytest.mark.parametrize(
+    #     "test_context",
+    #     [
+    #         {
+    #             "MaxCapabilities": ["VCC:8", "FSP:4", "Subarray:1"],
+    #         },
+    #     ],
+    #     indirect=True,
+    # )
     def test_adminMode(
         self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
@@ -140,6 +168,35 @@ class TestCbfController:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
+    # @pytest.mark.parametrize(
+    #     "test_context",
+    #     [
+    #         {
+    #             "MaxCapabilities": ["FSP:4", "Subarray:1"],
+    #         },
+    #     ],
+    #     indirect=True,
+    # )
+    # def test_MaxCapabilitiesProperty(
+    #     self: TestCbfController, device_under_test: context.DeviceProxy,
+    # ) -> None:
+    #     """
+    #     Test the State attribute just after device initialization.
+
+    #     :param device_under_test: DeviceProxy to the device under test.
+    #     """
+    #     with pytest.raises(ValueError):
+    #         device_under_test.AdminMode = AdminMode.ONLINE
+
+    # @pytest.mark.parametrize(
+    #     "test_context",
+    #     [
+    #         {
+    #             "MaxCapabilities": ["VCC:8", "FSP:4", "Subarray:1"],
+    #         },
+    #     ],
+    #     indirect=True,
+    # )
     def test_Online(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
@@ -170,6 +227,15 @@ class TestCbfController:
             attribute_value=DevState.OFF,
         )
 
+    # @pytest.mark.parametrize(
+    #     "test_context",
+    #     [
+    #         {
+    #             "MaxCapabilities": ["VCC:8", "FSP:4", "Subarray:1"],
+    #         },
+    #     ],
+    #     indirect=True,
+    # )
     @pytest.mark.parametrize(
         "sys_param_file_path",
         [
@@ -184,6 +250,7 @@ class TestCbfController:
             "source_init_sys_param_invalid_schema.json",
         ],
     )
+    
     def test_InitSysParam(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
@@ -198,7 +265,7 @@ class TestCbfController:
                              events from the device under test.
         :param sys_param_file_path: The path to the sys_param file to be used
         """
-        self.test_Online(device_under_test, event_tracer)
+
 
         with open(json_file_path + sys_param_file_path) as f:
             sp = f.read()
@@ -268,7 +335,15 @@ class TestCbfController:
                     '[3, "Validating init_sys_param file against ska-telmodel schema failed"]',
                 ),
             )
-
+    # @pytest.mark.parametrize(
+    #     "test_context",
+    #     [
+    #         {
+    #             "MaxCapabilities": ["VCC:8", "FSP:4", "Subarray:1"],
+    #         },
+    #     ],
+    #     indirect=True,
+    # )
     def test_On_without_init_sys_param(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
@@ -296,7 +371,15 @@ class TestCbfController:
                 '[6, "Command is not allowed"]',
             ),
         )
-
+    # @pytest.mark.parametrize(
+    #     "test_context",
+    #     [
+    #         {
+    #             "MaxCapabilities": ["VCC:8", "FSP:4", "Subarray:1"],
+    #         },
+    #     ],
+    #     indirect=True,
+    # )
     @pytest.mark.skip(reason="Skipping test involving nested LRC")
     def test_Commands_all(
         self: TestCbfController,

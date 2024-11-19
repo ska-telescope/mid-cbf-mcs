@@ -64,17 +64,14 @@ class ControllerComponentManager(CbfComponentManager):
 
         self.validate_supported_configuration = True
 
-        # --- Max Capabilities --- #
-        self._count_vcc = max_capabilities["VCC"]
-        self._count_fsp = max_capabilities["FSP"]
-        self._count_subarray = max_capabilities["Subarray"]
+        # TODO: Create setter function for these
+        # # --- Max Capabilities --- #
+        self.max_capabilities = max_capabilities
+        self._count_vcc = 0
+        self._count_fsp = 0
+        self._count_subarray = 0
 
-        # TODO: Check if this is necessary, I think tests will fail if
-        # max_capabilities is empty even without this
-        if max_capabilities == {}:
-            raise tango.DevFailed(
-                "MaxCapabilities device property not defined"
-            )
+
 
         # --- All FQDNs --- #
         self._subarray_fqdns_all = fqdn_dict["CbfSubarray"]
@@ -437,13 +434,28 @@ class ControllerComponentManager(CbfComponentManager):
 
         return init_success
 
+    def _set_max_capabilities(self):
+        self.logger.warning("Entering set max capabilities")
+        if self.max_capabilities == {}:
+            self.logger.warning("Empty property")
+            raise ValueError
+            self.logger.warning("Raised error")
+        else:
+            self.logger.warning("Setting max capabilities")
+            self._count_vcc = self.max_capabilities["VCC"]
+            self._count_fsp = self.max_capabilities["FSP"]
+            self._count_subarray = self.max_capabilities["Subarray"]
+        self.logger.warning("returnign")
+        return
+
+    # define set max capabilities function
     def _start_communicating(
         self: ControllerComponentManager, *args, **kwargs
     ) -> None:
         """
         Thread for start_communicating operation.
         """
-        self.logger.debug(
+        self.logger.warning(
             "Entering ControllerComponentManager._start_communicating"
         )
 
@@ -456,7 +468,9 @@ class ControllerComponentManager(CbfComponentManager):
                 f"Failed to read HW config file at {self._hw_config_path}: {e}"
             )
             return
-
+        # Call set max capabilities function
+        # self._set_max_capabilities()
+        self.logger.error("Finished setting max capabilities")
         self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
 
         # Read the talondx config JSON
@@ -646,6 +660,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         self.logger.debug("Checking if init_sys_param is allowed")
         if not self.is_communicating:
+            self.logger.warning("Is communicating is false")
             return False
         if self.power_state == PowerState.OFF:
             return True
@@ -668,7 +683,7 @@ class ControllerComponentManager(CbfComponentManager):
         :param task_callback: Callback function to update task status
         :param task_abort_event: Event to signal task abort.
         """
-        self.logger.debug(f"Received sys params {argin}")
+        self.logger.info(f"Received sys params {argin}")
 
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
@@ -745,6 +760,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Send init_sys_param to the subarrays and VCCs.
         if not self._update_init_sys_param(self.last_init_sys_param):
+            self.logger.error("Setting comm state to not established")
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )

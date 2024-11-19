@@ -254,6 +254,9 @@ class CbfController(CbfDevice):
         """
         capabilities = ["VCC", "FSP", "Subarray"]
         max_capabilities = {}
+        # self.logger.error("Start get max capabilities")
+        # self.logger.error("MaxCapabilities:")
+        # self.logger.error(f'{self.MaxCapabilities}')
 
         if self.MaxCapabilities:
             for max_capability in self.MaxCapabilities:
@@ -264,17 +267,22 @@ class CbfController(CbfDevice):
                 max_capabilities[capability_type] = int(
                     max_capability_instances
                 )
-
+            # self.logger.error("Done splitting capabilities")
             for capability in capabilities:
                 if capability not in max_capabilities:
                     self.logger.error(
                         f"{capability} capabilities not defined; look into updating charts to define this capability"
                     )
                     # TODO: Exit this command
+                    # self.logger.error("returning empty")
+                    # raise exception here
                     return {}
         else:
-            self.logger.warning("MaxCapabilities device property not defined")
+            # self.logger.warning("MaxCapabilities device property not defined")
+            # remove this when log is back
+            pass
 
+        # self.logger.error("returning max capabilities")
         return max_capabilities
 
     def create_component_manager(
