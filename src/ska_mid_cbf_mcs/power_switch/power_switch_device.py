@@ -16,7 +16,7 @@ TANGO device class for controlling and monitoring the web power switch that dist
 from __future__ import annotations
 
 # Additional import
-from ska_control_model import PowerState, SimulationMode
+from ska_control_model import PowerState
 
 # tango imports
 from ska_tango_base.commands import SubmittedSlowCommand

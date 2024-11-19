@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from ska_control_model import HealthState, PowerState, SimulationMode
+from ska_control_model import HealthState, PowerState
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from tango import DebugIt

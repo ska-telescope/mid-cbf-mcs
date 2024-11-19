@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 # Additional import
-from ska_control_model import HealthState, SimulationMode
+from ska_control_model import HealthState
 
 # tango imports
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
