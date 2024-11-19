@@ -343,6 +343,7 @@ class MockDeviceBuilder:
             mock_event_data = unittest.mock.Mock()
             mock_event_data.device.dev_name = mock_device.dev_name
             mock_event_data.err = attr_err
+            mock_event_data.attr_name = attr_name
             mock_event_data.attr_value.name = attr_name
             mock_event_data.attr_value.value = attr_value
             mock_event_data.attr_value.quality = attr_quality
