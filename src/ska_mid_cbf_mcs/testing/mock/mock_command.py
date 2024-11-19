@@ -43,9 +43,34 @@ class MockCommand:
 
     def __call__(self: MockCommand, *args: any, **kwargs: any) -> any:
         """
-        Handle a callback call.
+        Handle a call to this mock command.
 
-        Create a standard mock, call it and return
+        For a fast command (`is_lrc == False`) the stored return value is immediately
+        returned.
+        For a long-running command (`is_lrc == True`) the return value supplied
+        must be a dictionary containing certain key parameters:
+        - "name": str - LRC name
+        - "queued": bool - True if the LRC should return ResultCode.QUEUED, False
+          if it should return ResultCode.REJECTED
+        - "result_code": ResultCode - what ResultCode to push to the `longRunningCommandResult`
+          attribute change event callback
+        - "message": str - what message string to push to the `longRunningCommandResult`
+          attribute change event callback
+        - "attr_values": dict - optional dictionary of attribute names and values to push
+          change events for
+        - "sleep_time_s": int - optional time value in seconds to wait between each
+          change event callback
+
+        ```
+        {
+            "name": name,               # LRC name
+            "queued": queued,           # True if the LRC should return ResultCode.QUEUED
+            "result_code": result_code,
+            "message": message,
+            "attr_values": attr_values,
+            "sleep_time_s": sleep_time_s,
+        }
+        ```
 
         :param args: positional args in the call
         :param kwargs: keyword args in the call

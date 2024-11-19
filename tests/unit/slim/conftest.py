@@ -128,14 +128,12 @@ def mock_slim_link() -> unittest.mock.Mock:
         result_code=ResultCode.OK,
         message="ConnectTxRx completed OK",
         queued=True,
-        attr_values={"longRunningCommandResult": ""},
     )
     builder.add_lrc(
         name="DisconnectTxRx",
         result_code=ResultCode.OK,
         message="DisconnectTxRx completed OK",
         queued=True,
-        attr_values={"longRunningCommandResult": ""},
     )
     return builder
 

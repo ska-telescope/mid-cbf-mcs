@@ -122,6 +122,24 @@ class MockDeviceBuilder:
         Tell this builder to build mocks with a specified long-running command that
         returns ([ResultCode], [command_id]).
 
+        The `result_code` and `message` parameters are necessary to push an expected
+        change to the `longRunningCommandResult` attribute, while `attr_values`
+        can be used to supply further attribute change events that might be expected
+        during the mocked LRC.
+        As a helpful standard, `attr_values` can at baseline be a dictionary with
+        an empty or None value for `longRunningCommandResult`, e.g.
+
+        ```
+        builder = MockDeviceBuilder()
+        builder.add_lrc(
+            name="On",
+            result_code=ResultCode.OK,
+            message="On completed OK",
+            queued=True,
+            attr_values={"longRunningCommandResult": ""},
+        )
+        ```
+
         :param name: the name of the command
         :param queued: if True, return ResultCode.QUEUED, if False, return ResultCode.REJECTED
         :param result_code: the
@@ -133,6 +151,8 @@ class MockDeviceBuilder:
             events for in a given LRC
         :param sleep_time_s: sleep time in seconds to wait before pushing change event
         """
+        if attr_values is None:
+            attr_values = dict()
         self._lrc_return_values[name] = {
             "name": name,
             "queued": queued,
