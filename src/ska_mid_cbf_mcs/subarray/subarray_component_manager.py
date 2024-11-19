@@ -1377,7 +1377,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         function_mode: str,
     ) -> bool:
         """
-        Check fsp function mode and add fsp to subarray membership
+        Check FSP function mode and add FSP to subarray membership
 
         :param fsp_id: ID of FSP to assign
         :param function_mode: target FSP function mode
@@ -1393,6 +1393,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     f"{fsp_proxy.dev_name()} is not fitted; skipping assignment."
                 )
                 return False
+
+            fsp_proxy.adminMode = AdminMode.ONLINE
 
             # Only set function mode if FSP is both IDLE and not configured for another mode
             current_function_mode = fsp_proxy.functionMode
