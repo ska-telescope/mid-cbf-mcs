@@ -598,13 +598,6 @@ class FspComponentManager(CbfComponentManager):
             "subarrayMembership", list(self.subarray_membership)
         )
 
-        # If no current subarray membership, reset function mode to IDLE
-        if len(self.subarray_membership) == 0:
-            self.logger.info(
-                "No current subarray membership, resetting function mode to IDLE"
-            )
-            self._set_hps_fsp_function_mode(FspModes.IDLE.value)
-
         task_callback(
             result=(
                 ResultCode.OK,
