@@ -63,6 +63,7 @@ class MockCommand:
             result_code = self._return_value["result_code"]
             message = self._return_value["message"]
             attr_values = self._return_value["attr_values"]
+            sleep_time_s = self._return_value["sleep_time_s"]
 
             # Add LRC result value and push all attribute change events
             command_id = f"{time.time()}_{uuid.uuid4().fields[-1]}_{name}"
@@ -76,7 +77,12 @@ class MockCommand:
                 callback = self._mock_device.attr_change_event_callbacks[
                     attr_name
                 ]
-                self._mock_device.mock_event(attr_name, attr_value, callback)
+                self._mock_device.mock_event(
+                    attr_name=attr_name,
+                    attr_value=attr_value,
+                    callback=callback,
+                    sleep_time_s=sleep_time_s,
+                )
 
             return [[ResultCode.QUEUED], [command_id]]
 

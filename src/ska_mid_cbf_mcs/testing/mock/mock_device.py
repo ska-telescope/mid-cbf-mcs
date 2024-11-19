@@ -21,7 +21,7 @@ from typing import Callable
 import tango
 from ska_tango_base.commands import ResultCode
 
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCommand
+from ska_mid_cbf_mcs.testing.mock.mock_command import MockCommand
 
 __all__ = ["MockDeviceBuilder"]
 
@@ -116,6 +116,7 @@ class MockDeviceBuilder:
         result_code: ResultCode = None,
         message: str = None,
         attr_values: dict[str, any] = None,
+        sleep_time_s: int = 0,
     ) -> None:
         """
         Tell this builder to build mocks with a specified long-running command that
@@ -130,6 +131,7 @@ class MockDeviceBuilder:
             return
         :param attr_values: dict containing list of attributes and values to push
             events for in a given LRC
+        :param sleep_time_s: sleep time in seconds to wait before pushing change event
         """
         self._lrc_return_values[name] = {
             "name": name,
@@ -137,6 +139,7 @@ class MockDeviceBuilder:
             "result_code": result_code,
             "message": message,
             "attr_values": attr_values,
+            "sleep_time_s": sleep_time_s,
         }
 
     def _setup_read_attribute(
@@ -314,7 +317,8 @@ class MockDeviceBuilder:
             :param callback: a callback to call
             :param attr_quality: attribute quality to push
             :param attr_err: attribute error to push
-            :param sleep_time_s: sleep time before pushing change event
+            :param sleep_time_s: sleep time in seconds to wait before pushing
+                change event
             """
             mock_event_data = unittest.mock.Mock()
             mock_event_data.device.dev_name = mock_device.dev_name
