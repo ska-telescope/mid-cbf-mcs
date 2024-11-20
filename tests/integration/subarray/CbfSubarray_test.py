@@ -38,7 +38,7 @@ class TestCbfSubarray:
         controller: context.DeviceProxy,
     ) -> None:
         """
-        Setup for Subarray integration test suite by making call to turn on controller.
+        Setup for Subarray integration test suite by making calls to turn on controller.
 
         :param event_tracer: TangoEventTracer
         :param controller: proxy to contorller devices
