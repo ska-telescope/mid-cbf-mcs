@@ -19,6 +19,7 @@ from typing import Generator
 
 import pytest
 import tango
+from ska_control_model import AdminMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
@@ -104,6 +105,7 @@ def tango_event_tracer_fail(
 def mock_slim_link() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
+    builder.add_attribute("adminMode", AdminMode.OFFLINE)
     builder.add_attribute(
         "linkName",
         "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0",
@@ -121,15 +123,17 @@ def mock_slim_link() -> unittest.mock.Mock:
     builder.add_command("set_timeout_millis", None)
     builder.add_command("poll_command", None)
     builder.add_command("stop_poll_command", None)
-    builder.add_result_command(
-        "ConnectTxRx",
-        ResultCode.QUEUED,
-        "1234_ConnectTxRx",
+    builder.add_lrc(
+        name="ConnectTxRx",
+        result_code=ResultCode.OK,
+        message="ConnectTxRx completed OK",
+        queued=True,
     )
-    builder.add_result_command(
-        "DisconnectTxRx",
-        ResultCode.QUEUED,
-        "1234_DisconnectTxRx",
+    builder.add_lrc(
+        name="DisconnectTxRx",
+        result_code=ResultCode.OK,
+        message="DisconnectTxRx completed OK",
+        queued=True,
     )
     return builder
 
@@ -138,6 +142,7 @@ def mock_slim_link() -> unittest.mock.Mock:
 def mock_fail_slim_link() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
+    builder.add_attribute("adminMode", AdminMode.OFFLINE)
     builder.add_attribute(
         "linkName",
         "talondx-001/slim-tx-rx/fs-tx0->talondx-001/slim-tx-rx/fs-rx0",
@@ -155,15 +160,13 @@ def mock_fail_slim_link() -> unittest.mock.Mock:
     builder.add_command("set_timeout_millis", None)
     builder.add_command("poll_command", None)
     builder.add_command("stop_poll_command", None)
-    builder.add_result_command(
-        "ConnectTxRx",
-        ResultCode.REJECTED,
-        "ConnectTxRx Failed: Mock",
+    builder.add_lrc(
+        name="ConnectTxRx",
+        queued=False,
     )
-    builder.add_result_command(
-        "DisconnectTxRx",
-        ResultCode.REJECTED,
-        "DisconnectTxRx Failed: Mock",
+    builder.add_lrc(
+        name="DisconnectTxRx",
+        queued=False,
     )
     return builder
 
@@ -177,7 +180,7 @@ def mock_slim_tx() -> unittest.mock.Mock:
 
     builder.add_command("ping", None)
     builder.add_command("clear_read_counters", None)
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -191,7 +194,7 @@ def mock_slim_rx() -> unittest.mock.Mock:
     builder.add_command("ping", None)
     builder.add_command("initialize_connection", None)
     builder.add_command("clear_read_counters", None)
-    return builder()
+    return builder
 
 
 @pytest.fixture()

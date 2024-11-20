@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-2953 increase SV pod storage from 375Mi to 2Gi
 * CIP-3035: fix errors when sending channel_offset to Host-LUT and SPEAD
   * fix sending proper channel offset values to SPEAD and Host-LUT
   * fix splitting up output_port, output_host, and output_link_map in fsp configs
@@ -27,6 +28,7 @@ UNRELEASED CHANGES
   * Configurable HPS device timeouts in charts: CbfController, FspCorrSubarray, SlimLink, Vcc
 * CIP-2828 Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
 * CIP-2899: Refactored adminMode push event to be changed after communication has been established
+* 19-11-2024: Added attribute change event mocking for unit tests to MockDeviceBuilder, MockCommand
 
 1.1.0-rc.1
 **********
