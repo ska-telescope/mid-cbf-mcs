@@ -271,12 +271,9 @@ class CbfController(CbfDevice):
 
             for capability in capabilities:
                 if capability not in max_capabilities:
-                    self.logger.warning(
-                        f"{capability} capabilities not defined; MaxCapabilities device property must be updated in charts"
-                    )
-                    return {}
+                    raise tango.DevFailed(f"{capability} capabilities not defined; MaxCapabilities device property must be updated in charts")
         else:
-            self.logger.warning("MaxCapabilities device property not defined")
+            raise tango.DevFailed("MaxCapabilities device property not defined")
 
         return max_capabilities
 

@@ -65,11 +65,9 @@ class ControllerComponentManager(CbfComponentManager):
         self.validate_supported_configuration = True
 
         # --- Max Capabilities --- #
-
-        self._max_capabilities = max_capabilities
-        self._count_vcc = 0
-        self._count_fsp = 0
-        self._count_subarray = 0
+        self._count_vcc = max_capabilities["VCC"]
+        self._count_fsp = max_capabilities["FSP"]
+        self._count_subarray = max_capabilities["Subarray"]
         # --- All FQDNs --- #
         self._subarray_fqdns_all = fqdn_dict["CbfSubarray"]
         self._vcc_fqdns_all = fqdn_dict["VCC"]
@@ -431,20 +429,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         return init_success
 
-    def _set_max_capabilities(self):
-        self.logger.warning("Entering set max capabilities")
-        if self._max_capabilities == {}:
-            self.logger.warning("Empty property")
-            raise tango.DevFailed("Fail")
-            self.logger.warning("Devfail")
-        else:
-            self.logger.warning("Setting max capabilities")
-            self._count_vcc = self._max_capabilities["VCC"]
-            self._count_fsp = self._max_capabilities["FSP"]
-            self._count_subarray = self._max_capabilities["Subarray"]
-        self.logger.warning("returnign")
-        return
-
     def _start_communicating(
         self: ControllerComponentManager, *args, **kwargs
     ) -> None:
@@ -464,8 +448,6 @@ class ControllerComponentManager(CbfComponentManager):
                 f"Failed to read HW config file at {self._hw_config_path}: {e}"
             )
             return
-        self._set_max_capabilities()
-        self.logger.warning("Finished set max capabilities")
         self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
 
         # Read the talondx config JSON
