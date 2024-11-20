@@ -395,7 +395,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 dish_id
             ]
 
-        self.logger.info(f"Updating delay model; {delay_model_json}")
+        self.logger.debug(f"Updating delay model; {delay_model_json}")
         # we lock the mutex while forwarding the configuration to fsp_corr devices
         with self._delay_model_lock:
             results_fsp = self.issue_group_command(
