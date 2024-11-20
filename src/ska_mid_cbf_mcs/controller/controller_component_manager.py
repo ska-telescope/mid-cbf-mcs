@@ -436,6 +436,7 @@ class ControllerComponentManager(CbfComponentManager):
         if self._max_capabilities == {}:
             self.logger.warning("Empty property")
             raise tango.DevFailed("Fail")
+            self.logger.warning("Devfail")
         else:
             self.logger.warning("Setting max capabilities")
             self._count_vcc = self._max_capabilities["VCC"]
@@ -453,7 +454,6 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.info(
             "Entering ControllerComponentManager._start_communicating"
         )
-        raise tango.DevFailed()
 
         # Read the HW config YAML
         try:
@@ -465,6 +465,7 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
         self._set_max_capabilities()
+        self.logger.warning("Finished set max capabilities")
         self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
 
         # Read the talondx config JSON
