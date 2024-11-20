@@ -28,11 +28,6 @@ from ska_mid_cbf_mcs.device.base_device import CbfDevice
 
 __all__ = ["CbfController", "main"]
 
-DEFAULT_COUNT_VCC = 4
-DEFAULT_COUNT_FSP = 4
-DEFAULT_COUNT_SUBARRAY = 1
-
-
 class CbfController(CbfDevice):
 
     """
