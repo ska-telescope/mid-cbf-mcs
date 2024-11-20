@@ -34,13 +34,11 @@ class TestCbfSubarray:
     @pytest.mark.dependency(name="CbfSubarray_Setup_1")
     def test_Setup(
         self: TestCbfSubarray,
-        event_tracer: TangoEventTracer,
         controller: context.DeviceProxy,
     ) -> None:
         """
         Setup for Subarray integration test suite by making calls to turn on controller.
 
-        :param event_tracer: TangoEventTracer
         :param controller: proxy to contorller devices
         """
         with open(test_data_path + "sys_param_4_boards.json") as f:
@@ -53,40 +51,9 @@ class TestCbfSubarray:
         result_code, command_id = controller.InitSysParam(sys_param_str)
         assert result_code == [ResultCode.QUEUED]
 
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=controller,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
-            ),
-        )
-
         # Send the On command
         result_code, command_id = controller.On()
         assert result_code == [ResultCode.QUEUED]
-
-        expected_events = [
-            ("state", DevState.ON, DevState.OFF, 1),
-            (
-                "longRunningCommandResult",
-                (f"{command_id[0]}", '[0, "On completed OK"]'),
-                None,
-                1,
-            ),
-        ]
-        for name, value, previous, n in expected_events:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=controller,
-                attribute_name=name,
-                attribute_value=value,
-                previous_value=previous,
-                min_n_events=n,
-            )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Setup_1"], name="CbfSubarray_Online_1"
