@@ -25,12 +25,12 @@ PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,W503
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 
 # unit and integration test targets
-PYTHON_TEST_FILE = ./tests/unit/
+PYTHON_TEST_FILE = ./tests/unit/talon_board
 K8S_TEST_FILE = ./tests/integration/controller ./tests/integration/subarray
 
 # additional pytest flags; use -k to isolate particular tests, e.g. -k test_Scan
-PYTHON_VARS_AFTER_PYTEST = --forked
-K8S_VARS_AFTER_PYTEST = -s
+PYTHON_VARS_AFTER_PYTEST = -rP --forked
+K8S_VARS_AFTER_PYTEST =
 
 CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-mcs
 

@@ -175,7 +175,9 @@ class TalonBoard(CbfDevice):
 
     # TalonSysID Attr
     @attribute(
-        dtype=str, label="FPGA bitstream version", doc="FPGA bitstream version"
+        dtype=str,
+        label="FPGA bitstream version", 
+        doc="FPGA bitstream version"
     )
     def bitstreamVersion(self: TalonBoard) -> str:
         """
@@ -187,6 +189,8 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=int,
+        abs_change=1,
+        archive_abs_change=1,
         label="FPGA bitstream checksum",
         doc="FPGA bitstream checksum",
     )

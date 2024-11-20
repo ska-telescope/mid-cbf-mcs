@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timedelta, timezone
 from threading import Event, Lock, Thread
+import time
 from typing import Optional
 
 import tango
@@ -242,6 +243,20 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         self._polled_attr_lock = Lock()
         self._polled_attr = dict()
+        self._alt_attr_name = {
+            "version": "bitstreamVersion",
+            "Bitstream": "bitstreamChecksum",
+            "iopll_locked_fault": "iopllLockedFault",
+            "fs_iopll_locked_fault": "fsIopllLockedFault",
+            "comms_iopll_locked_fault": "commsIopllLockedFault",
+            "system_clk_fault": "systemClkFault",
+            "emif_bl_fault": "emifBlFault",
+            "emif_br_fault": "emifBrFault",
+            "emif_tr_fault": "emifTrFault",
+            "e100g_0_pll_fault": "ethernet0PllFault",
+            "e100g_1_pll_fault": "ethernet1PllFault",
+            "slim_pll_fault": "slimPllFault"
+        }
 
     # -------------
     # Communication
@@ -275,9 +290,10 @@ class TalonBoardComponentManager(CbfComponentManager):
                 self.logger.warning(
                     f"Unexpected change callback from FQDN {dev_name}/{attr_name}"
                 )
-                return  # TODO: Do we want this or should change events generate regardless?
-            self.device_attr_change_callback(attr_name, value)
-            self.device_attr_archive_callback(attr_name, value)
+                return
+        self.logger.debug(f"Generating change event for TalonBoard/{self._alt_attr_name[attr_name]}")
+        self.device_attr_change_callback(self._alt_attr_name[attr_name], value)
+        self.device_attr_archive_callback(self._alt_attr_name[attr_name], value)
 
     def talon_attr_change_callback(
         self: CbfComponentManager, event_data: Optional[tango.EventData]
@@ -317,7 +333,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 for attr_name in attr_list:
                     self.attr_event_subscribe(
                         proxy=self._proxies[fqdn],
-                        attr_name=attr_name,
+                        attr_name=attr_name[0],
                         callback=self.talon_attr_change_callback,
                     )
 
@@ -560,7 +576,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             attr = self._proxies[self._talon_sysid_fqdn].read_attribute(
                 attr_name
             )
-            self._talon_sysid_attrs[attr_name] = attr.value
+            with self._attr_event_lock:
+                self._talon_sysid_attrs[attr_name] = attr.value
         return self._talon_sysid_attrs.get(attr_name)
 
     def talon_sysid_bitstream(self) -> int:
@@ -579,7 +596,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             attr = self._proxies[self._talon_sysid_fqdn].read_attribute(
                 attr_name
             )
-            self._talon_sysid_attrs[attr_name] = attr.value
+            with self._attr_event_lock:
+                self._talon_sysid_attrs[attr_name] = attr.value
         return self._talon_sysid_attrs.get(attr_name)
 
     def talon_status_iopll_locked_fault(self) -> bool:

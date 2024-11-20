@@ -326,7 +326,7 @@ class MockDeviceBuilder:
             callback: Callable[[tango.EventData], None],
             attr_quality: tango.AttrQuality = tango.AttrQuality.ATTR_VALID,
             attr_err: bool = False,
-            sleep_time_s: int = 0,
+            sleep_time_s: float = 0,
         ) -> None:
             """
             Mock a Tango change event callback
@@ -347,10 +347,13 @@ class MockDeviceBuilder:
             mock_event_data.attr_value.name = attr_name
             mock_event_data.attr_value.value = attr_value
             mock_event_data.attr_value.quality = attr_quality
+            
+            def callback_with_sleep():
+                time.sleep(sleep_time_s)
+                callback(mock_event_data)
 
             # Invoke callback asynchronously
-            time.sleep(sleep_time_s)
-            Thread(target=callback, args=(mock_event_data,)).start()
+            Thread(target=callback_with_sleep).start()
 
         def _mock_subscribe_event(
             attr_name: str,

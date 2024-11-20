@@ -54,6 +54,12 @@ def tango_event_tracer(
 
     change_event_attr_list = [
         "longRunningCommandResult",
+        "subarrayID",
+        "dishID",
+        "vccID",
+        "pingResult",
+        "bitstreamVersion",
+        "bitstreamChecksum",
         "adminMode",
         "state",
     ]
@@ -77,15 +83,15 @@ def mock_talon_sysid() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     builder.add_attribute("version", "0.2.6")
-    builder.add_attribute("bitstream", 0xBEEFBABE)
-    return builder()
+    builder.add_attribute("Bitstream", 0xBEEFBABE)
+    return builder
 
 
 @pytest.fixture()
 def mock_ethernet_100g() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -102,14 +108,14 @@ def mock_talon_status() -> unittest.mock.Mock:
     builder.add_attribute("e100g_0_pll_fault", False)
     builder.add_attribute("e100g_1_pll_fault", False)
     builder.add_attribute("slim_pll_fault", False)
-    return builder()
+    return builder
 
 
 @pytest.fixture()
 def mock_hps_master() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    return builder()
+    return builder
 
 
 @pytest.fixture()

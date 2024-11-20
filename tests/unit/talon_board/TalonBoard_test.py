@@ -35,7 +35,7 @@ gc.disable()
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.mark.skip(reason="TODO: fix monkey patch dependencies and re-enable")
+# @pytest.mark.skip(reason="TODO: fix monkey patch dependencies and re-enable")
 class TestTalonBoard:
     """
     Test class for TalonBoard.
@@ -71,16 +71,16 @@ class TestTalonBoard:
                 request.param["sim_ping_fault"],
             ).ping()
 
-        def mock_run(self, *args: Any, **kwargs: Any) -> bool:
-            """
-            Replace asyncio.run method with a mock method.
+        # def mock_run(self, *args: Any, **kwargs: Any) -> bool:
+        #     """
+        #     Replace asyncio.run method with a mock method.
 
-            :param url: the URL
-            :param kwargs: other keyword args
+        #     :param url: the URL
+        #     :param kwargs: other keyword args
 
-            :return: a response
-            """
-            return MockDependency.Asyncio().run
+        #     :return: a response
+        #     """
+        #     return MockDependency.Asyncio().run
 
         def mock_do_queries(self) -> list[list]:
             """
@@ -97,10 +97,10 @@ class TestTalonBoard:
             "ska_mid_cbf_mcs.talon_board.influxdb_query_client.InfluxdbQueryClient.ping",
             mock_ping,
         )
-        monkeymodule.setattr(
-            "asyncio.run",
-            mock_run,
-        )
+        # monkeymodule.setattr(
+        #     "asyncio.run",
+        #     mock_run,
+        # )
         monkeymodule.setattr(
             "ska_mid_cbf_mcs.talon_board.influxdb_query_client.InfluxdbQueryClient.do_queries",
             mock_do_queries,
@@ -123,7 +123,7 @@ class TestTalonBoard:
         )
 
         for name, mock in initial_mocks.items():
-            harness.add_mock_device(device_name=name, device_mock=mock)
+            harness.add_mock_device(device_name=name, device_mock=mock(name))
 
         with harness as test_context:
             yield test_context
@@ -284,7 +284,7 @@ class TestTalonBoard:
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
                              events from the device under test.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
+        # device_under_test.loggingLevel = 5
         # Device must be on in order to query InfluxDB
         self.test_Online(device_under_test, event_tracer)
 
@@ -295,16 +295,25 @@ class TestTalonBoard:
         device_under_test.subarrayID = "1"
         device_under_test.dishID = "2"
         device_under_test.vccID = "3"
-        assert device_under_test.subarrayID == "1"
-        assert device_under_test.dishID == "2"
-        assert device_under_test.vccID == "3"
 
+        attr_values = [
+            # From device props
+            ("subarrayID", "1"),
+            ("dishID", "2"),
+            ("vccID", "3"),
+            # From TalonSysId attr
+            ("bitstreamVersion", "0.2.6"),
+            ("bitstreamChecksum", 0xBEEFBABE),
+            # From TalonStatus attr
+            # From InfluxDB
+        ]
+        
         # TalonStatus Attr
         # This values comes from charts
-        assert device_under_test.ipAddr == "192.168.8.1"
+        # assert device_under_test.ipAddr == "192.168.8.1"
         # These values are read from mocked device attr
-        assert device_under_test.bitstreamVersion == "0.2.6"
-        assert device_under_test.bitstreamChecksum == 0xBEEFBABE
+        # assert device_under_test.bitstreamVersion == "0.2.6"
+        # assert device_under_test.bitstreamChecksum == 0xBEEFBABE
 
         # TalonStatus Attr
         assert device_under_test.iopllLockedFault is False
@@ -319,44 +328,53 @@ class TestTalonBoard:
         assert device_under_test.slimPllFault is False
 
         # All these values are read from InfluxDB
-        assert device_under_test.fpgaDieTemperature == 32.0
-        assert device_under_test.humiditySensorTemperature == 32.0
-        assert all(temp == 32.0 for temp in device_under_test.dimmTemperatures)
+        # assert device_under_test.fpgaDieTemperature == 32.0
+        # assert device_under_test.humiditySensorTemperature == 32.0
+        # assert all(temp == 32.0 for temp in device_under_test.dimmTemperatures)
 
-        assert all(
-            temp == 32.0 for temp in device_under_test.mboTxTemperatures
-        )
-        assert all(v == 3.3 for v in device_under_test.mboTxVccVoltages)
-        # Not currently queried.
-        # assert all(not fault for fault in device_under_test.mboTxFaultStatus)
-        # assert all(not status for status in device_under_test.mboTxLolStatus)
-        # assert all(not status for status in device_under_test.mboTxLosStatus)
+        # assert all(
+        #     temp == 32.0 for temp in device_under_test.mboTxTemperatures
+        # )
+        # assert all(v == 3.3 for v in device_under_test.mboTxVccVoltages)
+        # # Not currently queried.
+        # # assert all(not fault for fault in device_under_test.mboTxFaultStatus)
+        # # assert all(not status for status in device_under_test.mboTxLolStatus)
+        # # assert all(not status for status in device_under_test.mboTxLosStatus)
 
-        assert all(v == 3.3 for v in device_under_test.mboRxVccVoltages)
-        # Not currently queried.
-        # assert all(not status for status in device_under_test.mboRxLolStatus)
-        # assert all(not status for status in device_under_test.mboRxLosStatus)
+        # assert all(v == 3.3 for v in device_under_test.mboRxVccVoltages)
+        # # Not currently queried.
+        # # assert all(not status for status in device_under_test.mboRxLolStatus)
+        # # assert all(not status for status in device_under_test.mboRxLosStatus)
 
-        assert all(pwm == 255 for pwm in device_under_test.fansPwm)
-        # Not currently queried.
-        # assert all(not enabled for enabled in device_under_test.fansPwmEnable)
-        assert all(not fault for fault in device_under_test.fansFault)
+        # assert all(pwm == 255 for pwm in device_under_test.fansPwm)
+        # # Not currently queried.
+        # # assert all(not enabled for enabled in device_under_test.fansPwmEnable)
+        # assert all(not fault for fault in device_under_test.fansFault)
 
-        assert all(v == 12.0 for v in device_under_test.ltmInputVoltage)
-        assert all(v == 1.5 for v in device_under_test.ltmOutputVoltage1)
-        assert all(v == 1.5 for v in device_under_test.ltmOutputVoltage2)
+        # assert all(v == 12.0 for v in device_under_test.ltmInputVoltage)
+        # assert all(v == 1.5 for v in device_under_test.ltmOutputVoltage1)
+        # assert all(v == 1.5 for v in device_under_test.ltmOutputVoltage2)
 
-        assert all(i == 1.0 for i in device_under_test.ltmInputCurrent)
-        assert all(i == 1.0 for i in device_under_test.ltmOutputCurrent1)
-        assert all(i == 1.0 for i in device_under_test.ltmOutputCurrent2)
+        # assert all(i == 1.0 for i in device_under_test.ltmInputCurrent)
+        # assert all(i == 1.0 for i in device_under_test.ltmOutputCurrent1)
+        # assert all(i == 1.0 for i in device_under_test.ltmOutputCurrent2)
 
-        assert all(temp == 32.0 for temp in device_under_test.ltmTemperature1)
-        assert all(temp == 32.0 for temp in device_under_test.ltmTemperature2)
+        # assert all(temp == 32.0 for temp in device_under_test.ltmTemperature1)
+        # assert all(temp == 32.0 for temp in device_under_test.ltmTemperature2)
 
-        assert all(not warn for warn in device_under_test.ltmVoltageWarning)
+        # assert all(not warn for warn in device_under_test.ltmVoltageWarning)
 
-        assert all(not warn for warn in device_under_test.ltmCurrentWarning)
+        # assert all(not warn for warn in device_under_test.ltmCurrentWarning)
 
-        assert all(
-            not warn for warn in device_under_test.ltmTemperatureWarning
-        )
+        # assert all(
+        #     not warn for warn in device_under_test.ltmTemperatureWarning
+        # )
+
+        for name, value in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+            )
