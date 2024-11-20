@@ -435,7 +435,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Thread for start_communicating operation.
         """
-        self.logger.info(
+        self.logger.debug(
             "Entering ControllerComponentManager._start_communicating"
         )
 
