@@ -23,7 +23,7 @@ from ska_control_model import AdminMode, SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
-from tango import DevFailed, DevState
+from tango import DevState
 
 from ska_mid_cbf_mcs.controller.controller_device import CbfController
 
@@ -110,7 +110,6 @@ class TestCbfController:
         with harness as test_context:
             yield test_context
 
-
     def test_State(
         self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
@@ -121,7 +120,6 @@ class TestCbfController:
         """
         assert device_under_test.State() == DevState.DISABLE
 
-
     def test_Status(
         self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
@@ -131,7 +129,6 @@ class TestCbfController:
         :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
-
 
     def test_adminMode(
         self: TestCbfController, device_under_test: context.DeviceProxy
@@ -187,7 +184,6 @@ class TestCbfController:
             "source_init_sys_param_invalid_schema.json",
         ],
     )
-
     def test_InitSysParam(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
@@ -272,7 +268,6 @@ class TestCbfController:
                     '[3, "Validating init_sys_param file against ska-telmodel schema failed"]',
                 ),
             )
-
 
     def test_On_without_init_sys_param(
         self: TestCbfController,
