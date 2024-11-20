@@ -10,9 +10,8 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from threading import Event, Lock, Thread
-import time
 from typing import Optional
 
 import tango
@@ -255,7 +254,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             "emif_tr_fault": "emifTrFault",
             "e100g_0_pll_fault": "ethernet0PllFault",
             "e100g_1_pll_fault": "ethernet1PllFault",
-            "slim_pll_fault": "slimPllFault"
+            "slim_pll_fault": "slimPllFault",
         }
 
     # -------------
@@ -291,9 +290,13 @@ class TalonBoardComponentManager(CbfComponentManager):
                     f"Unexpected change callback from FQDN {dev_name}/{attr_name}"
                 )
                 return
-        self.logger.debug(f"Generating change event for TalonBoard/{self._alt_attr_name[attr_name]}")
+        self.logger.debug(
+            f"Generating change event for TalonBoard/{self._alt_attr_name[attr_name]}"
+        )
         self.device_attr_change_callback(self._alt_attr_name[attr_name], value)
-        self.device_attr_archive_callback(self._alt_attr_name[attr_name], value)
+        self.device_attr_archive_callback(
+            self._alt_attr_name[attr_name], value
+        )
 
     def talon_attr_change_callback(
         self: CbfComponentManager, event_data: Optional[tango.EventData]
@@ -333,7 +336,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 for attr_name in attr_list:
                     self.attr_event_subscribe(
                         proxy=self._proxies[fqdn],
-                        attr_name=attr_name[0],
+                        attr_name=attr_name,
                         callback=self.talon_attr_change_callback,
                     )
 
@@ -402,6 +405,8 @@ class TalonBoardComponentManager(CbfComponentManager):
                     self.logger.debug(
                         f"{attr_name} not currently monitored for changes; starting now."
                     )
+                    self.device_attr_change_callback(attr_name, cur_val)
+                    self.device_attr_archive_callback(attr_name, cur_val)
                 self._polled_attr[attr_name] = cur_val
 
     def _internal_polling_thread(
@@ -881,9 +886,10 @@ class TalonBoardComponentManager(CbfComponentManager):
         Checks if the query result is too old. When this happens, it means
         Influxdb hasn't received a new entry in the time series recently.
 
-        :param record: a record from Influxdb query result
+        :param field: The field for which itsvalue is being validated
+        :param t: The timestamp reported from the latest query of the field
         """
-        td = datetime.now(timezone.utc) - t
+        td = datetime.now() - t
         if td.total_seconds() > 240:
             msg = f"Time of record {field} is too old. Currently not able to monitor device."
             self.logger.error(msg)

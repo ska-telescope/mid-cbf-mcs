@@ -163,6 +163,44 @@ class MockDependency:
                         32.0,
                     ),
                 ],
+                # _query_voltages
+                [
+                    (
+                        "voltage-sensors_fpga-die-voltage-0",
+                        datetime.now(),
+                        12.0,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-1",
+                        datetime.now(),
+                        2.5,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-2",
+                        datetime.now(),
+                        0.8,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-3",
+                        datetime.now(),
+                        1.8,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-4",
+                        datetime.now(),
+                        1.8,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-5",
+                        datetime.now(),
+                        0.9,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-6",
+                        datetime.now(),
+                        1.8,
+                    ),
+                ],
                 # _query_mbo_temperatures
                 [
                     ("MBOs_0_TX_temperature", datetime.now(), 32.0),
@@ -189,12 +227,60 @@ class MockDependency:
                     ("MBOs_3_RX_vcc-3.3-voltage", datetime.now(), 3.3),
                     ("MBOs_4_RX_vcc-3.3-voltage", datetime.now(), 3.3),
                 ],
+                # _query_mbo_faults
+                [
+                    ("MBOs_0_TX_tx-fault-status", datetime.now(), False),
+                    ("MBOs_1_TX_tx-fault-status", datetime.now(), False),
+                    ("MBOs_2_TX_tx-fault-status", datetime.now(), False),
+                    ("MBOs_3_TX_tx-fault-status", datetime.now(), False),
+                    ("MBOs_4_TX_tx-fault-status", datetime.now(), False),
+                ],
+                # _query_mbo_lol
+                [
+                    ("MBOs_0_TX_tx-lol-status", datetime.now(), False),
+                    ("MBOs_1_TX_tx-lol-status", datetime.now(), False),
+                    ("MBOs_2_TX_tx-lol-status", datetime.now(), False),
+                    ("MBOs_3_TX_tx-lol-status", datetime.now(), False),
+                    ("MBOs_4_TX_tx-lol-status", datetime.now(), False),
+                    ("MBOs_0_RX_rx-lol-status", datetime.now(), False),
+                    ("MBOs_1_RX_rx-lol-status", datetime.now(), False),
+                    ("MBOs_2_RX_rx-lol-status", datetime.now(), False),
+                    ("MBOs_3_RX_rx-lol-status", datetime.now(), False),
+                    ("MBOs_4_RX_rx-lol-status", datetime.now(), False),
+                ],
+                # _query_mbo_los
+                [
+                    ("MBOs_0_TX_tx-los-status", datetime.now(), False),
+                    ("MBOs_1_TX_tx-los-status", datetime.now(), False),
+                    ("MBOs_2_TX_tx-los-status", datetime.now(), False),
+                    ("MBOs_3_TX_tx-los-status", datetime.now(), False),
+                    ("MBOs_4_TX_tx-los-status", datetime.now(), False),
+                    ("MBOs_0_RX_rx-los-status", datetime.now(), False),
+                    ("MBOs_1_RX_rx-los-status", datetime.now(), False),
+                    ("MBOs_2_RX_rx-los-status", datetime.now(), False),
+                    ("MBOs_3_RX_rx-los-status", datetime.now(), False),
+                    ("MBOs_4_RX_rx-los-status", datetime.now(), False),
+                ],
+                # _query_fans_input
+                [
+                    ("fans_fan-input_0", datetime.now(), 100),
+                    ("fans_fan-input_1", datetime.now(), 100),
+                    ("fans_fan-input_2", datetime.now(), 100),
+                    ("fans_fan-input_3", datetime.now(), 100),
+                ],
                 # _query_fans_pwm
                 [
                     ("fans_pwm_0", datetime.now(), 255),
                     ("fans_pwm_1", datetime.now(), 255),
                     ("fans_pwm_2", datetime.now(), 255),
                     ("fans_pwm_3", datetime.now(), 255),
+                ],
+                # _query_fans_pwm_enable
+                [
+                    ("fans_pwm-enable_0", datetime.now(), 1),
+                    ("fans_pwm-enable_1", datetime.now(), 1),
+                    ("fans_pwm-enable_2", datetime.now(), 1),
+                    ("fans_pwm-enable_3", datetime.now(), 1),
                 ],
                 # _query_fans_fault
                 [
