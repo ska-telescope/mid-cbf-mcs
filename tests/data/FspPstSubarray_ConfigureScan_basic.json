@@ -1,0 +1,17 @@
+{
+    "fsp_id": 1, 
+    "function_mode": "PST-BF", 
+    "timing_beam": [
+        {
+            "timing_beam_id": 10, 
+            "receptor_ids": [1],
+            "enable_output": true, 
+            "timing_beam_destination_address": "10.1.1.1"
+        }
+    ], 
+    "config_id": "band:5a, fsp1, 744 channels average factor 8", 
+    "frequency_band": "5a", 
+    "band_5_tuning": [5.85, 7.25], 
+    "frequency_band_offset_stream1": 0, 
+    "frequency_band_offset_stream2": 0
+}

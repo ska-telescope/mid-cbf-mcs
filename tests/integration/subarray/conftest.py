@@ -138,6 +138,41 @@ def fsp_corr_proxies() -> dict[int, context.DeviceProxy]:
     }
 
 
+# TODO: upgrade fsp pst fixture for multiple subarrays
+@pytest.fixture(name="fsp_pst", scope="session", autouse=True)
+def fsp_pst_proxies() -> dict[int, context.DeviceProxy]:
+    """
+    Fixture that returns a dict of proxies to FSP PST subarray devices.
+
+    :return: dict of DeviceProxy to FspPstSubarray devices
+    """
+    return {
+        fsp_id: context.DeviceProxy(
+            device_name=f"mid_csp_cbf/fspCPstSubarray/{fsp_id:02}_01"
+        )
+        for fsp_id in range(1, const.DEFAULT_COUNT_FSP + 1)
+    }
+
+
+# TODO: upgrade fsp pst fixture for multiple subarrays
+@pytest.fixture(name="fsp_mode_proxies", scope="session", autouse=True)
+def fsp_mode_proxies() -> dict[FspModes, dict[int, context.DeviceProxy]]:
+    """
+    Fixture that returns a dict of proxies to FSP Mode subarray devices index by
+    the repsective FSP Mode.
+
+    Currently supported FSP Modes:
+        - FspModes.CORR
+        - FspModes.PST_BF
+
+    :return: dict of DeviceProxy to FspPstSubarray devices indexed by FspModes
+    """
+    return {
+        FspModes.CORR: fsp_corr_proxies(),
+        FspModes.PST_BF: fsp_pst_proxies(),
+    }
+
+
 @pytest.fixture(name="fsp", scope="session", autouse=True)
 def fsp_proxies() -> dict[int, context.DeviceProxy]:
     """

@@ -1,0 +1,36 @@
+{
+    "interface": "https://schema.skao.int/ska-csp-configurescan/5.0",
+    "common": {
+        "config_id": "sbi-mvp01-20200325-00001-science_A",
+        "frequency_band": "1",
+        "subarray_id": 1,
+        "eb_id": "eb-m001-20230712-56789"
+    },
+    "pst": {},
+    "transaction_id": "txn-....-00001",
+    "midcbf": {
+        "vlbi": {},
+        "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
+        "pst-bf": {
+            "processing_regions": [{
+                "fsp_ids": [1,2,3,4],
+                "start_freq": 495075840,
+                "channel_count": 3700,
+                "pst_start_channel_id": 0,
+                "timing_beams": [{
+                    "timing_beam_id": 1,
+                    "receptors": ["SKA063", "SKA001"],
+                    "output_link_map": [
+                        [0, 1]
+                    ],
+                    "output_host": [
+                        [0, "192.168.178.26"]
+                    ],
+                    "output_port": [
+                        [0, 20000]
+                    ]
+                }]
+            }]
+        }
+    }
+}
