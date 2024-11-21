@@ -90,7 +90,7 @@ Note that there also exists a RemoveAllReceptors command, which has the same
 code flow; the only difference is that it takes no argument and instead submits 
 a full copy of the current assigned receptors to the loop that resets the subdevices.
 
-.. uml:: ../../diagrams/remove-receptors.puml
+.. uml:: ../diagrams/remove-receptors.puml
 
 .. _config_scan:
 Configure Scan Sequence
@@ -99,12 +99,12 @@ Configure Scan Sequence
 The sequence diagram below shows the main sequence of calls in MCS 
 to configure a correlation scan. Return calls are not shown.
 
-.. uml:: ../../../diagrams/configure-corr-scan-mcs.puml   
+.. uml:: ../../diagrams/configure-corr-scan-mcs.puml   
 
 The sequence diagram below shows additional detail for configuration of 
 the VCC for a correlation scan, following the ConfigureScan call from LMC.
 
-.. uml:: ../../../diagrams/configure-scan-vcc.puml
+.. uml:: ../../diagrams/configure-scan-vcc.puml
 
 When the Subarray calls **ConfigureBand**, the jsonstr argument contains:
 
@@ -125,17 +125,17 @@ When the Subarray calls **ConfigureScan**, the jsonstr argument contains:
 The sequence diagram below shows details of calls to configure a FSP for a 
 correlation scan.
 
-.. uml:: ../../../diagrams/configure-scan-hps-fsp.puml
+.. uml:: ../../diagrams/configure-scan-hps-fsp.puml
 
 The sequence diagram below shows details of calls to configure a FSP for a 
 PST scan.
 
-.. uml:: ../../../diagrams/configure-scan-pst-fsp-hps.puml
+.. figure:: ../../../diagrams/configure-scan-pst-fsp-hps.png
 
 The sequence diagram below shows details of calls a FSP for a 
 PST scan.
 
-.. uml:: ../../../diagrams/scan-pst-hps-fsp.puml
+.. figure:: ../../../diagrams/scan-pst-hps-fsp.png
 
 Abort Sequence
 ++++++++++++++
@@ -143,7 +143,7 @@ Abort Sequence
 The sequence diagram below shows the main sequence of calls in MCS 
 to Abort from a correlation scan. Return calls are not shown.
 
-.. uml:: ../../../diagrams/abort-command.puml
+.. uml:: ../../diagrams/abort-command.puml
 
 ObsReset Sequence
 +++++++++++++++++
