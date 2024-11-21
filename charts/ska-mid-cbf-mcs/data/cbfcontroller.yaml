@@ -4,24 +4,7 @@ domain: csp-monitoring
 command: "CbfController"
 instances: ["controller"]
 depends_on:
-  - device: mid_csp_cbf/vcc/001
-  - device: mid_csp_cbf/vcc/002
-  - device: mid_csp_cbf/vcc/003
-  - device: mid_csp_cbf/vcc/004
-  - device: mid_csp_cbf/vcc/005
-  - device: mid_csp_cbf/vcc/006
-  - device: mid_csp_cbf/vcc/007
-  - device: mid_csp_cbf/vcc/008
-  - device: mid_csp_cbf/fsp/01
-  - device: mid_csp_cbf/fsp/02
-  - device: mid_csp_cbf/fsp/03
-  - device: mid_csp_cbf/fsp/04
-  - device: mid_csp_cbf/talon_lru/001
-  - device: mid_csp_cbf/talon_lru/002
-  - device: mid_csp_cbf/talon_lru/003
-  - device: mid_csp_cbf/talon_lru/004
-  - device: mid_csp_cbf/slim/slim-fs
-  - device: mid_csp_cbf/slim/slim-vis
+  - device: sys/database/2
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -65,10 +48,6 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "TalonLRU"
             values:
             - "mid_csp_cbf/talon_lru/001"
@@ -89,15 +68,17 @@ server:
             values:
             - "mid_csp_cbf/power_switch/001"
             - "mid_csp_cbf/power_switch/002"
+            - "mid_csp_cbf/power_switch/003"
+            - "mid_csp_cbf/power_switch/004"
           - name: "FsSLIM"
             values:
             - "mid_csp_cbf/slim/slim-fs"
           - name: "VisSLIM"
             values:
             - "mid_csp_cbf/slim/slim-vis"
-          - name: "LruTimeout"
+          - name: "LRCTimeout"
             values:
-            - "30"
+            - "{{ .Values.controllerTimeout }}"
           - name: "TalonDxConfigPath"
             values:
             - "mnt/talondx-config"
@@ -106,20 +87,10 @@ server:
             - "mnt/hw_config/hw_config.yaml"
           - name: "FsSLIMConfigPath"
             values:
-            - "mnt/slim/fs_slim_config.yaml"
+            - "mnt/slim/fs/slim_config.yaml"
           - name: "VisSLIMConfigPath"
             values:
-            - "mnt/slim/vis_slim_config.yaml"
-          - name: "polled_attr"
-            values:
-            - "commandprogress"
-            - "3000"
-            - "receptortovcc"
-            - "3000"
-            - "vcctoreceptor"
-            - "3000"
-            - "subarrayconfigid"
-            - "3000"
+            - "mnt/slim/vis/slim_config.yaml"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"
@@ -141,3 +112,43 @@ volume:
   mountPath: "/app/mnt/talondx-config"
   readOnly: false
 
+{{- if or (.Values.hw_config) (.Values.fs_slim) (.Values.vis_slim) (.Values.talondx_config) }}
+extraVolumes:
+{{- if .Values.hw_config }}
+- name: hw-config-mount
+  configMap: 
+    name:  hwconfig-configmap
+{{- end }}
+{{- if .Values.talondx_config }}
+- name: talondx-config-mount
+  configMap: 
+    name:  talondx-config-configmap
+{{- end }}
+{{- if .Values.fs_slim }}
+- name: fs-slim-mount
+  configMap:
+    name:  fs-slim-configmap
+{{- end }}
+{{- if .Values.vis_slim }}
+- name: vis-slim-mount
+  configMap:
+    name:  vis-slim-configmap
+{{- end }}
+extraVolumeMounts:
+{{- if .Values.hw_config }}
+  - name: hw-config-mount
+    mountPath: /app/mnt/hw_config
+{{- end }}
+{{- if .Values.talondx_config }}
+  - name: talondx-config-mount
+    mountPath: /app/mnt/talondx_config
+{{- end }}
+{{- if .Values.fs_slim }}
+  - name: fs-slim-mount
+    mountPath: /app/mnt/slim/fs
+{{- end }}
+{{- if .Values.vis_slim }}
+  - name: vis-slim-mount
+    mountPath: /app/mnt/slim/vis
+{{- end }}
+{{- end }}

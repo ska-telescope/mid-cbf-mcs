@@ -4,7 +4,7 @@ domain: mid-csp-cbf
 command: "TalonDxLogConsumer"
 instances: ["001"]
 depends_on:
-  - device: mid_csp_cbf/sub_elt/controller
+  - device: sys/database/2
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -32,14 +32,6 @@ server:
           - name: "LoggingTargetsDefault"
             values:
             - "console"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

@@ -1,5 +1,5 @@
 MCS to HPS
-=====================
+==========
 The interface from the MCS to the HPS is largely in the form of communication between
 Tango devices running on either side. 
 
@@ -9,65 +9,55 @@ and start the HPS Master process. This functionality may be moved in the future,
 it is implemented in the :ref:`TalonDxComponentManager Class`, which is instantiated by the
 :ref:`CbfController`.
 
-MCS and HPS Master DS
-----------------------
-The interface between the MCS and the HPS Master device server is primarily made up
-of the ``configure`` command sent from the MCS to the HPS master, which programs the
-FPGA and spawns the remaining HPS device servers. Before this command can be run, it is 
-expected that the MCS has already copied the necessary bitstreams and binaries to the board
-and the HPS master has obviously been started. This is all handled automatically as part of
-the :ref:`MCS On Command`.
+Command Sequence
+----------------
 
-The ``configure`` command has one argument, which is a JSON-formatted string. An example
-of its contents can be seen below.
+On Sequence
++++++++++++
+
+The sequence diagram below shows the main sequence of calls in MCS
+when the On command is called. Return calls are not shown.
+
+Prior to ``On()`` being called, two pre-requisite steps are expected:
+1. Artifacts have been downloaded from CAR and stored under the /mnt directory inside MCS. 
+2. The Tango database has been configured, including all MCS and HPS devices that are expected to deploy.
+
+.. uml:: ../../diagrams/on-command-sequence.puml
+
+The interface between the MCS and the HPS Master device server is primarily made 
+up of the ``ConfigureTalons()`` command sent from the MCS to the HPS master, 
+which programs the FPGA and spawns the remaining HPS device servers. 
+The parameters used to configure each Talon-DX board come from the "config_commands"-keyed 
+JSON objects in ``talondx-config.json``, which must be staged prior to calling Controller's 
+``On()`` command in the path indicated by the ``Controller`` device's 
+``TalonDxConfigPath`` property.
+
+An example of such a configuration is provided below:
 
 .. code-block:: json
 
     {
-        "description": "Configures Talon DX to run VCC firmware and devices.",
-        "target": "talon1",
-        "ip_address": "169.254.100.1",
-        "ds_hps_master_fqdn": "talondx-001/hpsmaster/hps-1",
-        "fpga_path": "/lib/firmware",
-        "fpga_dtb_name": "vcc3_2ch4.dtb",
-        "fpga_rbf_name": "vcc3_2ch4.core.rbf",
-        "fpga_label": "base",
-        "ds_path": "/lib/firmware/hps_software/vcc_test",
-        "server_instance": "talon1_test",
-        "devices": [
-            "dscircuitswitch",
-            "dsdct",
-            "dsfinechannelizer",
-            "dstalondxrdma",
-            "dsvcc"
+        "config_commands": [
+            {
+                "description": "Configures Talon DX to run BITE/VCC firmware and devices.",
+                "target": "001",
+                "talon_first_connect_timeout": 90,
+                "ds_hps_master_fqdn": "talondx-001/hpsmaster/hps-1",
+                "fpga_path": "/lib/firmware",
+                "fpga_dtb_name": "talon_dx-tdc_base-tdc_vcc_processing.dtb",
+                "fpga_rbf_name": "talon_dx-tdc_base-tdc_vcc_processing-hps_first.core.rbf",
+                "fpga_label": "base",
+                "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
+                "server_instance": "talon1_test",
+                "devices": [
+                    "ska-mid-cbf-vcc-app"
+                ]
+            }
         ]
     }
 
-MCS On Command
-----------------
-
-The following diagram shows the ``CbfController`` On command sequence and how it integrates with other
-components in the Mid.CBF system. The steps are outlined in detail in the 
-`Engineering Console <https://developer.skatelescope.org/projects/ska-mid-cbf-engineering-console/en/latest/system.html#on-command-sequence>`_.
-
-From a MCS perspective, the On command sequence consists of the following steps:
-
-- Arrows 4-7: Power on the Talon-DX boards
-- Arrow 9: Attempt to connect to each board over SSH (see :ref:`TalonDxComponentManager Class`)
-- Arrows 8-9: Copy the relevant binaries and bitstreams to each board
-- Arrow 10: Start up the HPS Master on each board
-- Arrow 12: Send the ``configure`` to each HPS Master device server
-
-.. figure:: ../../diagrams/on-command-sequence.png
-    :align: center
-    
-    MCS On Command Sequence
-
-Command Sequence
------------------
-
 Off Sequence
-++++++++++++++
+++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
 when the Off command is called. Return calls are not shown.
@@ -75,15 +65,36 @@ when the Off command is called. Return calls are not shown.
 .. uml:: ../../diagrams/off-command-sequence.puml
 
 InitSysParam Sequence
-++++++++++++++++++++++
++++++++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
 to initialize the system parameters.
 
 .. uml:: ../../diagrams/initsysparam-command.puml
 
-Configure Scan Sequence
+AddReceptors Sequence
++++++++++++++++++++++
+
+The sequence diagram below shows the main sequence of calls in MCS
+to assign resources to a subarray.
+
+.. uml:: ../../diagrams/add-receptors.puml
+
+RemoveReceptors Sequence
 ++++++++++++++++++++++++
+
+The sequence diagram below shows the main sequence of calls in MCS
+to release resources from a subarray.
+
+Note that there also exists a RemoveAllReceptors command, which has the same 
+code flow; the only difference is that it takes no argument and instead submits 
+a full copy of the current assigned receptors to the loop that resets the subdevices.
+
+.. uml:: ../../diagrams/remove-receptors.puml
+
+.. _config_scan:
+Configure Scan Sequence
++++++++++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS 
 to configure a correlation scan. Return calls are not shown.
@@ -117,7 +128,7 @@ correlation scan.
 .. uml:: ../../diagrams/configure-scan-hps-fsp.puml
 
 Abort Sequence
-+++++++++++++++
+++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS 
 to Abort from a correlation scan. Return calls are not shown.
@@ -125,7 +136,7 @@ to Abort from a correlation scan. Return calls are not shown.
 .. uml:: ../../diagrams/abort-command.puml
 
 ObsReset Sequence
-++++++++++++++++++
++++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
 to return to IDLE via the ObsReset command for a correlation scan.
@@ -134,7 +145,7 @@ Return calls are not shown.
 .. uml:: ../../diagrams/obsreset-command.puml
 
 Restart Sequence
-++++++++++++++++++
+++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
 to return to EMPTY via the Restart command for a correlation scan.
@@ -144,7 +155,7 @@ Return calls are not shown.
 
 
 Serial Lightweight Interconnect Mesh (SLIM) Interface
-------------------------------------------------------
+-----------------------------------------------------
 
 Refs: `SLIM IP Block <https://gitlab.drao.nrc.ca/SKA/slim>`_, :ref:`Serial Lightweight Interconnect Mesh (SLIM) Design`
 
@@ -174,21 +185,21 @@ AA0.5 quantities shown.
 .. uml:: /diagrams/slim-configuration-vis.puml
 
 SLIM FS Links Definition Example YAML File
-+++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++
 `[x]` indicates inactive link.
 Part of the `MID CBF AA0.5 Talondx-Config MCS Data Model <https://confluence.skatelescope.org/display/SWSI/MID+CBF+AA0.5+Talondx-Config+MCS+Data+Model>`_
 
 .. literalinclude:: fs_slim_config.yaml
 
 SLIM Visibility Links Definition Example YAML File
-++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++
 `[x]` indicates inactive link.
 Part of the `MID CBF AA0.5 Talondx-Config MCS Data Model <https://confluence.skatelescope.org/display/SWSI/MID+CBF+AA0.5+Talondx-Config+MCS+Data+Model>`_
 
 .. literalinclude:: vis_slim_config.yaml
 
 SLIM Tx / Rx Device Servers (HPS)
-++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++
 
 Note: See `SLIM Tx/Rx Documentation <https://gitlab.drao.nrc.ca/digital-systems/software/applications/ds-slim-tx-rx/-/blob/main/doc>`_ for more details.
 

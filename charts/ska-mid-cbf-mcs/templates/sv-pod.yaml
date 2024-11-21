@@ -9,7 +9,7 @@ spec:
         claimName: sv-pvc-{{ .Release.Name }}
   containers:
   - name: sv-cont
-    image: artefact.skao.int/ska-mid-cbf-signal-verification:{{ .Values.signalVerificationVersion }}
+    image: {{ .Values.svImageRegistry }}/ska-mid-cbf-signal-verification:{{ .Values.signalVerificationVersion }}
     env:
       - name: INPUT_DIR
         value: /app/dc-results

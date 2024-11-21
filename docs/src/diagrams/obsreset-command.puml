@@ -3,19 +3,17 @@
 
 skinparam backgroundColor #EEEBDC
 skinparam sequence {
-ParticipantBorderColor DodgerBlue
-ParticipantBackgroundColor DeepSkyBlue
-ActorBorderColor DarkGreen
-ActorBackgroundColor Green
-BoxBorderColor LightBlue
-BoxBackgroundColor #F0FFFF
+  ParticipantBorderColor DodgerBlue
+  ParticipantBackgroundColor DeepSkyBlue
+  ActorBorderColor DarkGreen
+  ActorBackgroundColor Green
+  BoxBorderColor LightBlue
+  BoxBackgroundColor #F0FFFF
 }
-
 skinparam collections {
   BackGroundColor LightBlue
   BorderColor DodgerBlue
 }
-
 skinparam database {
   BackgroundColor LightGreen
   BorderColor DarkGreen
@@ -23,47 +21,66 @@ skinparam database {
 
 title ObsReset Command Sequence - Correlation\n
 
-participant "CSP_Mid\n.LMC" as lmc
-
-box "MCS"
-participant "Mid.CBF\nSubarray" as subarray
-collections "VCC" as vcc
-collections "FSP" as fsp
-collections "FSP\nCorr\nSubarray" as fspsubarray
+participant "TMC\n" as tmc #Gold
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nSubarray" as subarray
+  collections "VCC\n" as vcc
+  collections "FSP\n" as fsp
+  collections "FSP Corr\nSubarray" as fspsubarray
+end box
+box "\nHPS\n"
+  participant "VCC\nController" as hpsvcc
+  participant "VCC\nBand1&2" as hpsvccband
+  participant "FSP\nController" as hpsfsp_cont  
+  participant "FSP Corr\nController" as hpsfsp
 end box
 
-box "HPS"
-participant "HPS\nVCC\nController" as hpsvcc
-participant "HPS\nVCC\nBand1&2" as hpsvccband
-participant "HPS FSP\nCorr App" as hpsfsp
-collections "HPS\nLow Level\nDevices" as hpsdevices
-end box
+lmc         ->  subarray      : ObsReset
 
-lmc         ->  subarray      : Obsreset
+group #SeaShell If ObsState == [ABORTED, FAULT]:
+  note over subarray           : ObsState: RESETTING
+end group
 
-group if subarray in ObsState.FAULT
-subarray    ->  vcc           : Abort
-subarray    ->  fspsubarray   : Abort
+group #SeaShell If ObsState == FAULT:
+  subarray    ->  vcc           : Abort
+  vcc         ->  hpsvccband    : Abort (stub)
+  note over hpsvccband          : (TBD)
+  note over vcc                 : ObsState: ABORTED
+  subarray    ->  fspsubarray   : Abort
+  fspsubarray ->  hpsfsp        : Abort (stub)
+  note over hpsfsp              : (TBD)
+  note over fspsubarray         : ObsState: ABORTED
 end group
 
 subarray    ->  vcc           : ObsReset
-vcc         ->  hpsvccband    : ObsReset
+note over vcc                 : ObsState: RESETTING
+vcc         ->  hpsvccband    : ObsReset (stub)
+note over hpsvccband          : (TBD)
+vcc         ->  vcc           : Deconfigure scan configuration 
+note over vcc                 : ObsState: IDLE
 
-note over vcc                 : VCC\nObsState IDLE
 subarray    ->  fspsubarray   : ObsReset
+note over fspsubarray         : ObsState: RESETTING
+fspsubarray ->  hpsfsp        : ObsReset (stub)
+note over hpsfsp              : (TBD)
+fspsubarray ->  fspsubarray   : Deconfigure scan configuration
+note over fspsubarray         : ObsState: IDLE
+subarray    <--  fspsubarray  : Success
 
-note over fspsubarray         : FSP Corr Subarray\nObsState IDLE
-
-subarray    ->  subarray      : deconfigure
-subarray    ->  fsp           : RemoveSubarrayMembership
-
-group no other subarray membership
-fsp         ->  fspsubarray   : GoToIdle\n
+group #LightCyan For each FSP:
+    subarray    -> fsp        : RemoveSubarrayMembership
+    note over hpsfsp_cont     : functionMode: IDLE
+    group #SeaShell If len(subarrayMembership) == 0:
+      note over fsp           : OpState: UNKNOWN
+    end group
 end group
 
-note over fspsubarray         : FSP Corr Subarray\nObsState IDLE
-note over subarray            : Subarray\nObsState IDLE
-lmc        <--  subarray      : Success
+group #LemonChiffon Delay model subscription point
+    subarray    -> tmc        : Unsubscribe all events
+end group
 
+note over subarray            : ObsState: IDLE
+lmc        <--  subarray      : Success
 
 @enduml

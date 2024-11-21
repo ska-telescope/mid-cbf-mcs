@@ -1,0 +1,67 @@
+{
+    "interface": "https://schema.skao.int/ska-csp-configurescan/19.0",
+    "common": {
+        "config_id": "sbi-mvp01-20200325-00001-science_A",
+        "frequency_band": "1",
+        "subarray_id": 1
+    },
+    "midcbf": {
+        "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayMode",
+        "frequency_band_offset_stream1": 80,
+        "correlation": {
+            "processing_regions": [
+            {
+                "fsp_ids": [1,2,3,4],
+                "receptors": ["SKA063", "SKA001", "SKA100"],
+                "start_freq" : 350000000,
+                "channel_width" : 13440,
+                "channel_count" : 52080,
+                "sdp_start_channel_id": 0,
+                "integration_factor": 1,
+                "output_host": [
+                    [0, "1.22.3.4"],
+                    [13020, "1.22.3.5"],
+                    [26040, "1.22.3.6"],
+                    [39060, "1.22.3.7"]
+                ],
+                 "output_port": [
+                    [0,  10000],
+                    [20, 10001],
+                    [13000, 1650],
+                    [13020, 40000],
+                    [13040, 40001],
+                    [19500, 40324],
+                    [19520, 60000],
+                    [19540, 60001],
+                    [26020,  6325],
+                    [26040, 10000],
+                    [26060, 10001],
+                    [39040, 10650],
+                    [39060, 10000],
+                    [52060, 10650]    
+                ],
+                "output_link_map": [
+                    [0, 1]
+                ]
+            },
+            {
+                "fsp_ids": [5],
+                "start_freq" : 548437600,
+                "channel_width" : 210,
+                "channel_count" : 14880,
+                "sdp_start_channel_id": 65536,
+                "integration_factor": 10,
+                "output_host": [
+                    [65536, "1.22.3.5"]
+                ],
+                "output_port": [
+                    [65536, 14880]
+                ],
+                "output_link_map": [
+                    [65536, 1]
+                ]
+            }
+            ]
+        }
+    }
+}

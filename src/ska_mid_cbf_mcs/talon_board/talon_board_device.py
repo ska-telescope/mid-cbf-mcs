@@ -13,44 +13,35 @@ TANGO device class for monitoring a Talon board.
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 # tango imports
-from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
-from tango import AttrWriteType
-from tango.server import attribute, device_property, run
+from tango import (
+    AttrQuality,
+    DevBoolean,
+    DevVarBooleanArray,
+    DevVarFloatArray,
+    DevVarShortArray,
+    DevVarULongArray,
+    TimeVal,
+)
+from tango.server import attribute, device_property
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.device.base_device import CbfDevice
 from ska_mid_cbf_mcs.talon_board.talon_board_component_manager import (
     TalonBoardComponentManager,
 )
 
-# Additional import
-# PROTECTED REGION ID(TalonBoard.additionnal_import) ENABLED START #
-
-
-# PROTECTED REGION END #    //  TalonBoard.additionnal_import
-
 __all__ = ["TalonBoard", "main"]
 
+# Global Variable for polling period of Attributes, in ms
+ATTR_POLLING_PERIOD = 10000
 
-class TalonBoard(SKABaseDevice):
+
+class TalonBoard(CbfDevice):
     """
     TANGO device class for consuming logs from the Tango devices run on the Talon boards,
     converting them to the SKA format, and outputting them via the logging framework.
     """
-
-    # PROTECTED REGION ID(TalonBoard.class_variable) ENABLED START #
-
-    # Some of these IDs are typically integers. But it is easier to use
-    # empty string to show the board is not assigned.
-    subarrayID_ = ""
-    dishID_ = ""
-    vccID_ = ""
-
-    # PROTECTED REGION END #    //  TalonBoard.class_variable
 
     # -----------------
     # Device Properties
@@ -68,80 +59,142 @@ class TalonBoard(SKABaseDevice):
 
     Instance = device_property(dtype="str")
 
-    TalonDxSysIdServer = device_property(dtype="str")
+    TalonDxSysIdAddress = device_property(dtype="str")
 
-    TalonDx100GEthernetServer = device_property(dtype="str")
+    TalonDx100GEthernetAddress = device_property(dtype="str")
 
-    TalonStatusServer = device_property(dtype="str")
+    TalonStatusAddress = device_property(dtype="str")
 
-    HpsMasterServer = device_property(dtype="str")
+    HpsMasterAddress = device_property(dtype="str")
 
     # ----------
     # Attributes
     # ----------
 
-    subarrayID = attribute(
-        dtype="DevString",
-        access=AttrWriteType.READ_WRITE,
+    @attribute(
+        dtype=str,
         label="Subarray ID",
         doc="The Subarray ID assigned to the board. This attribute is only used for labelling.",
     )
+    def subarrayID(self: TalonBoard) -> str:
+        """
+        Read the subarrayID attribute.
 
-    dishID = attribute(
-        dtype="DevString",
-        access=AttrWriteType.READ_WRITE,
-        label="DISH ID",
-        doc="The DISH ID assigned to the board. This attribute is only used for labelling.",
+        :return: the vcc ID
+        :rtype: str
+        """
+        return self._subarrayID
+
+    @subarrayID.write
+    def subarrayID(self: TalonBoard, value: str) -> None:
+        """
+        Write the subarrayID attribute.
+
+        :param value: the vcc ID
+        """
+        self._subarrayID = value
+
+    @attribute(
+        dtype=str,
+        memorized=True,
+        hw_memorized=True,
+        label="Dish ID",
+        doc="The Dish ID assigned to the board. This attribute is only used for labelling.",
     )
+    def dishID(self: TalonBoard) -> str:
+        """
+        Read the dishID attribute.
 
-    vccID = attribute(
-        dtype="DevString",
-        access=AttrWriteType.READ_WRITE,
+        :return: the Dish ID
+        :rtype: str
+        """
+        return self._dishID
+
+    @dishID.write
+    def dishID(self: TalonBoard, value: str) -> None:
+        """
+        Write the dishID attribute.
+
+        :param value: the Dish ID
+        """
+        if self._dishID != value:
+            self._dishID = value
+            self.push_change_event("dishID", value)
+            self.push_archive_event("dishID", value)
+            self.logger.info(f"New value for dishID: {value}")
+
+    @attribute(
+        dtype=str,
         label="VCC ID",
         doc="The VCC ID assigned to the board. This attribute is only used for labelling.",
     )
+    def vccID(self: TalonBoard) -> str:
+        """
+        Read the vccID attribute.
+
+        :return: the VCC ID
+        :rtype: str
+        """
+        return self._vccID
+
+    @vccID.write
+    def vccID(self: TalonBoard, value: str) -> None:
+        """
+        Write the vccID attribute.
+
+        :param value: the VCC ID
+        """
+        self._vccID = value
 
     @attribute(dtype=str, label="IP", doc="IP Address")
-    def IpAddr(self: TalonBoard) -> str:
+    def ipAddr(self: TalonBoard) -> str:
         """
         The IP Address assigned to this talon board. This is a device
         property. This attribute is a workaround to expose it
-        to Taranta.
+        to Taranta dashboards.
 
         :return: the IP address
         """
         return self.TalonDxBoardAddress
 
     @attribute(
+        dtype=bool,
+        label="Ping Result",
+        doc="True if the last ping to the board was successful. False otherwise",
+    )
+    def pingResult(self: TalonBoard) -> bool:
+        return self.component_manager.ping_ok
+
+    # TalonSysID Attr
+    @attribute(
         dtype=str, label="FPGA bitstream version", doc="FPGA bitstream version"
     )
-    def BitstreamVersion(self: TalonBoard) -> str:
+    def bitstreamVersion(self: TalonBoard) -> str:
         """
         Read the FPGA bitstream version of the Talon-DX board.
 
         :return: the FPGA bitstream version
         """
-        res = self.component_manager.talon_sysid_version()
-        return res
+        return self.component_manager.talon_sysid_version()
 
     @attribute(
         dtype=int,
         label="FPGA bitstream checksum",
         doc="FPGA bitstream checksum",
     )
-    def BitstreamChecksum(self: TalonBoard) -> str:
+    def bitstreamChecksum(self: TalonBoard) -> int:
         """
         Read the least 32 bits of md5 checksum of the bitstream name
 
-        :return: the FPGA bitstream version
+        :return: a 32 bit unique identifier for the bitstream
         """
-        res = self.component_manager.talon_sysid_bitstream()
-        return res
+        return self.component_manager.talon_sysid_bitstream()
 
+    # TalonStatus Attr
     @attribute(
         dtype=bool, label="iopll_locked_fault", doc="iopll_locked_fault"
     )
-    def iopll_locked_fault(self: TalonBoard) -> str:
+    def iopllLockedFault(self: TalonBoard) -> bool:
         """
         Read the iopll_locked_fault status
 
@@ -153,7 +206,7 @@ class TalonBoard(SKABaseDevice):
     @attribute(
         dtype=bool, label="fs_iopll_locked_fault", doc="fs_iopll_locked_fault"
     )
-    def fs_iopll_locked_fault(self: TalonBoard) -> str:
+    def fsIopllLockedFault(self: TalonBoard) -> bool:
         """
         Read the fs_iopll_locked_fault status
 
@@ -167,7 +220,7 @@ class TalonBoard(SKABaseDevice):
         label="comms_iopll_locked_fault",
         doc="comms_iopll_locked_fault",
     )
-    def comms_iopll_locked_fault(self: TalonBoard) -> str:
+    def commsIopllLockedFault(self: TalonBoard) -> bool:
         """
         Read the comms_iopll_locked_fault status
 
@@ -177,7 +230,7 @@ class TalonBoard(SKABaseDevice):
         return res
 
     @attribute(dtype=bool, label="system_clk_fault", doc="system_clk_fault")
-    def system_clk_fault(self: TalonBoard) -> str:
+    def systemClkFault(self: TalonBoard) -> bool:
         """
         Read the system_clk_fault status
 
@@ -187,7 +240,7 @@ class TalonBoard(SKABaseDevice):
         return res
 
     @attribute(dtype=bool, label="emif_bl_fault", doc="emif_bl_fault")
-    def emif_bl_fault(self: TalonBoard) -> str:
+    def emifBlFault(self: TalonBoard) -> bool:
         """
         Read the emif_bl_fault status
 
@@ -197,7 +250,7 @@ class TalonBoard(SKABaseDevice):
         return res
 
     @attribute(dtype=bool, label="emif_br_fault", doc="emif_br_fault")
-    def emif_br_fault(self: TalonBoard) -> str:
+    def emifBrFault(self: TalonBoard) -> bool:
         """
         Read the emif_br_fault status
 
@@ -207,7 +260,7 @@ class TalonBoard(SKABaseDevice):
         return res
 
     @attribute(dtype=bool, label="emif_tr_fault", doc="emif_tr_fault")
-    def emif_tr_fault(self: TalonBoard) -> str:
+    def emifTrFault(self: TalonBoard) -> bool:
         """
         Read the emif_tr_fault status
 
@@ -217,7 +270,7 @@ class TalonBoard(SKABaseDevice):
         return res
 
     @attribute(dtype=bool, label="e100g_0_pll_fault", doc="e100g_0_pll_fault")
-    def e100g_0_pll_fault(self: TalonBoard) -> str:
+    def ethernet0PllFault(self: TalonBoard) -> bool:
         """
         Read the e100g_0_pll_fault status
 
@@ -227,7 +280,7 @@ class TalonBoard(SKABaseDevice):
         return res
 
     @attribute(dtype=bool, label="e100g_1_pll_fault", doc="e100g_1_pll_fault")
-    def e100g_1_pll_fault(self: TalonBoard) -> str:
+    def ethernet1PllFault(self: TalonBoard) -> bool:
         """
         Read the e100g_1_pll_fault status
 
@@ -237,7 +290,7 @@ class TalonBoard(SKABaseDevice):
         return res
 
     @attribute(dtype=bool, label="slim_pll_fault", doc="slim_pll_fault")
-    def slim_pll_fault(self: TalonBoard) -> str:
+    def slimPllFault(self: TalonBoard) -> bool:
         """
         Read the slim_pll_fault status
 
@@ -247,67 +300,259 @@ class TalonBoard(SKABaseDevice):
         return res
 
     @attribute(
-        dtype=float, label="FPGA Die Temperature", doc="FPGA Die Temperature"
+        dtype=float,
+        label="FPGA Die Temperature",
+        doc="FPGA Die Temperature",
+        format=".3f",
+        max_warning=90.0,
+        max_alarm=100.0,
     )
-    def FpgaDieTemperature(self: TalonBoard) -> float:
+    def fpgaDieTemperature(self: TalonBoard) -> float:
         """
         Read the FPGA die temperature of the Talon-DX board.
 
-        :return: the FPGA die temperature in deg Celcius
+        :return: the FPGA die temperature in deg Celsius
         """
         res = self.component_manager.fpga_die_temperature()
+        return res
+
+    # Raise warning if voltage sensor readings are outside the range of the
+    # Stratix10 recommended operating conditions
+    # https://www.intel.com/content/www/us/en/docs/programmable/683181/current/recommended-operating-conditions-63993.html
+    #
+    # Raise alarm if voltage sensor readings are outside the range of
+    # the absolute maximum ratings
+    # https://www.intel.com/content/www/us/en/docs/programmable/683181/current/absolute-maximum-ratings.html
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die 12V sensor",
+        doc="Value of the 12V FPGA Die Voltage Sensor",
+        unit="V",
+        format=".3f",
+        min_warning=11.2,
+        max_warning=12.8,
+        min_alarm=11.0,
+        max_alarm=13.0,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def fpgaDieVoltage0(self: TalonBoard) -> float:
+        """
+        Reads the 12V FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        ATTR_WARNING is trigger when the value is <= 11.2V or >= 12.8V
+        ATTR_ALARM  is trigger when the value is <= 11.0V or >= 13.0V
+
+        :return: 12V FPGA Die Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_0()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die 2.5V sensor",
+        doc="Value of the 2.5V FPGA Die Voltage Sensor",
+        unit="V",
+        format=".3f",
+        min_warning=2.404,
+        max_warning=2.596,
+        min_alarm=2.38,
+        max_alarm=2.62,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def fpgaDieVoltage1(self: TalonBoard) -> float:
+        """
+        Reads the 2.5V FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        ATTR_WARNING is trigger when the value is <= 2.404V or >= 2.596V
+        ATTR_ALARM  is trigger when the value is <= 2.38V or >= 2.62V
+
+        :return: 2.5V FPGA Die Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_1()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die VCC sensor",
+        doc="Value of the VCC FPGA Die Voltage Sensor",
+        unit="V",
+        format=".3f",
+        min_warning=0.77,
+        max_warning=0.97,
+        min_alarm=-0.5,
+        max_alarm=1.26,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def fpgaDieVoltage2(self: TalonBoard) -> float:
+        """
+        Reads the 0.8V VCC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        :return: 0.8V VCC FPGA Die Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_2()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die VCCIO_SDM sensor",
+        doc="Value of the VCCIO_SDM FPGA Die Voltage Sensor",
+        unit="V",
+        format=".3f",
+        min_warning=1.71,
+        max_warning=1.89,
+        min_alarm=-0.50,
+        max_alarm=2.19,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def fpgaDieVoltage3(self: TalonBoard) -> float:
+        """
+        Reads the 1.8V VCCIO FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        :return: The FPGA Die VCCIO Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_3()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die VCCPT sensor",
+        doc="Value of the VCCPT FPGA Die Voltage Sensor",
+        unit="V",
+        format=".3f",
+        min_warning=1.71,
+        max_warning=1.89,
+        min_alarm=-0.50,
+        max_alarm=2.46,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def fpgaDieVoltage4(self: TalonBoard) -> list[float]:
+        """
+        Reads the 1.8V VCCPT FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        :return: The FPGA Die VCCPT Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_4()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die VCCERAM sensor",
+        doc="Value of the VCCERAM FPGA Die Voltage Sensor",
+        unit="V",
+        format=".3f",
+        min_warning=0.87,
+        max_warning=0.93,
+        min_alarm=-0.50,
+        max_alarm=1.24,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def fpgaDieVoltage5(self: TalonBoard) -> list[float]:
+        """
+        Reads the 0.9V VCCERAM FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        :return: The PGA Die VCCERAM Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_5()
+        return res
+
+    @attribute(
+        dtype=float,
+        label="FPGA Die VCCADC sensor",
+        doc="Value of the VCCADC FPGA Die Voltage Sensor",
+        unit="V",
+        format=".3f",
+        min_warning=1.71,
+        max_warning=1.89,
+        min_alarm=-0.50,
+        max_alarm=2.19,
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def fpgaDieVoltage6(self: TalonBoard) -> list[float]:
+        """
+        Reads the 1.8V VCCADC FPGA Die Voltage Sensor of the Talon-DX board in Volts (V)
+        This value gets polled every 10 seconds to prevent overhead with Alarm checking
+
+        :return: The FPGA Die VCCADC Voltage
+        :rtype: float
+        """
+        res = self.component_manager.fpga_die_voltage_6()
         return res
 
     @attribute(
         dtype=float,
         label="Humidity Sensor Temperature",
         doc="Humidity Sensor Temperature",
+        format=".3f",
+        min_warning=15.0,
+        max_warning=45.0,
     )
-    def HumiditySensorTemperature(self: TalonBoard) -> float:
+    def humiditySensorTemperature(self: TalonBoard) -> float:
         """
         Read the humidity sensor temperature of the Talon-DX board.
 
-        :return: the humidity sensor temperature in deg Celcius
+        :return: the humidity sensor temperature in deg Celsius
         """
         return self.component_manager.humidity_sensor_temperature()
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=4,
         label="DIMM Memory Module Temperatures",
         doc="DIMM Memory Module Temperatures. Array of size 4. Value set to 0 if not valid.",
+        format=".3f",
+        max_warning=80.0,
+        max_alarm=85.0,
     )
-    def DIMMTemperatures(self: TalonBoard):
+    def dimmTemperatures(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the DIMM temperatures of the Talon-DX board.
 
-        :return: the DIMM temperatures in deg Celcius
+        :return: the DIMM temperatures in deg Celsius
         """
         return self.component_manager.dimm_temperatures()
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=5,
         label="MBO Tx Temperatures",
         doc="MBO Tx Temperatures. Value set to 0 if not valid.",
+        format=".3f",
+        max_warning=65.0,
+        max_alarm=70.0,
     )
-    def MboTxTemperatures(self: TalonBoard):
+    def mboTxTemperatures(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the MBO Tx temperatures of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case a 0 will be
         returned for the MBO.
 
-        :return: the MBO Tx temperatures in deg Celcius.
+        :return: the MBO Tx temperatures in deg Celsius.
         """
         return self.component_manager.mbo_tx_temperatures()
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=5,
         label="MBO Tx VCC 3.3 Voltages",
         doc="MBO Tx VCC 3.3 Voltages. Value set to 0 if not valid.",
+        format=".3f",
+        min_alarm=3.2,
+        max_alarm=3.4,
     )
-    def MboTxVccVoltages(self: TalonBoard):
+    def mboTxVccVoltages(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the MBO Tx VCC 3.3V voltages of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case a 0 will be
@@ -315,15 +560,15 @@ class TalonBoard(SKABaseDevice):
 
         :return: the MBO Tx VCC voltages.
         """
-        return self.component_manager.mbo_rx_vcc_voltages()
+        return self.component_manager.mbo_tx_vcc_voltages()
 
     @attribute(
-        dtype=(bool,),
+        dtype=[bool],
         max_dim_x=5,
         label="MBO Tx Fault Status",
         doc="MBO Tx Fault Status. True = status set.",
     )
-    def MboTxFaultStatus(self: TalonBoard):
+    def mboTxFaultStatus(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the MBO Tx fault status register of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case false will be
@@ -334,12 +579,12 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.mbo_tx_fault_status()
 
     @attribute(
-        dtype=(bool,),
+        dtype=[bool],
         max_dim_x=5,
         label="MBO Tx Loss of Lock Status",
         doc="MBO Tx Loss of Lock Status. True = status set.",
     )
-    def MboTxLOLStatus(self: TalonBoard):
+    def mboTxLolStatus(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the MBO Tx loss of lock status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -350,12 +595,12 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.mbo_tx_lol_status()
 
     @attribute(
-        dtype=(bool,),
+        dtype=[bool],
         max_dim_x=5,
         label="MBO Tx Loss of Signal Status",
         doc="MBO Tx Loss of Signal Status. True = status set.",
     )
-    def MboTxLOSStatus(self: TalonBoard):
+    def mboTxLosStatus(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the MBO Tx loss of signal status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -366,12 +611,15 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.mbo_tx_los_status()
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=5,
         label="MBO Rx VCC 3.3 Voltages",
         doc="MBO Rx VCC 3.3 Voltages. Value set to 0 if not valid.",
+        format=".3f",
+        min_alarm=3.2,
+        max_alarm=3.4,
     )
-    def MboRxVccVoltages(self: TalonBoard):
+    def mboRxVccVoltages(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the MBO Rx VCC 3.3V voltages of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case a 0 will be
@@ -382,12 +630,12 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.mbo_rx_vcc_voltages()
 
     @attribute(
-        dtype=(bool,),
+        dtype=[bool],
         max_dim_x=5,
         label="MBO Rx Loss of Lock Status",
         doc="MBO Rx Loss of Lock Status. True = status set.",
     )
-    def MboRxLOLStatus(self: TalonBoard):
+    def mboRxLolStatus(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the MBO Rx loss of lock status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -398,12 +646,12 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.mbo_rx_lol_status()
 
     @attribute(
-        dtype=(bool,),
+        dtype=[bool],
         max_dim_x=5,
         label="MBO Rx Loss of Signal Status",
         doc="MBO Rx Loss of Signal Status. True = status set.",
     )
-    def MboRxLOSStatus(self: TalonBoard):
+    def mboRxLosStatus(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the MBO Rx loss of signal status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
@@ -414,27 +662,48 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.mbo_rx_los_status()
 
     @attribute(
-        dtype=(int,),
+        dtype=bool,
+        label="has fan control",
+        doc="Indicates whether this board has control over the fans. If false, the board cannot correctly read fan speed and fault.",
+    )
+    def hasFanControl(self: TalonBoard) -> DevBoolean:
+        """
+        Indicates whether this board has control over the fans.
+        If false, the board cannot correctly read fan speed and fault.
+
+        return: True if the board has control over fans. False otherwise.
+        """
+        return self.component_manager.has_fan_control()
+
+    @attribute(
+        dtype=[int],
         max_dim_x=4,
         label="Fan PWM values",
         doc="Fan PWM values.",
     )
-    def FansPwm(self: TalonBoard):
+    def fansPwm(self: TalonBoard) -> DevVarShortArray:
         """
         Read the PWM value of the fans. Valid values are
         0 to 255.
 
         :return: the PWM value of the fans
         """
-        return self.component_manager.fans_pwm()
+        if self.component_manager.has_fan_control():
+            return self.component_manager.fans_pwm()
+        else:
+            return (
+                self.component_manager.fans_pwm(),
+                TimeVal.totime(TimeVal.now()),
+                AttrQuality.ATTR_INVALID,
+            )
 
     @attribute(
-        dtype=(int,),
+        dtype=[int],
         max_dim_x=4,
         label="Fan PWM enable values",
         doc="Fan PWM enable values.",
     )
-    def FansPwmEnable(self: TalonBoard):
+    def fansPwmEnable(self: TalonBoard) -> DevVarShortArray:
         """
         Read the PWM value of the fans. Valid values are 0 to 2.
 
@@ -443,26 +712,57 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.fans_pwm_enable()
 
     @attribute(
-        dtype=(bool,),
+        dtype=[int],
+        max_dim_x=4,
+        label="Fan RPM",
+        doc="Fan RPM.",
+        min_alarm=500,
+    )
+    def fansRpm(self: TalonBoard) -> DevVarShortArray:
+        """
+        Read the RPM values of the fans
+
+        :return: the RPM value of the fans
+        """
+        if self.component_manager.has_fan_control():
+            return self.component_manager.fans_input()
+        else:
+            return (
+                self.component_manager.fans_input(),
+                TimeVal.totime(TimeVal.now()),
+                AttrQuality.ATTR_INVALID,
+            )
+
+    @attribute(
+        dtype=[bool],
         max_dim_x=4,
         label="Fan Fault status",
         doc="Fan Fault status.",
     )
-    def FansFault(self: TalonBoard):
+    def fansFault(self: TalonBoard) -> DevVarBooleanArray:
         """
         Read the fault status of the fans.
 
         :return: true if fan fault register is set
         """
-        return self.component_manager.fans_fault()
+        if self.component_manager.has_fan_control():
+            return self.component_manager.fans_fault()
+        else:
+            return (
+                self.component_manager.fans_fault(),
+                TimeVal.totime(TimeVal.now()),
+                AttrQuality.ATTR_INVALID,
+            )
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=4,
         label="LTM Input Voltage",
         doc="LTM Input Voltage. One entry per LTM.",
+        format=".3f",
+        min_alarm=0.50,
     )
-    def LtmInputVoltage(self: TalonBoard):
+    def ltmInputVoltage(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the input voltage to LTMs
 
@@ -471,12 +771,14 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.ltm_input_voltage()
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=4,
         label="LTM Output Voltage 1",
         doc="LTM Output Voltage 1. One entry per LTM",
+        format=".3f",
+        min_alarm=0.50,
     )
-    def LtmOutputVoltage1(self: TalonBoard):
+    def ltmOutputVoltage1(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the output voltage 1 to LTMs
 
@@ -485,12 +787,14 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.ltm_output_voltage_1()
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=4,
         label="LTM Output Voltage 2",
         doc="LTM Output Voltage 2. One entry per LTM",
+        format=".3f",
+        min_alarm=0.50,
     )
-    def LtmOutputVoltage2(self: TalonBoard):
+    def ltmOutputVoltage2(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the output voltage 2 to LTMs
 
@@ -499,12 +803,13 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.ltm_output_voltage_2()
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=4,
         label="LTM Input Current",
         doc="LTM Input Current. One entry per LTM.",
+        format=".3f",
     )
-    def LtmInputCurrent(self: TalonBoard):
+    def ltmInputCurrent(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the input current to LTMs
 
@@ -513,12 +818,13 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.ltm_input_current()
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=4,
         label="LTM Output Current 1",
         doc="LTM Output Current 1. One entry per LTM",
+        format=".3f",
     )
-    def LtmOutputCurrent1(self: TalonBoard):
+    def ltmOutputCurrent1(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the output current 1 to LTMs
 
@@ -527,12 +833,13 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.ltm_output_current_1()
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=4,
         label="LTM Output Current 2",
         doc="LTM Output Current 2. One entry per LTM",
+        format=".3f",
     )
-    def LtmOutputCurrent2(self: TalonBoard):
+    def ltmOutputCurrent2(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the output current 2 to LTMs
 
@@ -541,12 +848,15 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.ltm_output_current_2()
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=4,
         label="LTM Temperature 1",
         doc="LTM Temperature 1. One entry per LTM",
+        format=".3f",
+        max_warning=80.0,
+        max_alarm=85.0,
     )
-    def LtmTemperature1(self: TalonBoard):
+    def ltmTemperature1(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the temperature 1 of LTMs
 
@@ -555,12 +865,15 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.ltm_temperature_1()
 
     @attribute(
-        dtype=(float,),
+        dtype=[float],
         max_dim_x=4,
         label="LTM Temperature 2",
         doc="LTM Temperature 2. One entry per LTM",
+        format=".3f",
+        max_warning=80.0,
+        max_alarm=85.0,
     )
-    def LtmTemperature2(self: TalonBoard):
+    def ltmTemperature2(self: TalonBoard) -> DevVarFloatArray:
         """
         Read the temperature 2 of LTMs
 
@@ -569,12 +882,12 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.ltm_temperature_2()
 
     @attribute(
-        dtype=(bool,),
+        dtype=[bool],
         max_dim_x=4,
         label="LTM Voltage Warning",
         doc="True if any input or output voltage warnings is set. One entry per LTM",
     )
-    def LtmVoltageWarning(self: TalonBoard):
+    def ltmVoltageWarning(self: TalonBoard) -> DevVarBooleanArray:
         """
         Returns True if any input or output voltage warning is set. One entry per LTM
 
@@ -583,12 +896,12 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.ltm_voltage_warning()
 
     @attribute(
-        dtype=(bool,),
+        dtype=[bool],
         max_dim_x=4,
         label="LTM Current Warning",
         doc="True if any input or output current warnings is set. One entry per LTM",
     )
-    def LtmCurrentWarning(self: TalonBoard):
+    def ltmCurrentWarning(self: TalonBoard) -> DevVarBooleanArray:
         """
         Returns True if any input or output current warning is set. One entry per LTM
 
@@ -597,12 +910,12 @@ class TalonBoard(SKABaseDevice):
         return self.component_manager.ltm_current_warning()
 
     @attribute(
-        dtype=(bool,),
+        dtype=[bool],
         max_dim_x=4,
         label="LTM Temperature Warning",
         doc="True if any temperature warnings is set. One entry per LTM",
     )
-    def LtmTemperatureWarning(self: TalonBoard):
+    def ltmTemperatureWarning(self: TalonBoard) -> DevVarBooleanArray:
         """
         Returns True if any temperature warning is set. One entry per LTM
 
@@ -610,158 +923,344 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.ltm_temperature_warning()
 
-    # -----------------
-    # Attribute Methods
-    # -----------------
-
-    def read_subarrayID(self: TalonBoard) -> str:
-        # PROTECTED REGION ID(TalonBoard.read_subarrayID) ENABLED START #
+    @attribute(
+        dtype=[int],
+        max_dim_x=4,
+        label="100g_eth_0 counters",
+        doc=(
+            "a list of counters at the 100g ethernet input "
+            "in the following order:\n"
+            "[0] cntr_tx_1519tomaxb\n"
+            "[1] TxFrameOctetsOK\n"
+            "[2] cntr_rx_1519tomaxb\n"
+            "[3] RxFrameOctetsOK"
+        ),
+    )
+    def eth100g0Counters(self: TalonBoard) -> DevVarULongArray:
         """
-        Read the subarrayID attribute.
+        Returns a list of counters at the 100g ethernet input
+        in the following order:
+        [0] cntr_tx_1519tomaxb
+        [1] TxFrameOctetsOK
+        [2] cntr_rx_1519tomaxb
+        [3] RxFrameOctetsOK
 
-        :return: the vcc ID
-        :rtype: str
+        :return: a list of counters at the 100g ethernet input
         """
-        return self.subarrayID_
-        # PROTECTED REGION END #    //  TalonBoard.subarrayID_read
+        return self.component_manager.eth100g_0_counters()
 
-    def write_subarrayID(self: TalonBoard, value: str) -> None:
-        # PROTECTED REGION ID(TalonBoard.subarrayID_write) ENABLED START #
+    @attribute(
+        dtype=[int],
+        max_dim_x=6,
+        label="100g_eth_0 error counters",
+        doc=(
+            "a list of error counters at the 100g ethernet input "
+            "in the following order:\n"
+            "[0]: number of transmitted frames less than 64 bytes\n"
+            "[1]: number of transmitted oversized frames\n"
+            "[2]: number of transmitted CRC errors\n"
+            "[3]: number of received frames less than 64 bytes\n"
+            "[4]: number of received oversized frames\n"
+            "[5]: number of received CRC errors"
+        ),
+    )
+    def eth100g0ErrorCounters(self: TalonBoard) -> DevVarULongArray:
         """
-        Write the subarrayID attribute.
+        Returns a list of error counters at the 100g ethernet input
+        in the following order:
+        [0]: number of transmitted frames less than 64 bytes
+        [1]: number of transmitted oversized frames
+        [2]: number of transmitted CRC errors
+        [3]: number of received frames less than 64 bytes
+        [4]: number of received oversized frames
+        [5]: number of received CRC errors
 
-        :param value: the vcc ID
+        :return: a list of error counters at the 100g ethernet input
         """
-        self.subarrayID_ = value
-        # PROTECTED REGION END #    //  TalonBoard.subarrayID_write
+        return self.component_manager.eth100g_0_error_counters()
 
-    def read_dishID(self: TalonBoard) -> str:
-        # PROTECTED REGION ID(TalonBoard.read_dishID) ENABLED START #
+    @attribute(
+        dtype=bool,
+        label="100g_eth_0 data flow active",
+        doc="True if there is data flowing at the 100g ethernet input",
+    )
+    def eth100g0DataFlowActive(self: TalonBoard) -> DevBoolean:
         """
-        Read the dishID attribute.
+        Indicates if there is data flowing at the 100g ethernet input
 
-        :return: the DISH ID
-        :rtype: str
+        :return: a boolean indicating if there is data flowing
+                 at the 100g ethernet input
         """
-        return self.dishID_
-        # PROTECTED REGION END #    //  TalonBoard.dishID_read
+        return self.component_manager.eth100g_0_data_flow_active()
 
-    def write_dishID(self: TalonBoard, value: str) -> None:
-        # PROTECTED REGION ID(TalonBoard.dishID_write) ENABLED START #
+    @attribute(
+        dtype=bool,
+        label="100g_eth_0 has data error",
+        doc=(
+            "True if any error counter is non-zero at the 100g ethernet input"
+        ),
+    )
+    def eth100g0HasDataError(self: TalonBoard) -> DevBoolean:
         """
-        Write the dishID attribute.
+        Indicates if any error counter is non-zero at the 100g ethernet input
 
-        :param value: the DISH ID
+        :return: a boolean indicating if any error counter is non-zero
+                 at the 100g ethernet input
         """
-        self.dishID_ = value
-        # PROTECTED REGION END #    //  TalonBoard.dishID_write
+        return self.component_manager.eth100g_0_has_data_error()
 
-    def read_vccID(self: TalonBoard) -> str:
-        # PROTECTED REGION ID(TalonBoard.read_vccID) ENABLED START #
+    @attribute(
+        dtype=[int],
+        max_dim_x=27,
+        label="100g_eth_0 all Tx counters",
+        doc="the full list of Tx counters at the 100g ethernet input",
+    )
+    def eth100g0AllTxCounters(self: TalonBoard) -> DevVarULongArray:
         """
-        Read the vccID attribute.
+        Returns the full list of Tx counters at the 100g ethernet input
+        in the following order:
+        [0] fragments
+        [1] jabbers
+        [2] fcs
+        [3] crcerr
+        [4] mcast_data_err
+        [5] bcast_data_err
+        [6] ucast_data_err
+        [7] mcast_ctrl_err
+        [8] bcast_ctrl_err
+        [9] ucast_ctrl_err
+        [10] pause_err
+        [11] 64b
+        [12] 65to127b
+        [13] 128to255b
+        [14] 256to511b
+        [15] 512to1023b
+        [16] 1024to1518b
+        [17] 1519tomaxb
+        [18] oversize
+        [19] mcast_data_ok
+        [20] bcast_data_ok
+        [21] ucast_data_ok
+        [22] mcast_ctrl
+        [23] bcast_ctrl
+        [24] ucast_ctrl
+        [25] pause
+        [26] runt
 
-        :return: the vcc ID
-        :rtype: str
+        :return: the full list of tx counters at the 100g ethernet input
         """
-        return self.vccID_
-        # PROTECTED REGION END #    //  TalonBoard.vccID_read
+        return self.component_manager.eth100g_0_all_tx_counters()
 
-    def write_vccID(self: TalonBoard, value: str) -> None:
-        # PROTECTED REGION ID(TalonBoard.vccID_write) ENABLED START #
+    @attribute(
+        dtype=[int],
+        max_dim_x=27,
+        label="100g_eth_0 all Rx counters",
+        doc="the full list of Rx counters at the 100g ethernet input",
+    )
+    def eth100g0AllRxCounters(self: TalonBoard) -> DevVarULongArray:
         """
-        Write the vccID attribute.
+        Returns the full list of Rx counters at the 100g ethernet input
+        in the following order:
+        [0] fragments
+        [1] jabbers
+        [2] fcs
+        [3] crcerr
+        [4] mcast_data_err
+        [5] bcast_data_err
+        [6] ucast_data_err
+        [7] mcast_ctrl_err
+        [8] bcast_ctrl_err
+        [9] ucast_ctrl_err
+        [10] pause_err
+        [11] 64b
+        [12] 65to127b
+        [13] 128to255b
+        [14] 256to511b
+        [15] 512to1023b
+        [16] 1024to1518b
+        [17] 1519tomaxb
+        [18] oversize
+        [19] mcast_data_ok
+        [20] bcast_data_ok
+        [21] ucast_data_ok
+        [22] mcast_ctrl
+        [23] bcast_ctrl
+        [24] ucast_ctrl
+        [25] pause
+        [26] runt
 
-        :param value: the vcc ID
+        :return: the full list of rx counters at the 100g ethernet input
         """
-        self.vccID_ = value
-        # PROTECTED REGION END #    //  TalonBoard.vccID_write
+        return self.component_manager.eth100g_0_all_rx_counters()
 
-    # ---------------
-    # General methods
-    # ---------------
-    def always_executed_hook(self: TalonBoard) -> None:
-        # PROTECTED REGION ID(TalonBoard.always_executed_hook) ENABLED START #
-        pass
-        # PROTECTED REGION END #    //  TalonBoard.always_executed_hook
-
-    def delete_device(self: TalonBoard) -> None:
-        # PROTECTED REGION ID(TalonBoard.delete_device) ENABLED START #
-        pass
-        # PROTECTED REGION END #    //  TalonBoard.delete_device
-
-    def init_command_objects(self: TalonBoard) -> None:
+    @attribute(
+        dtype=[int],
+        max_dim_x=4,
+        label="100g_eth_1 counters",
+        doc=(
+            "a list of counters at the 100g ethernet output "
+            "in the following order:\n"
+            "[0] cntr_tx_1519tomaxb\n"
+            "[1] TxFrameOctetsOK\n"
+            "[2] cntr_rx_1519tomaxb\n"
+            "[3] RxFrameOctetsOK\n"
+        ),
+    )
+    def eth100g1Counters(self: TalonBoard) -> DevVarULongArray:
         """
-        Sets up the command objects
+        Returns a list of counters at the 100g ethernet output
+        in the following order:
+        [0] cntr_tx_1519tomaxb
+        [1] TxFrameOctetsOK
+        [2] cntr_rx_1519tomaxb
+        [3] RxFrameOctetsOK
+
+        :return: a list of counters at the 100g ethernet output
         """
-        super().init_command_objects()
+        return self.component_manager.eth100g_1_counters()
 
-        # device_args = (self, self.op_state_model, self.logger)
-
-        # self.register_command_object("On", self.OnCommand(*device_args))
-
-        # self.register_command_object("Off", self.OffCommand(*device_args))
-
-    # ----------
-    # Callbacks
-    # ----------
-
-    def _communication_status_changed(
-        self: TalonBoard, communication_status: CommunicationStatus
-    ) -> None:
+    @attribute(
+        dtype=[int],
+        max_dim_x=6,
+        label="100g_eth_1 error counters",
+        doc=(
+            "a list of error counters at the 100g ethernet output "
+            "in the following order:\n"
+            "[0]: number of transmitted frames less than 64 bytes\n"
+            "[1]: number of transmitted oversized frames\n"
+            "[2]: number of transmitted CRC errors\n"
+            "[3]: number of received frames less than 64 bytes\n"
+            "[4]: number of received oversized frames\n"
+            "[5]: number of received CRC errors"
+        ),
+    )
+    def eth100g1ErrorCounters(self: TalonBoard) -> DevVarULongArray:
         """
-        Handle change in communications status between component manager and component.
+        Returns a list of error counters at the 100g ethernet output
+        in the following order:
+        [0]: number of transmitted frames less than 64 bytes
+        [1]: number of transmitted oversized frames
+        [2]: number of transmitted CRC errors
+        [3]: number of received frames less than 64 bytes
+        [4]: number of received oversized frames
+        [5]: number of received CRC errors
 
-        This is a callback hook, called by the component manager when
-        the communications status changes. It is implemented here to
-        drive the op_state.
-
-        :param communication_status: the status of communications
-            between the component manager and its component.
+        :return: a list of error counters at the 100g ethernet output
         """
+        return self.component_manager.eth100g_1_error_counters()
 
-        self._communication_status = communication_status
-
-        if communication_status == CommunicationStatus.DISABLED:
-            self.op_state_model.perform_action("component_disconnected")
-        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
-            self.op_state_model.perform_action("component_unknown")
-
-    def _component_power_mode_changed(
-        self: TalonBoard, power_mode: PowerMode
-    ) -> None:
+    @attribute(
+        dtype=bool,
+        label="100g_eth_1 data flow active",
+        doc="True if there is data flowing at the 100g ethernet output",
+    )
+    def eth100g1DataFlowActive(self: TalonBoard) -> DevBoolean:
         """
-        Handle change in the power mode of the component.
-
-        This is a callback hook, called by the component manager when
-        the power mode of the component changes. It is implemented here
-        to drive the op_state.
-
-        :param power_mode: the power mode of the component.
+        Returns True if there is data flowing at the 100g ethernet
+        output.
         """
-        self._component_power_mode = power_mode
+        return self.component_manager.eth100g_1_data_flow_active()
 
-        if self._communication_status == CommunicationStatus.ESTABLISHED:
-            action_map = {
-                PowerMode.OFF: "component_off",
-                PowerMode.STANDBY: "component_standby",
-                PowerMode.ON: "component_on",
-                PowerMode.UNKNOWN: "component_unknown",
-            }
-
-            self.op_state_model.perform_action(action_map[power_mode])
-
-    def _component_fault(self: TalonBoard, faulty: bool) -> None:
+    @attribute(
+        dtype=bool,
+        label="100g_eth_1 has data error",
+        doc="True if any error counter is non-zero at the 100g ethernet output",
+    )
+    def eth100g1HasDataError(self: TalonBoard) -> DevBoolean:
         """
-        Handle component fault
+        Returns True if any error counter is non-zero at the 100g
+        ethernet input. Error counters include CRC error,
+        oversized packets, and fragmented packets.
         """
-        if faulty:
-            self.op_state_model.perform_action("component_fault")
-            self.set_status("The device is in FAULT state.")
+        return self.component_manager.eth100g_1_has_data_error()
 
-    # --------
-    # Commands
-    # --------
+    @attribute(
+        dtype=[int],
+        max_dim_x=27,
+        label="100g_eth_1 all Tx counters",
+        doc="the full list of Tx counters at the 100g ethernet output",
+    )
+    def eth100g1AllTxCounters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns the full list of Tx counters at the 100g ethernet output
+        in the following order:
+        [0] fragments
+        [1] jabbers
+        [2] fcs
+        [3] crcerr
+        [4] mcast_data_err
+        [5] bcast_data_err
+        [6] ucast_data_err
+        [7] mcast_ctrl_err
+        [8] bcast_ctrl_err
+        [9] ucast_ctrl_err
+        [10] pause_err
+        [11] 64b
+        [12] 65to127b
+        [13] 128to255b
+        [14] 256to511b
+        [15] 512to1023b
+        [16] 1024to1518b
+        [17] 1519tomaxb
+        [18] oversize
+        [19] mcast_data_ok
+        [20] bcast_data_ok
+        [21] ucast_data_ok
+        [22] mcast_ctrl
+        [23] bcast_ctrl
+        [24] ucast_ctrl
+        [25] pause
+        [26] runt
+
+        :return: the full list of tx counters at the 100g ethernet output
+        """
+        return self.component_manager.eth100g_1_all_tx_counters()
+
+    @attribute(
+        dtype=[int],
+        max_dim_x=27,
+        label="100g_eth_1 all Rx counters",
+        doc="the full list of Rx counters at the 100g ethernet output",
+    )
+    def eth100g1AllRxCounters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns the full list of Rx counters at the 100g ethernet output
+        in the following order:
+        [0] fragments
+        [1] jabbers
+        [2] fcs
+        [3] crcerr
+        [4] mcast_data_err
+        [5] bcast_data_err
+        [6] ucast_data_err
+        [7] mcast_ctrl_err
+        [8] bcast_ctrl_err
+        [9] ucast_ctrl_err
+        [10] pause_err
+        [11] 64b
+        [12] 65to127b
+        [13] 128to255b
+        [14] 256to511b
+        [15] 512to1023b
+        [16] 1024to1518b
+        [17] 1519tomaxb
+        [18] oversize
+        [19] mcast_data_ok
+        [20] bcast_data_ok
+        [21] ucast_data_ok
+        [22] mcast_ctrl
+        [23] bcast_ctrl
+        [24] ucast_ctrl
+        [25] pause
+        [26] runt
+
+        :return: the full list of rx counters at the 100g ethernet output
+        """
+        return self.component_manager.eth100g_1_all_rx_counters()
+
+    # --------------
+    # Initialization
+    # --------------
 
     def create_component_manager(
         self: TalonBoard,
@@ -774,9 +1273,6 @@ class TalonBoard(SKABaseDevice):
 
         self.logger.debug("Entering create_component_manager()")
 
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
-
         return TalonBoardComponentManager(
             hostname=self.TalonDxBoardAddress,
             influx_port=self.InfluxDbPort,
@@ -784,23 +1280,29 @@ class TalonBoard(SKABaseDevice):
             influx_bucket=self.InfluxDbBucket,
             influx_auth_token=self.InfluxDbAuthToken,
             instance=self.Instance,
-            talon_sysid_server=self.TalonDxSysIdServer,
-            eth_100g_server=self.TalonDx100GEthernetServer,
-            talon_status_server=self.TalonStatusServer,
-            hps_master_server=self.HpsMasterServer,
+            talon_sysid_address=self.TalonDxSysIdAddress,
+            eth_100g_address=self.TalonDx100GEthernetAddress,
+            talon_status_address=self.TalonStatusAddress,
+            hps_master_address=self.HpsMasterAddress,
             logger=self.logger,
-            push_change_event_callback=self.push_change_event,
-            communication_status_changed_callback=self._communication_status_changed,
-            component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault,
+            health_state_callback=self._update_health_state,
+            communication_state_callback=self._communication_state_changed,
+            component_state_callback=self._component_state_changed,
+            admin_mode_callback=self._admin_mode_perform_action,
         )
 
-    class InitCommand(SKABaseDevice.InitCommand):
+    # -------------
+    # Fast Commands
+    # -------------
+
+    class InitCommand(CbfDevice.InitCommand):
         """
         A class for the TalonBoard's init_device() "command".
         """
 
-        def do(self: TalonBoard.InitCommand) -> tuple[ResultCode, str]:
+        def do(
+            self: TalonBoard.InitCommand, *args, **kwargs
+        ) -> tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -808,44 +1310,31 @@ class TalonBoard(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            return super().do()
+            (result_code, msg) = super().do(*args, **kwargs)
 
-    class OnCommand(SKABaseDevice.OnCommand):
-        """
-        The command class for the On command.
+            # Some of these IDs are typically integers. But it is easier to use
+            # empty string to show the board is not assigned.
+            self._device._subarrayID = ""
+            self._device._dishID = ""
+            self._device._vccID = ""
 
-        Initializes HPS device proxies and starts listening to
-        attribute change events
-        """
+            self._device.set_change_event("dishID", True)
+            self._device.set_archive_event("dishID", True)
 
-        def do(self: TalonBoard.OnCommand) -> Tuple[ResultCode, str]:
-            """
-            Implement On command functionality.
+            return (result_code, msg)
 
-            :return: A Tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            component_manager = self.target
-            return component_manager.on()
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
 
-    class OffCommand(SKABaseDevice.OffCommand):
-        """
-        The command class for the Off command.
+    # None at this time...
 
-        Stops listening to attribute change events
-        """
+    # ----------
+    # Callbacks
+    # ----------
 
-        def do(self: TalonBoard.OffCommand) -> Tuple[ResultCode, str]:
-            """
-            Implement Off command functionality.
-
-            :return: A Tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            component_manager = self.target
-            return component_manager.off()
+    # None at this time...
+    # We currently rely on the SKABaseDevice implemented callbacks.
 
 
 # ----------
@@ -854,9 +1343,7 @@ class TalonBoard(SKABaseDevice):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(TalonBoard.main) ENABLED START #
-    return run((TalonBoard,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  TalonBoard.main
+    return TalonBoard.run_server(args=args or None, **kwargs)
 
 
 if __name__ == "__main__":

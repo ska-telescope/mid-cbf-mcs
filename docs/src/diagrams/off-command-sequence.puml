@@ -18,77 +18,85 @@ skinparam database {
   BorderColor DarkGreen
 }
 title Off Command Sequence - Correlation\n
-participant "CSP_Mid\n.LMC" as lmc
-box "MCS"
-participant "Mid.CBF\nController" as controller
-participant "Mid.CBF\nSubarray" as subarray
-collections "VCC" as vcc
-collections "FSP" as fsp
-collections "FSP\nCorr\nSubarray" as fspsubarray
-participant "Talon\nLRU" as lru
-participant "Power\nSwitch" as switch
-participant "SLIM\nFS" as slim_fs
-participant "SLIM\nVis" as slim_vis
-collections "SLIM\nLink" as slimlink
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nController" as controller
+  participant "Mid.CBF\nSubarray" as subarray
+  participant "Talon\nBoard" as talon_board
+  participant "Talon\nLRU" as lru
+  participant "Talon\nDX" as tdx
+  participant "Power\nSwitch" as ps
+  collections "SLIM\n" as slim
+  collections "SLIM\nLink" as slimlink
 end box
-participant "PDU\n" as pdu
-box "HPS"
-participant "Linux\nOS" as os #LightGreen
-participant "HPS\nMaster" as hpsmaster
-collections "HPS\nDevices" as hpsdevices
+participant "PDU\n" as pdu #Orange
+box "\nHPS\n"
+  participant "Linux\nOS" as os #LightGreen
+  participant "HPS\nMaster" as hpsmaster
+  collections "HPS\nDevices" as hpsdevices
 end box
-lmc        ->  controller    : Off()
 
-note over controller         : clean up observing model:
+lmc -> controller : Off()
 
-loop until Subarray ObsState EMPTY or time exceeded
-alt Subarray ObsState EMPTY
-controller -> controller : Do nothing
-else ObStates RESOURCING, RESTARTING, ABORTING,\nRESETTING
-controller -> controller : Wait
-else ObsStates IDLE\nCONFIGURING, READY,\nSCANNING
-controller -> subarray   : Abort
-else ObsState ABORTED, FAULT
-controller -> subarray   : Restart
-end loop
-note over vcc            : VCC\nObsState IDLE
-note over fspsubarray    : FSP Corr Subarray\nObsState IDLE
+group #LightCyan For each subarray:
+group #SeaShell If ObsState == [RESOURCING, RESTARTING, ABORTING,\n                      READY, RESETTING, SCANNING]:
+controller -> subarray        : Abort
+end
 
-controller ->  subarray      : Off
-subarray   ->  fspsubarray   : Off
-fspsubarray->  fspsubarray   : PowerMode OFF
-subarray   ->  subarray      : PowerMode OFF
-controller ->  vcc           : Off
-vcc        ->  vcc           : PowerMode OFF
-controller ->  fsp           : Off
-fsp        ->  fspsubarray   : Off
-fspsubarray->  fspsubarray   : PowerMode OFF
-fsp        ->  fsp           : PowerMode OFF
-controller ->  slim_fs       : Off
-slim_fs    ->  slim_fs       : PowerMode OFF
-slim_fs    ->  slimlink      : Disconnect Links
-loop
-group SLIM FS Link
-slimlink   ->  hpsdevices    : DisconnectTxRx
-end loop
-controller ->  slim_vis      : Off
-slim_vis   ->  slim_vis      : PowerMode OFF
-slim_vis   ->  slimlink      : Disconnect Links
-loop
-group SLIM Vis Link
-slimlink   ->  hpsdevices    : DisconnectTxRx
+controller -> subarray        : Restart
+note over subarray            : ObsState: EMPTY
 end loop
 
-note over subarray       : Subarray\nObsState EMPTY
-controller ->  hpsmaster     : Shutdown(3)
-group no Tango exception on Shutdown
-hpsmaster  ->  hpsdevices !! : kill pid
-hpsmaster  ->  os !!         : system "shutdown now"
-controller ->  controller    : wait 4 sec
+group #LightCyan For each SLIM:
+  controller ->  slim         : Off
+
+  group #LightCyan For each active SlimLink:
+    slim      ->  slimlink    : Stop polling VerifyConnection()
+    slim      ->  slimlink    : DisconnectTxRx()
+    slimlink  ->  hpsdevices  : InitializeConnection(serial_loopback=True)
+  end 
+  note over slim              : OpState: OFF
 end group
-controller ->  lru           : PowerOff
-lru        ->  switch        : Off()
-switch     ->  pdu           : Off(outlets)
 
-controller ->  controller    : PowerMode OFF
+note over talon_board          : OpState: UNKNOWN
+controller  ->  tdx            : Shutdown()
+tdx         ->  hpsmaster      : Shutdown(3)
+hpsmaster   ->  hpsdevices !!  : kill pid
+hpsmaster   ->  os !!          : system "shutdown now"
+tdx         ->  tdx            : sleep(4s)
+
+group #LightCyan For each Talon LRU in configuration:
+  controller    ->  lru         : Off()
+  lru           ->  ps          : outlet1_state = GetOutletPowerState(outlet1)
+  ps            ->  pdu         : GetOutletPowerState(outlet1)
+  group #SeaShell If using single outlet:
+    lru         ->  lru         : outlet2_state = outlet1_state
+    else
+    lru         ->  ps          : outlet2_state = GetOutletPowerState(outlet2)
+    ps          ->  pdu         : GetOutletPowerState(outlet2)
+  end group
+
+  note over lru                 : OpState: UNKNOWN
+  group #SeaShell If outlet1_state OR outlet2_state == ON:
+    note over lru               : OpState: ON
+  else If outlet1_state AND outlet2_state == OFF:
+    note over lru               : OpState: OFF
+  end group
+
+  lru           ->  ps          : TurnOffOutlet(outlet1)
+  ps            ->  pdu         : TurnOffOutlet(outlet1)
+  group #SeaShell If using both outlets:
+    lru         ->  ps          : TurnOffOutlet(outlet2)
+    ps          ->  pdu         : TurnOffOutlet(outlet2)
+  end group
+end group
+
+group #SeaShell If all LRUs turned off successfully:
+  note over controller               : OpState: OFF
+  lmc           <--  controller   : Success
+else If one or more LRUs still powered on:
+  note over controller               : OpState: ON
+  lmc           <--  controller   : Failure
+end group
+
 @enduml

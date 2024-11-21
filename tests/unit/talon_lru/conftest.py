@@ -10,208 +10,94 @@
 from __future__ import annotations
 
 import unittest
-from typing import Callable, Dict, Optional, Tuple, Type
+from typing import Generator
 
-# Standard imports
 import pytest
-import pytest_mock
-import tango
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_control_model import ResultCode
+from ska_tango_base.control_model import PowerState
+from ska_tango_testing import context
+from ska_tango_testing.harness import TangoTestHarnessContext
+from ska_tango_testing.integration import TangoEventTracer
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-
-# Local imports
-from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import (
-    DevicesToLoadType,
-    TangoHarness,
-)
 
 
-@pytest.fixture()
-def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
+@pytest.fixture(name="device_under_test")
+def device_under_test_fixture(
+    test_context: TangoTestHarnessContext,
+) -> context.DeviceProxy:
     """
     Fixture that returns the device under test.
 
-    :param tango_harness: a test harness for Tango devices
-
-    :return: the device under test
+    :param test_context: the context in which the tests run
+    :return: the DeviceProxy for the device under test
     """
-    return tango_harness.get_device("mid_csp_cbf/talon_lru/001")
+    return test_context.get_device("mid_csp_cbf/talon_lru/001")
 
 
-@pytest.fixture()
-def device_to_load(
-    patched_talon_lru_device_class: Type[TalonLRU],
-) -> DevicesToLoadType:
-    """
-    Fixture that specifies the device to be loaded for testing.
-
-    :return: specification of the device to be loaded
-    """
-    return {
-        "path": "tests/unit/talon_lru/devicetoload.json",
-        "package": "ska_mid_cbf_mcs.talon_lru.talon_lru_device",
-        "device": "talonlru-001",
-        "device_class": "TalonLRU",
-        "proxy": CbfDeviceProxy,
-        "patch": patched_talon_lru_device_class,
-    }
-
-
-@pytest.fixture
-def unique_id() -> str:
-    """
-    Return a unique ID used to test Tango layer infrastructure.
-
-    :return: a unique ID
-    """
-    return "a unique id"
-
-
-@pytest.fixture()
-def mock_component_manager(
-    mocker: pytest_mock.mocker,
-    unique_id: str,
-    mock_power_switch1: unittest.mock.Mock,
-    mock_power_switch2: unittest.mock.Mock,
+@pytest.fixture(name="power_switch_1")
+def power_switch_1_fixture(
+    test_context: TangoTestHarnessContext,
 ) -> unittest.mock.Mock:
     """
-    Return a mock component manager.
-
-    The mock component manager is a simple mock except for one bit of
-    extra functionality: when we call start_communicating() on it, it
-    makes calls to callbacks signaling that communication is established
-    and the component is off.
-
-    :param mocker: pytest wrapper for unittest.mock
-    :param unique_id: a unique id used to check Tango layer functionality
-
-    :return: a mock component manager
+    Fixture that returns the power switch mock
     """
-    mock = mocker.Mock()
-    mock.is_communicating = False
-    mock.connected = False
+    return test_context.get_device("mid_csp_cbf/power_switch/001")
 
-    def _start_communicating(mock: unittest.mock.Mock) -> None:
-        if (
-            mock_power_switch1.stimulusMode == "conn_success"
-            or mock_power_switch2.stimulusMode == "conn_success"
-        ):
-            mock.is_communicating = True
-            mock.connected = True
-            mock._communication_status_changed_callback(
-                CommunicationStatus.ESTABLISHED
-            )
-            mock._component_power_mode_changed_callback(PowerMode.OFF)
-        elif (
-            mock_power_switch1.stimulusMode == "command_fail"
-            or mock_power_switch2.stimulusMode == "command_fail"
-        ):
-            mock.is_communicating = True
-            mock.connected = True
-            mock._communication_status_changed_callback(
-                CommunicationStatus.ESTABLISHED
-            )
-            mock._component_power_mode_changed_callback(PowerMode.OFF)
-        else:
-            mock.is_communicating = False
-            mock.connected = False
-            mock._communication_status_changed_callback(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            mock._component_fault_callback(True)
 
-    def _on(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        if (
-            mock_power_switch1.stimulusMode == "command_fail"
-            and mock_power_switch2.stimulusMode == "command_fail"
-        ):
-            mock._component_fault_callback(True)
-            return (ResultCode.FAILED, "On command failed")
-        else:
-            mock._component_power_mode_changed_callback(PowerMode.ON)
-            return (ResultCode.OK, "On command completed OK")
+@pytest.fixture(name="power_switch_2")
+def power_switch_2_fixture(
+    test_context: TangoTestHarnessContext,
+) -> unittest.mock.Mock:
+    """
+    Fixture that returns the power switch mock
+    """
+    return test_context.get_device("mid_csp_cbf/power_switch/002")
 
-    def _off(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        if (
-            mock_power_switch1.stimulusMode == "command_fail"
-            and mock_power_switch2.stimulusMode == "command_fail"
-        ):
-            mock._component_fault_callback(True)
-            return (ResultCode.FAILED, "Off command failed")
-        else:
-            mock._component_power_mode_changed_callback(PowerMode.OFF)
-            return (ResultCode.OK, "Off command completed OK")
 
-    def _check_power_mode(
-        mock: unittest.mock.Mock, state: tango.DevState
-    ) -> None:
-        pass
+@pytest.fixture(name="event_tracer", autouse=True)
+def tango_event_tracer(
+    device_under_test: context.DeviceProxy,
+) -> Generator[TangoEventTracer, None, None]:
+    """
+    Fixture that returns a TangoEventTracer for pertinent devices.
+    Takes as parameter all required device proxy fixtures for this test module.
 
-    mock.start_communicating.side_effect = lambda: _start_communicating(mock)
-    mock.on.side_effect = lambda: _on(mock)
-    mock.off.side_effect = lambda: _off(mock)
-    mock.check_power_mode.side_effect = lambda mock_state: _check_power_mode(
-        mock, mock_state
-    )
+    :param device_under_test: the DeviceProxy for the device under test
+    :return: TangoEventTracer
+    """
+    tracer = TangoEventTracer()
 
-    mock.enqueue.return_value = unique_id, ResultCode.QUEUED
+    change_event_attr_list = [
+        "longRunningCommandResult",
+        "adminMode",
+        "state",
+    ]
+    for attr in change_event_attr_list:
+        tracer.subscribe_event(device_under_test, attr)
 
-    return mock
+    return tracer
 
 
 @pytest.fixture()
-def patched_talon_lru_device_class(
-    mock_component_manager: unittest.mock.Mock,
-) -> Type[TalonLRU]:
-    """
-    Return a Talon LRU device that is patched with a mock component manager.
-
-    :param mock_component_manager: the mock component manager with
-        which to patch the device
-
-    :return: a Talon LRU device that is patched with a mock component
-        manager.
-    """
-
-    class PatchedTalonLRU(TalonLRU):
-        """A Talon LRU device patched with a mock component manager."""
-
-        def create_component_manager(
-            self: PatchedTalonLRU,
-        ) -> unittest.mock.Mock:
-            """
-            Return a mock component manager instead of the usual one.
-
-            :return: a mock component manager
-            """
-            self._communication_status: Optional[CommunicationStatus] = None
-            self._component_power_mode: Optional[PowerMode] = None
-
-            mock_component_manager._communication_status_changed_callback = (
-                self._communication_status_changed
-            )
-            mock_component_manager._component_power_mode_changed_callback = (
-                self._component_power_mode_changed
-            )
-            mock_component_manager._component_fault_callback = (
-                self._component_fault
-            )
-
-            return mock_component_manager
-
-    return PatchedTalonLRU
+def mock_talon_board() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.add_attribute("adminMode", None)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
+    builder.add_result_command(
+        "On",
+        ResultCode.QUEUED,
+        "1234_On",
+    )
+    builder.add_command(
+        "Off",
+        ResultCode.OK,
+    )
+    return builder()
 
 
-@pytest.fixture(
-    params=["conn_success", "conn_fail", "invalid_start_state", "command_fail"]
-)
-def mock_power_switch1(request: pytest.FixtureRequest) -> unittest.mock.Mock:
+@pytest.fixture(params=["command_success", "command_fail"])
+def mock_power_switch_1(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     """
     Get a mock power switch device. This fixture is parameterized to
     mock different pass / failure scenarios.
@@ -223,10 +109,8 @@ def mock_power_switch1(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     return get_mock_power_switch(request.param)
 
 
-@pytest.fixture(
-    params=["conn_success", "conn_fail", "invalid_start_state", "command_fail"]
-)
-def mock_power_switch2(request: pytest.FixtureRequest) -> unittest.mock.Mock:
+@pytest.fixture(params=["command_success", "command_fail"])
+def mock_power_switch_2(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     """
     Get a mock power switch device. This fixture is parameterized to
     mock different pass / failure scenarios.
@@ -245,176 +129,54 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
     :param param: parameterization string that impacts the mocked behaviour
     """
     builder = MockDeviceBuilder()
-    builder.add_attribute(
-        "stimulusMode", param
-    )  # Attribute only used by tests
+    builder.add_attribute("stimulusMode", param)
+    builder.add_attribute("adminMode", None)
+    builder.add_attribute("simulationMode", None)
+    builder.add_attribute("numOutlets", 8)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
+    builder.add_command("GetOutletPowerState", PowerState.OFF)
 
-    if param == "conn_success":
-        # Connection to power switch is working as expected
-        builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerMode", PowerMode.OFF)
+    if param == "command_success":
+        # Connection to power switch is working as expected.
         builder.add_result_command(
-            "TurnOnOutlet", ResultCode.OK, "Success msg"
+            "TurnOnOutlet", ResultCode.QUEUED, "Success message"
         )
         builder.add_result_command(
-            "TurnOffOutlet", ResultCode.OK, "Success msg"
+            "TurnOffOutlet", ResultCode.QUEUED, "Success message"
         )
-
-    elif param == "conn_fail":
-        # Connection to power switch cannot be made
-        builder.add_attribute("numOutlets", 0)
-        builder.add_result_command(
-            "TurnOnOutlet", ResultCode.FAILED, "Failed msg"
-        )
-        builder.add_result_command(
-            "TurnOffOutlet", ResultCode.FAILED, "Failed msg"
-        )
-
-    elif param == "invalid_start_state":
-        # Can communicate with the power switch, but one or both outlets are ON
-        # when the TalonLRU device starts up
-        builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerMode", PowerMode.ON)
-        builder.add_result_command(
-            "TurnOnOutlet", ResultCode.OK, "Success msg"
-        )
-        builder.add_result_command(
-            "TurnOffOutlet", ResultCode.OK, "Success msg"
-        )
-
     elif param == "command_fail":
-        # Can communicate with the power switch, but the turn on/off outlet
-        # commands fail
-        builder.add_attribute("numOutlets", 8)
-        builder.add_command("GetOutletPowerMode", PowerMode.OFF)
+        # Can communicate with the power switch, but the turn on/off outlet commands fail.
         builder.add_result_command(
-            "TurnOnOutlet", ResultCode.FAILED, "Failed msg"
+            "TurnOnOutlet", ResultCode.FAILED, "Failed message"
         )
         builder.add_result_command(
-            "TurnOffOutlet", ResultCode.FAILED, "Failed msg"
+            "TurnOffOutlet", ResultCode.FAILED, "Failed message"
         )
-
     return builder()
 
 
 @pytest.fixture()
 def initial_mocks(
-    mock_power_switch1: unittest.mock.Mock,
-    mock_power_switch2: unittest.mock.Mock,
-) -> Dict[str, unittest.mock.Mock]:
+    mock_power_switch_1: unittest.mock.Mock,
+    mock_power_switch_2: unittest.mock.Mock,
+    mock_talon_board: unittest.mock.Mock,
+) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
+    Althought these mocks are not explicitly used in TalonLRU_test.py,
+    they are required to be pre-registered in the test harness.
+    TalonLRU device only uses the mock's 3 digit device name
+    to create the device proxy rather then full FQDN.
 
-    :param mock_power_switch1: a mock PowerSwitch device
-    :param mock_power_switch2: a second mock PowerSwitch device
+    :param mock_power_switch_1: a mock power switch device that simulates both successful and failed commands
+    :param mock_power_switch_2: a mock power switch device that simulates both successful and failed commands
+    :param mock_talon_board: a mock talon board
+
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/power_switch/001": mock_power_switch1,
-        "mid_csp_cbf/power_switch/002": mock_power_switch2,
+        "mid_csp_cbf/talon_board/001": mock_talon_board,
+        "mid_csp_cbf/talon_board/002": mock_talon_board,
+        "mid_csp_cbf/power_switch/001": mock_power_switch_1,
+        "mid_csp_cbf/power_switch/002": mock_power_switch_2,
     }
-
-
-@pytest.fixture()
-def communication_status_changed_callback(
-    mock_callback_factory: Callable[[], unittest.mock.Mock],
-) -> unittest.mock.Mock:
-    """
-    Return a mock callback for component manager communication status.
-
-    :param mock_callback_factory: fixture that provides a mock callback
-        factory (i.e. an object that returns mock callbacks when
-        called).
-
-    :return: a mock callback to be called when the communication status
-        of a component manager changed.
-    """
-    return mock_callback_factory()
-
-
-@pytest.fixture()
-def component_power_mode_changed_callback(
-    mock_callback_factory: Callable[[], unittest.mock.Mock],
-) -> unittest.mock.Mock:
-    """
-    Return a mock callback for component power mode change.
-
-    :param mock_callback_factory: fixture that provides a mock callback
-        factory (i.e. an object that returns mock callbacks when
-        called).
-
-    :return: a mock callback to be called when the component manager
-        detects that the power mode of its component has changed.
-    """
-    return mock_callback_factory()
-
-
-@pytest.fixture()
-def component_fault_callback(
-    mock_callback_factory: Callable[[], unittest.mock.Mock],
-) -> unittest.mock.Mock:
-    """
-    Return a mock callback for component manager fault.
-
-    :param mock_callback_factory: fixture that provides a mock callback
-        factory (i.e. an object that returns mock callbacks when
-        called).
-
-    :return: a mock callback to be called when the communication status
-        of a component manager changed.
-    """
-    return mock_callback_factory()
-
-
-@pytest.fixture()
-def check_power_mode_callback(
-    mock_callback_factory: Callable[[], unittest.mock.Mock],
-) -> unittest.mock.Mock:
-    """
-    Return a mock callback for component manager fault.
-
-    :param mock_callback_factory: fixture that provides a mock callback
-        factory (i.e. an object that returns mock callbacks when
-        called).
-
-    :return: a mock callback to be called when the communication status
-        of a component manager changed.
-    """
-    return mock_callback_factory()
-
-
-@pytest.fixture()
-def push_change_event_callback_factory(
-    mock_change_event_callback_factory: Callable[
-        [str], MockChangeEventCallback
-    ],
-) -> Callable[[], MockChangeEventCallback]:
-    """
-    Return a mock change event callback factory
-
-    :param mock_change_event_callback_factory: fixture that provides a
-        mock change event callback factory (i.e. an object that returns
-        mock callbacks when called).
-
-    :return: a mock change event callback factory
-    """
-
-    def _factory() -> MockChangeEventCallback:
-        return mock_change_event_callback_factory("adminMode")
-
-    return _factory
-
-
-@pytest.fixture()
-def push_change_event_callback(
-    push_change_event_callback_factory: Callable[[], MockChangeEventCallback],
-) -> MockChangeEventCallback:
-    """
-    Return a mock change event callback
-
-    :param push_change_event_callback_factory: fixture that provides a mock
-        change event callback factory
-
-    :return: a mock change event callback
-    """
-    return push_change_event_callback_factory()

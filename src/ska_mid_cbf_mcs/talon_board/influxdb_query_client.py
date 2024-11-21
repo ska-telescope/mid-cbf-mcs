@@ -9,6 +9,7 @@
 
 import asyncio
 import logging
+from datetime import datetime
 
 from influxdb_client.client.influxdb_client_async import InfluxDBClientAsync
 
@@ -39,8 +40,8 @@ class InfluxdbQueryClient:
         self._influx_bucket = influx_bucket
         self._influx_auth_token = influx_auth_token
 
-        self._logger = logger
-        self._logger.info(
+        self.logger = logger
+        self.logger.info(
             f"InfluxdbQueryClient: using {self._hostname}:{self._influx_port}"
         )
 
@@ -55,45 +56,18 @@ class InfluxdbQueryClient:
                 url=f"http://{self._hostname}:{self._influx_port}",
                 token=self._influx_auth_token,
                 org=self._influx_org,
+                timeout=300,
             ) as client:
                 ready = await client.ping()
-                self._logger.info(
-                    f"Ping InfluxDB at {self._hostname}:{self._influx_port}: {ready}"
-                )
                 return ready
-        except Exception as e:
-            self._logger.error(
-                f"Unexpected error when pinging InfluxDB at {self._hostname}:{self._influx_port}: {e}"
-            )
+        except Exception:
             return False
 
-    async def do_queries(self):
-        """
-        The main query function that asynchronously queries
-        the Influxdb for all the monitored devices. The results
-        are saved to in the dict self._telemetry.
-
-        :return: 2D array of tuples of (field, time, value)
-        """
-        async with InfluxDBClientAsync(
-            url=f"http://{self._hostname}:{self._influx_port}",
-            token=self._influx_auth_token,
-            org=self._influx_org,
-            timeout=2000,
-        ) as client:
-            res = await asyncio.gather(
-                self._query_temperatures(client),
-                self._query_mbo_temperatures(client),
-                self._query_mbo_voltages(client),
-                self._query_fans_pwm(client),
-                self._query_fans_fault(client),
-                self._query_ltm_voltages(client),
-                self._query_ltm_currents(client),
-                self._query_ltm_temperatures(client),
-            )
-        return res
+    # --- InfluxDB Query Methods --- #
 
     async def _query_common(self, client, query: str):
+        # For each matching record returned from the query, add
+        # the field name, time, and value to the result list.
         query_api = client.query_api()
         result = await query_api.query(org=self._influx_org, query=query)
         results = []
@@ -107,6 +81,23 @@ class InfluxdbQueryClient:
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
         |>filter(fn: (r) => r["_field"] =~ /temperature-sensors_.*?temp$/)\
+        |>last()'
+        return await self._query_common(client, query)
+
+    async def _query_fpga_die_voltages(
+        self, client
+    ) -> list[tuple[str, datetime, float]]:
+        """
+        Asynchronously queries a influxDB for FPGA Die Voltage Sensor readings
+        Queries returns the readings for all 6 voltage sensors on the FPGA Die
+
+        :return: A list of 3-value tuple that containes: Sensor Name, Time of Record, Value of the Sensor in Volts
+        :rtype: list[tuple[str,datetime,float]]
+        """
+        query = f'from(bucket: "{self._influx_bucket}")\
+        |>range(start: -5m)\
+        |>filter(fn: (r) => r["_measurement"] == "exec")\
+        |>filter(fn: (r) => r["_field"] =~ /voltage-sensors_fpga-die-voltage-[0-6]$/)\
         |>last()'
         return await self._query_common(client, query)
 
@@ -138,7 +129,15 @@ class InfluxdbQueryClient:
         query = f'from(bucket: "{self._influx_bucket}")\
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /fans_pwm.*?_[0-5]/)\
+        |>filter(fn: (r) => r["_field"] =~ /fans_pwm.*?_[0-3]/)\
+        |>last()'
+        return await self._query_common(client, query)
+
+    async def _query_fans_input(self, client):
+        query = f'from(bucket: "{self._influx_bucket}")\
+        |>range(start: -5m)\
+        |>filter(fn: (r) => r["_measurement"] == "exec")\
+        |>filter(fn: (r) => r["_field"] =~ /fans_fan-input_[0-3]/)\
         |>last()'
         return await self._query_common(client, query)
 
@@ -146,7 +145,7 @@ class InfluxdbQueryClient:
         query = f'from(bucket: "{self._influx_bucket}")\
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /fans_fan-fault_[0-5]/)\
+        |>filter(fn: (r) => r["_field"] =~ /fans_fan-fault_[0-3]/)\
         |>last()'
         return await self._query_common(client, query)
 
@@ -173,3 +172,31 @@ class InfluxdbQueryClient:
         |>filter(fn: (r) => r["_field"] =~ /LTMs_[0-9]_LTM_temperature.*?/)\
         |>last()'
         return await self._query_common(client, query)
+
+    async def do_queries(self):
+        """
+        The main query function that asynchronously queries
+        the Influxdb for all the monitored devices. The results
+        are saved to in the dict self._telemetry.
+
+        :return: 2D array of tuples of (field, time, value)
+        """
+        async with InfluxDBClientAsync(
+            url=f"http://{self._hostname}:{self._influx_port}",
+            token=self._influx_auth_token,
+            org=self._influx_org,
+            timeout=2000,
+        ) as client:
+            res = await asyncio.gather(
+                self._query_temperatures(client),
+                self._query_mbo_temperatures(client),
+                self._query_mbo_voltages(client),
+                self._query_fans_pwm(client),
+                self._query_fans_input(client),
+                self._query_fans_fault(client),
+                self._query_ltm_voltages(client),
+                self._query_ltm_currents(client),
+                self._query_ltm_temperatures(client),
+                self._query_fpga_die_voltages(client),
+            )
+        return res

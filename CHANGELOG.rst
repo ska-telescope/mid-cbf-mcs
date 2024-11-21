@@ -5,6 +5,135 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+UNRELEASED CHANGES
+******************
+* CIP-2953 increase SV pod storage from 375Mi to 2Gi
+* CIP-3028 Updated hw config after systems room re-organization.
+* CIP-3034 Removed parallelization for LRU On and Off command queuing to work better with the ST PDU that is now in use.
+* CIP-2549 Controller sets unused subdevices to AdminMode.NOT_FITTED
+* CIP-2965 talondx-config generates in the beginning of integration test
+* SKB-499 added attribute pingResult to talon board devices. Added missing warning/alarm values.
+* CIP-2664 Added PST-BF back to FSP as a valid function mode; FspPstSubarray still remains to be added back in a separate story.
+* CIP-2659: CbfController On/Off command partial success
+  * On command succeeds if one or more LRUs are powered on; Off command succeeds if one or more LRUs are powered off
+  * Controller OpState is ON if one or more LRUs are powered on, and only OFF once all LRUs are powered off and Off command is fully successful
+  * wait_for_blocking_results allows partial success of blocking LRCs
+  * Configurable HPS device timeouts in charts: CbfController, FspCorrSubarray, SlimLink, Vcc
+* CIP-2828 Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
+* CIP-2899: Refactored adminMode push event to be changed after communication has been established
+* CIP-3100: fix sending all subarray vcc shift values in hps fsp config value vcc_id_to_rdt_freq_shifts
+* 19-11-2024: Added attribute change event mocking for unit tests to MockDeviceBuilder, MockCommand
+
+1.1.0-rc.2
+**********
+* CIP-3035: fix errors when sending channel_offset to Host-LUT and SPEAD
+  * fix sending proper channel offset values to SPEAD and Host-LUT
+  * fix splitting up output_port, output_host, and output_link_map in fsp configs
+* CIP-3065: fix setting receptors in fsp config
+* CIP-2240: ExpectedDishID field is added to the ConfigureScan
+* CIP-3068: fix validation output_host
+  * difference between channel_ids is a multiple of 20, not the value itself
+
+1.1.0-rc.1
+**********
+* CIP-2799 Refactored wait_for_blocking_results to verify all incoming events
+* CIP-2966 fixed SPEAD descriptor not ready before Scan under certain conditions
+* CIP-2911 fixed bad error message appending in controller Off command
+* CIP-2840 talon fans monitoring
+  * added hasFanControl attribute to talon board devices to indicate if the board has control over fans
+  * added fansRpm attribute to talon board devices
+  * fixed bugs affecting talon board device initialization and influxdb queries
+  * updated FPGA die voltage labels to be more descriptive
+  * updated FPGA die voltage warning and alarm range according to stratix10 documentation
+* CIP-2956 CbfSubarray now sends all previously assigned FSPs to IDLE at the top of ConfigureScan
+* CIP-2917 Add optional configurable timeout for LRC wait thread; applied to HPS Master timeout
+* CIP-2780 added 100g ethernet monitoring on talon board devices
+* CIP-2254 support for configurescan 4.1 which introduces correlation processing regions
+  * Removes support for configurescan 3.0
+  * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
+  * Add 'vcc_id_to_rdt_freq_shifts' to hps_fsp_corr config to support work on CIP-2662
+
+1.0.0
+******
+* CIP-1924 Upgrade to ska-tango-base v1.0.0
+  * Created base classes for observing and non-observing devices (CbfObsDevice, CbfDevice) and component managers (CbfObsComponentManager, CbfComponentManager)
+    * CbfObsDevice implements reduced subarray ObsState model, removing EMPTY and RESOURCING states for non-subarray devices.
+  * Converted base component managers to inherit from TaskExecutorComponentManager
+  * Converted the following commands/methods to queued LRCs/submitted tasks:
+    * start_communicating
+    * CbfController: On, Off, InitSysParam
+    * CbfSubarray: update_sys_param, AddReceptors, RemoveReceptors, RemoveAllReceptors, ConfigureScan, Scan, EndScan, GoToIdle, Abort, ObsReset, Restart
+    * Vcc: ConfigureBand, ConfigureScan, Scan, EndScan, GoToIdle, Abort, ObsReset
+    * Fsp: SetFunctionMode, AddSubarrayMembership, RemoveSubarrayMembership
+    * FspCorrSubarray: ConfigureScan, Scan, EndScan, GoToIdle, Abort, ObsReset
+    * Slim: On, Off, Configure
+    * SlimLink: ConnectTxRx, DisconnectTxRx
+    * TalonLRU: On, Off
+    * PowerSwitch: TurnOnOutlet, TurnOffOutlet
+  * Removed the following commands:
+    * Standby command removed across the board
+    * CbfSubarray: On, Off
+    * Vcc: On, Off
+    * Fsp: On, Off
+    * FspCorrSubarray: On, Off
+    * TalonBoard: On, Off
+  * Improvements in control flow:
+    * Only Tango Devices that are directly controlling hardware can receive ON/OFF commands e.g. TalonLRU, and not Vcc
+    * In  Tango Devices that do not receive ON/OFF commands, once communication with the component is established the OpState becomes ON. This is all achieved when start_communicating method is called as part of setting the Tango Device's AdminMode to ONLINE. In these cases, essentially ON means the device is communicating with it's subordinate device.
+    * Moved AdminMode control of obs devices (Vcc, Fsp, FspCorrSubarray) from CbfController to CbfSubarray, during the following subarray commands:
+      * Vcc AdminMode ONLINE/OFFLINE during AddReceptors/RemoveReceptors
+      * Fsp AdminMode ONLINE/OFFLINE during ConfigureScan/GoToIdle
+      * FspCorrSubarray ONLINE/OFFLINE set by Fsp during ConfigureScan/GoToIdle
+    * State changing callbacks consistently use locks to avoid race conditions.
+      * Component managers do not update state machines directly; only callbacks (implemented at the device level) are passed to the component managers.
+  * Improvements in tests:
+    * More thorough unit tests provide better low-level coverage for individual devices, including failure mechanisms.
+    * Redundant subordinate device integration tests deprecated in favour of more comprehensive and holistic tests only at the highest levels of MCS (Controller and Subarray).
+    * ska-tango-testing better leveraged to align our testing framework with the rest of the SKAO:
+      * ska_tango_testing.context basis for unit testing harness
+      * TangoEventTracer used along with custom defined change event assertions to validate event-driven device behaviour.
+
+* CIP-2732 Added supported interface validation and documentation updates
+  * Added validation for supported schema versions specified in the interface parameter for commands in MCS.
+  * Added sphinx directive to generate tables for documentation
+* CIP-2616 MCS ADR-99 Scan Configuration Validation Updates
+  * Abstracted out the Scan Configuration Validation in Subarray into a separate class  
+  * Updated the Validations and added new validations to support ADR-99/v4.1 Interface Changes
+  * Refer to new MCS restrictions here: https://confluence.skatelescope.org/display/SE/Validation+of+Scan+Configuration+against+Supported+Configurations
+
+* CIP-2504 Updated for mid.cbf CSP ConfigureScan 3.0 telescope model changes
+  * Removed validation for tdc fields (removed from telescope model)
+  * Removed validation for doppler_phase_corr_subscription_point (removed from
+    telescope model)
+  * Removed check for existence of delay_model_subscription (mandatory in telmodel)
+  * Removed validation and setting zoom_factor and zoom_window_tuning
+
+    * Removed from telescope model
+    * Class properties remain, to be removed in base class update
+    * zoom_factor set to 0 for downstream HPS config, this will be set later
+      when zoom is implemented from the channel_width parameter introduced in 
+      ADR-99
+
+  * Added cross validation for cbf.fsp.output_port for the incoming ConfigureScan
+  * Removed setting fsp subarray values from parameters removed from schema
+  * Updated ConfigureScan unit test data to interface 3.0 
+  * Updated output_port default value to expanded 2-tuple format
+
+0.15.2
+******
+* CIP-2560 Moved visibility transport logic from FSP App to VisibilityTransport class. Multi-FSP support.
+* CIP-2553 Reduced number of pods in MCS deployment
+* CIP-2447 Added FpgaDieVoltage[0-6] Attributes in TalonBoard Device to read from the FPGA Die Voltage Sensors
+* MAP-115 Updated MCS overview Taranta dashboard to include more info LRUs, sim mode and updates to the DISH ID
+* MAP-116 Change initial board IP loading so it is set to an explicitly placeholder value until a HW config file is applied
+* CIP-2604 Fixes issue where unused Talon times-out while trying to set SimulationMode in MCS's TalonBoard during Controller's On Command
+* CIP-2365 Fixing shutdown order to fix off command failure, logging warning instead of error when talon board fails to turn off
+
+0.15.1
+******
+* MAP-69 Removing old ec-bite and ec-deployer pods from MCS deployment
+         and bumping EC to a version that integrates the new pods.
+
 0.15.0
 ******
 * CIP-2335 Migrated SlimTest From Engineering Console to MCS's Slim Device
@@ -50,7 +179,7 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 0.12.26
 *******
-* CIP-2105: Fixed FSP error from trying to revmove group proxy from IDLE state.
+* CIP-2105: Fixed FSP error from trying to remove group proxy from IDLE state.
 
 0.12.25
 *******
@@ -80,7 +209,7 @@ Development
 
 0.12.20
 *******
-* CIP-2050 Added additional logging for apsc_smnp_driver
+* CIP-2050 Added additional logging for apc_snmp_driver
 
 0.12.19
 *******
@@ -126,7 +255,7 @@ Development
 
 0.12.9
 ******
-* CIP-1674 Logconsumer logs every message twice
+* CIP-1674 LogConsumer logs every message twice
 * CIP-1853 Enhance system-tests to check ResultCode
 * CIP-2012 MCS k8s test pipeline job output no longer includes code coverage table
 

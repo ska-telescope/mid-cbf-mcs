@@ -1,8 +1,8 @@
 name: vcc
 function: coarse-channelisation
 domain: sensing
-command: "VccMulti"
-instances: ["vcc-001", "vcc-002", "vcc-003", "vcc-004", "vcc-005", "vcc-006", "vcc-007", "vcc-008"]
+command: "Vcc"
+instances: ["vcc"]
 depends_on:
   - device: sys/database/2
 readinessProbe:
@@ -18,20 +18,13 @@ livenessProbe:
   successThreshold: 1
   failureThreshold: 3
 server:
-  name: "VccMulti"
+  name: "Vcc"
   instances:
-  - name: "vcc-001"
+  - name: "vcc"
     classes:
     - name: "Vcc"
       devices:
       - name: "mid_csp_cbf/vcc/001"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "TalonLRUAddress"
             values:
@@ -51,32 +44,13 @@ server:
           - name: "Band5Address"
             values:
             - "talondx-001/vcc-app/vcc-band-5"
-          - name: "SW1Address"
-            values:
-            - "mid_csp_cbf/vcc_sw1/001"
-          - name: "SW2Address"
-            values:
-            - "mid_csp_cbf/vcc_sw2/001"
-          - name: "VccID"
+          - name: "DeviceID"
             values:
             - "1"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/001"
-      - name: "mid_csp_cbf/vcc_sw2/001"
-
-  - name: "vcc-002"
-    classes:
-    - name: "Vcc"
-      devices:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.vccTimeout }}"
       - name: "mid_csp_cbf/vcc/002"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
           - name: "TalonLRUAddress"
             values:
@@ -96,32 +70,13 @@ server:
           - name: "Band5Address"
             values:
             - "talondx-002/vcc-app/vcc-band-5"
-          - name: "SW1Address"
-            values:
-            - "mid_csp_cbf/vcc_sw1/002"
-          - name: "SW2Address"
-            values:
-            - "mid_csp_cbf/vcc_sw2/002"
-          - name: "VccID"
+          - name: "DeviceID"
             values:
             - "2"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/002"
-      - name: "mid_csp_cbf/vcc_sw2/002"
-
-  - name: "vcc-003"
-    classes:
-    - name: "Vcc"
-      devices:
-      - name: "mid_csp_cbf/vcc/003"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
+          - name: "LRCTimeout"
             values:
-            - "-1"
-            - "1"
+            - "{{ .Values.vccTimeout }}"
+      - name: "mid_csp_cbf/vcc/003"
         properties:
           - name: "TalonLRUAddress"
             values:
@@ -141,32 +96,13 @@ server:
           - name: "Band5Address"
             values:
             - "talondx-003/vcc-app/vcc-band-5"
-          - name: "SW1Address"
-            values:
-            - "mid_csp_cbf/vcc_sw1/003"
-          - name: "SW2Address"
-            values:
-            - "mid_csp_cbf/vcc_sw2/003"
-          - name: "VccID"
+          - name: "DeviceID"
             values:
             - "3"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/003"
-      - name: "mid_csp_cbf/vcc_sw2/003"
-
-  - name: "vcc-004"
-    classes:
-    - name: "Vcc"
-      devices:
-      - name: "mid_csp_cbf/vcc/004"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
+          - name: "LRCTimeout"
             values:
-            - "-1"
-            - "1"
+            - "{{ .Values.vccTimeout }}"
+      - name: "mid_csp_cbf/vcc/004"
         properties:
           - name: "TalonLRUAddress"
             values:
@@ -186,196 +122,12 @@ server:
           - name: "Band5Address"
             values:
             - "talondx-004/vcc-app/vcc-band-5"
-          - name: "SW1Address"
-            values:
-            - "mid_csp_cbf/vcc_sw1/004"
-          - name: "SW2Address"
-            values:
-            - "mid_csp_cbf/vcc_sw2/004"
-          - name: "VccID"
+          - name: "DeviceID"
             values:
             - "4"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/004"
-      - name: "mid_csp_cbf/vcc_sw2/004"
-
-  - name: "vcc-005"
-    classes:
-    - name: "Vcc"
-      devices:
-      - name: "mid_csp_cbf/vcc/005"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
+          - name: "LRCTimeout"
             values:
-            - "-1"
-            - "1"
-        properties:
-          - name: "TalonLRUAddress"
-            values:
-            - "mid_csp_cbf/talon_lru/003"
-          - name: "VccControllerAddress"
-            values:
-            - "talondx-005/vcc-app/vcc-controller"
-          - name: "Band1And2Address"
-            values:
-            - "talondx-005/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-005/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-005/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-005/vcc-app/vcc-band-5"
-          - name: "SW1Address"
-            values:
-            - "mid_csp_cbf/vcc_sw1/005"
-          - name: "SW2Address"
-            values:
-            - "mid_csp_cbf/vcc_sw2/005"
-          - name: "VccID"
-            values:
-            - "5"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/005"
-      - name: "mid_csp_cbf/vcc_sw2/005"
-  - name: "vcc-006"
-    classes:
-    - name: "Vcc"
-      devices:
-      - name: "mid_csp_cbf/vcc/006"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
-        properties:
-          - name: "TalonLRUAddress"
-            values:
-            - "mid_csp_cbf/talon_lru/003"
-          - name: "VccControllerAddress"
-            values:
-            - "talondx-006/vcc-app/vcc-controller"
-          - name: "Band1And2Address"
-            values:
-            - "talondx-006/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-006/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-006/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-006/vcc-app/vcc-band-5"
-          - name: "SW1Address"
-            values:
-            - "mid_csp_cbf/vcc_sw1/006"
-          - name: "SW2Address"
-            values:
-            - "mid_csp_cbf/vcc_sw2/006"
-          - name: "VccID"
-            values:
-            - "6"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/006"
-      - name: "mid_csp_cbf/vcc_sw2/006"
-  - name: "vcc-007"
-    classes:
-    - name: "Vcc"
-      devices:
-      - name: "mid_csp_cbf/vcc/007"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
-        properties:
-          - name: "TalonLRUAddress"
-            values:
-            - "mid_csp_cbf/talon_lru/004"
-          - name: "VccControllerAddress"
-            values:
-            - "talondx-007/vcc-app/vcc-controller"
-          - name: "Band1And2Address"
-            values:
-            - "talondx-007/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-007/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-007/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-007/vcc-app/vcc-band-5"
-          - name: "SW1Address"
-            values:
-            - "mid_csp_cbf/vcc_sw1/007"
-          - name: "SW2Address"
-            values:
-            - "mid_csp_cbf/vcc_sw2/007"
-          - name: "VccID"
-            values:
-            - "7"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/007"
-      - name: "mid_csp_cbf/vcc_sw2/007"
-  - name: "vcc-008"
-    classes:
-    - name: "Vcc"
-      devices:
-      - name: "mid_csp_cbf/vcc/008"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
-        properties:
-          - name: "TalonLRUAddress"
-            values:
-            - "mid_csp_cbf/talon_lru/004"
-          - name: "VccControllerAddress"
-            values:
-            - "talondx-008/vcc-app/vcc-controller"
-          - name: "Band1And2Address"
-            values:
-            - "talondx-008/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-008/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-008/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-008/vcc-app/vcc-band-5"
-          - name: "SW1Address"
-            values:
-            - "mid_csp_cbf/vcc_sw1/008"
-          - name: "SW2Address"
-            values:
-            - "mid_csp_cbf/vcc_sw2/008"
-          - name: "VccID"
-            values:
-            - "8"
-    - name: "VccSearchWindow"
-      devices:
-      - name: "mid_csp_cbf/vcc_sw1/008"
-      - name: "mid_csp_cbf/vcc_sw2/008"
+            - "{{ .Values.vccTimeout }}"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

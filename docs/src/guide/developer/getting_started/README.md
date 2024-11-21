@@ -223,7 +223,7 @@ The 3 instances of the `CbfSubarray` TANGO device server.
 * `fspxx-fsp-xx-0`: `xx` ranges from `01` to `04`. 
 The 4 instances of the `FspMulti` TANGO device servers.
 * `vccxxx-vcc-xxx-0`: `xxx` ranges from `001` to `004`. 
-The 4 instances of the `VccMulti` TANGO device servers.
+The 4 instances of the `Vcc` TANGO device servers.
 * `tmcspsubarrayleafnodetestx-tmx-0`: `x` ranges from `1` to `2`. 
 The 2 instances of the `TmCspSubarrayLeafNodeTest` TANGO device servers.
 * `tango-host-databaseds-from-makefile-test-0`: The TANGO DB device server.

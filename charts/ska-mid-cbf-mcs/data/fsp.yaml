@@ -4,14 +4,7 @@ domain: signal-processing
 command: "FspMulti"
 instances: ["fsp-01", "fsp-02", "fsp-03", "fsp-04"]
 depends_on:
-  - device: mid_csp_cbf/vcc/001
-  - device: mid_csp_cbf/vcc/002
-  - device: mid_csp_cbf/vcc/003
-  - device: mid_csp_cbf/vcc/004
-  - device: mid_csp_cbf/vcc/005
-  - device: mid_csp_cbf/vcc/006
-  - device: mid_csp_cbf/vcc/007
-  - device: mid_csp_cbf/vcc/008
+  - device: sys/database/2
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -32,15 +25,8 @@ server:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/01"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "1"
           - name: "FspCorrSubarray"
@@ -48,11 +34,6 @@ server:
             - "mid_csp_cbf/fspCorrSubarray/01_01"
             - "mid_csp_cbf/fspCorrSubarray/01_02"
             - "mid_csp_cbf/fspCorrSubarray/01_03"
-          - name: "FspPssSubarray"
-            values:
-            - "mid_csp_cbf/fspPssSubarray/01_01"
-            - "mid_csp_cbf/fspPssSubarray/01_02"
-            - "mid_csp_cbf/fspPssSubarray/01_03"
           - name: "FspPstSubarray"
             values:
             - "mid_csp_cbf/fspPstSubarray/01_01"
@@ -61,264 +42,72 @@ server:
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-controller"
-          - name: "HpsFspCorrControllerAddress"
-            values:
-            - "talondx-001/fsp-app/fsp-corr-controller"
 
     - name: "FspCorrSubarray"
       devices:
       - name: "mid_csp_cbf/fspCorrSubarray/01_01"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspCorrSubarray/01_02"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspCorrSubarray/01_03"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-corr-controller"
-
-    - name: "FspPssSubarray"
-      devices:
-      - name: "mid_csp_cbf/fspPssSubarray/01_01"
-        properties:
-          - name: "CbfControllerAddress"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-
-      - name: "mid_csp_cbf/fspPssSubarray/01_02"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-
-      - name: "mid_csp_cbf/fspPssSubarray/01_03"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-            
+            - "{{ .Values.fspTimeout }}"
+    
     - name: "FspPstSubarray"
       devices:
       - name: "mid_csp_cbf/fspPstSubarray/01_01"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-001/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspPstSubarray/01_02"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-001/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspPstSubarray/01_03"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-001/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "1"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
   - name: "fsp-02"
     classes:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/02"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "2"
           - name: "FspCorrSubarray"
@@ -326,11 +115,6 @@ server:
             - "mid_csp_cbf/fspCorrSubarray/02_01"
             - "mid_csp_cbf/fspCorrSubarray/02_02"
             - "mid_csp_cbf/fspCorrSubarray/02_03"
-          - name: "FspPssSubarray"
-            values:
-            - "mid_csp_cbf/fspPssSubarray/02_01"
-            - "mid_csp_cbf/fspPssSubarray/02_02"
-            - "mid_csp_cbf/fspPssSubarray/02_03"
           - name: "FspPstSubarray"
             values:
             - "mid_csp_cbf/fspPstSubarray/02_01"
@@ -339,264 +123,72 @@ server:
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-controller"
-          - name: "HpsFspCorrControllerAddress"
-            values:
-            - "talondx-002/fsp-app/fsp-corr-controller"
 
     - name: "FspCorrSubarray"
       devices:
       - name: "mid_csp_cbf/fspCorrSubarray/02_01"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspCorrSubarray/02_02"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspCorrSubarray/02_03"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-corr-controller"
-
-    - name: "FspPssSubarray"
-      devices:
-      - name: "mid_csp_cbf/fspPssSubarray/02_01"
-        properties:
-          - name: "CbfControllerAddress"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-
-      - name: "mid_csp_cbf/fspPssSubarray/02_02"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-
-      - name: "mid_csp_cbf/fspPssSubarray/02_03"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
     - name: "FspPstSubarray"
       devices:
       - name: "mid_csp_cbf/fspPstSubarray/02_01"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-002/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspPstSubarray/02_02"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-002/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspPstSubarray/02_03"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-002/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "2"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
   - name: "fsp-03"
     classes:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/03"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "3"
           - name: "FspCorrSubarray"
@@ -604,11 +196,6 @@ server:
             - "mid_csp_cbf/fspCorrSubarray/03_01"
             - "mid_csp_cbf/fspCorrSubarray/03_02"
             - "mid_csp_cbf/fspCorrSubarray/03_03"
-          - name: "FspPssSubarray"
-            values:
-            - "mid_csp_cbf/fspPssSubarray/03_01"
-            - "mid_csp_cbf/fspPssSubarray/03_02"
-            - "mid_csp_cbf/fspPssSubarray/03_03"
           - name: "FspPstSubarray"
             values:
             - "mid_csp_cbf/fspPstSubarray/03_01"
@@ -617,264 +204,72 @@ server:
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-controller"
-          - name: "HpsFspCorrControllerAddress"
-            values:
-            - "talondx-003/fsp-app/fsp-corr-controller"
 
     - name: "FspCorrSubarray"
       devices:
       - name: "mid_csp_cbf/fspCorrSubarray/03_01"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspCorrSubarray/03_02"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspCorrSubarray/03_03"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-corr-controller"
-
-    - name: "FspPssSubarray"
-      devices:
-      - name: "mid_csp_cbf/fspPssSubarray/03_01"
-        properties:
-          - name: "CbfControllerAddress"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-
-      - name: "mid_csp_cbf/fspPssSubarray/03_02"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-
-      - name: "mid_csp_cbf/fspPssSubarray/03_03"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-
+            - "{{ .Values.fspTimeout }}"
+    
     - name: "FspPstSubarray"
       devices:
       - name: "mid_csp_cbf/fspPstSubarray/03_01"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-003/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspPstSubarray/03_02"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-003/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspPstSubarray/03_03"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-003/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "3"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
   - name: "fsp-04"
     classes:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/04"
-        attribute_properties:
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
         properties:
-          - name: "FspID"
+          - name: "DeviceID"
             values:
             - "4"
           - name: "FspCorrSubarray"
@@ -882,11 +277,6 @@ server:
             - "mid_csp_cbf/fspCorrSubarray/04_01"
             - "mid_csp_cbf/fspCorrSubarray/04_02"
             - "mid_csp_cbf/fspCorrSubarray/04_03"
-          - name: "FspPssSubarray"
-            values:
-            - "mid_csp_cbf/fspPssSubarray/04_01"
-            - "mid_csp_cbf/fspPssSubarray/04_02"
-            - "mid_csp_cbf/fspPssSubarray/04_03"
           - name: "FspPstSubarray"
             values:
             - "mid_csp_cbf/fspPstSubarray/04_01"
@@ -895,249 +285,64 @@ server:
           - name: "HpsFspControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-controller"
-          - name: "HpsFspCorrControllerAddress"
-            values:
-            - "talondx-004/fsp-app/fsp-corr-controller"
 
     - name: "FspCorrSubarray"
       devices:
       - name: "mid_csp_cbf/fspCorrSubarray/04_01"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspCorrSubarray/04_02"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspCorrSubarray/04_03"
         properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-corr-controller"
-
-    - name: "FspPssSubarray"
-      devices:
-      - name: "mid_csp_cbf/fspPssSubarray/04_01"
-        properties:
-          - name: "CbfControllerAddress"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-
-      - name: "mid_csp_cbf/fspPssSubarray/04_02"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-
-      - name: "mid_csp_cbf/fspPssSubarray/04_03"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-
+            - "{{ .Values.fspTimeout }}"
+          
     - name: "FspPstSubarray"
       devices:
       - name: "mid_csp_cbf/fspPstSubarray/04_01"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-004/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-          - name: "FspID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "1"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspPstSubarray/04_02"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-004/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_02"
-          - name: "FspID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
       - name: "mid_csp_cbf/fspPstSubarray/04_03"
         properties:
-          - name: "CbfControllerAddress"
+          - name: "HpsFspPstControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "CbfSubarrayAddress"
+            - "talondx-004/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
             values:
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FspID"
-            values:
-            - "4"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            - "{{ .Values.fspTimeout }}"
 
 image:
   registry: "{{.Values.midcbf.image.registry}}"

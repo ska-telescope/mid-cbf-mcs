@@ -2,7 +2,7 @@ name: powerswitch
 function: power-switch
 domain: mid-csp-cbf
 command: "PowerSwitch"
-instances: ["powerswitch-001", "powerswitch-002", "powerswitch-003", "powerswitch-004"]
+instances: ["pdu"]
 depends_on:
   - device: sys/database/2
 readinessProbe:
@@ -20,33 +20,11 @@ livenessProbe:
 server:
   name: "PowerSwitch"
   instances:
-  - name: "powerswitch-001"
+  - name: "pdu"
     classes:
     - name: "PowerSwitch"
       devices:
       - name: "mid_csp_cbf/power_switch/001"
-        properties:
-          - name: "PowerSwitchModel"
-            values:
-            - "DLI LPC9"
-          - name: "PowerSwitchIp"
-            values:
-            - "192.168.0.100"
-          - name: "PowerSwitchLogin"
-            values: 
-            - "admin"
-          - name: "PowerSwitchPassword"
-            values:
-            - "1234"
-          - name: "polled_attr"
-            values:
-            - "simulationMode"
-            - "90000"
-  - name: "powerswitch-002"
-    classes:
-    - name: "PowerSwitch"
-      devices:
-      - name: "mid_csp_cbf/power_switch/002"
         properties:
           - name: "PowerSwitchModel"
             values:
@@ -60,54 +38,20 @@ server:
           - name: "PowerSwitchPassword"
             values:
             - "admn-1-Psi"
-          - name: "polled_attr"
-            values:
-            - "simulationMode"
-            - "90000"
-  - name: "powerswitch-003"
-    classes:
-    - name: "PowerSwitch"
-      devices:
-      - name: "mid_csp_cbf/power_switch/003"
-        properties:
-          - name: "PowerSwitchModel"
-            values:
-            - "APC AP8681 SSH"
-          - name: "PowerSwitchIp"
-            values:
-            - "192.168.1.253"
-          - name: "PowerSwitchLogin"
-            values: 
-            - "apc"
-          - name: "PowerSwitchPassword"
-            values:
-            - "apc"
-          - name: "polled_attr"
-            values:
-            - "simulationMode"
-            - "90000"
-  - name: "powerswitch-004"
-    classes:
-    - name: "PowerSwitch"
-      devices:
-      - name: "mid_csp_cbf/power_switch/004"
+      - name: "mid_csp_cbf/power_switch/002"
         properties:
           - name: "PowerSwitchModel"
             values:
             - "APC AP8681 SNMP"
           - name: "PowerSwitchIp"
             values:
-            - "192.168.1.253"
+            - "192.168.1.252"
           - name: "PowerSwitchLogin"
             values:
             - "apcsnmp"
           - name: "PowerSwitchPassword"
             values:
             - "testingapcsnmp"
-          - name: "polled_attr"
-            values:
-            - "simulationMode"
-            - "90000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

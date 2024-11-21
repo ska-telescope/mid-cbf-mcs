@@ -16,93 +16,35 @@ For full details of MCS Controller see :ref:`CbfController`.
 
 For full details of MCS Subarray see :ref:`CbfSubarray`.
 
+
+
 .. uml:: ../../diagrams/mid-cbf-scan-ops.puml
+
+..
+    Go to ska-mid-cbf-mcs/docs/src/ska-mcs-sphinx/ska-tables.py to find code that generates the below tables
+..
+
 
 CbfController Tango Commands
 ------------------------------
 
-+--------------+---------------+--------------------+--------------------------------------------------------+
-| Command      | Parameters    | Return type        | Action                                                 |
-+==============+===============+====================+========================================================+
-| Off          | None          | (ResultCode, str)  | | Set power state to OFF for controller and            |
-|              |               |                    | | subordinate devices (subarrays, VCCs, FSPs)          |
-|              |               |                    | | Turn off power to all hardware                       |
-|              |               |                    | | See also :ref:`Off Sequence`                         |
-+--------------+---------------+--------------------+--------------------------------------------------------+
-| InitSysParam | JSON str*     | (ResultCode, str)  | | Initialize Dish ID to VCC ID mapping and k values    |
-|              |               |                    | | See also :ref:`InitSysParam Sequence`                |
-+--------------+---------------+--------------------+--------------------------------------------------------+
-| Standby      | None          | (ResultCode, str)  | None                                                   |
-+--------------+---------------+--------------------+--------------------------------------------------------+
-| On           | None          | (ResultCode, str)  | Turn on the controller and subordinate devices         |
-+--------------+---------------+--------------------+--------------------------------------------------------+
+.. generate-command-table:: Controller
 
-\* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf.html>`_
+
+\* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/midcbf/ska-mid-cbf.html>`_
 
 CbfSubarray Tango Commands
 ----------------------------
 
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| Command              | Parameters    | Return type        | Action                                          |
-+======================+===============+====================+=================================================+
-| Abort                | None          | (ResultCode, str)  | | Change observing state to ABORTED             |
-|                      |               |                    | | Send Abort to VCC                             |
-|                      |               |                    | | Send Abort to FSP <function mode> Subarrays   |
-|                      |               |                    | | No action on hardware                         |
-|                      |               |                    | | See also :ref:`Abort Sequence`                |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| AddReceptors         | List[str]     | (ResultCode, str)  | | Assign receptors to this subarray             |
-|                      |               |                    | | Turn subarray to ObsState = IDLE if no        |
-|                      |               |                    | | receptor was previously assigned              |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| ConfigureScan        | JSON str*     | (ResultCode, str)  | | Change observing state to READY               |
-|                      |               |                    | | Configure attributes from input JSON          |
-|                      |               |                    | | Subscribe events                              |
-|                      |               |                    | | Configure VCC, VCC subarray, FSP, FSP Subarray|
-|                      |               |                    | | Publish output links.                         |
-|                      |               |                    | | See also :ref:`Configure Scan Sequence`       |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| EndScan              | None          | (ResultCode, str)  | End the scan                                    |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| ObsReset             | None          | (ResultCode, str)  | | Reset subarray scan configuration             |
-|                      |               |                    | | Keep assigned receptors                       |
-|                      |               |                    | | Reset observing state to IDLE                 |
-|                      |               |                    | | If in FAULT, send Abort/ObsReset to VCC       |
-|                      |               |                    | | If in FAULT, send Abort/ObsReset to           |
-|                      |               |                    | | FSP <function mode> subarrays                 |
-|                      |               |                    | | No action on hardware                         |
-|                      |               |                    | | See also :ref:`ObsReset Sequence`             |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| Off                  | None          | (ResultCode, str)  | | Set subarray power mode to off.               |
-|                      |               |                    | | Commands FSP<function mode> Subarrays         |
-|                      |               |                    | | to turn off                                   |
-|                      |               |                    | | No action on hardware power                   |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| On                   | None          | (ResultCode, str)  | | Set subarry power mode to on.                 |
-|                      |               |                    | | Command FSP<function mode> Subarrays          |
-|                      |               |                    | | to turn on                                    |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| RemoveAllReceptors   | None          | (ResultCode, str)  | | Remove all receptors                          |
-|                      |               |                    | | Turn Subarray off if no receptors are         |
-|                      |               |                    | | assigned                                      |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| RemoveReceptors      | List[str]     | (ResultCode, str)  | | Remove receptors in input list                |
-|                      |               |                    | | Change observing state to EMPTY if no         |
-|                      |               |                    | | receptors assigned                            |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| Restart              | None          | (ResultCode, str)  | | Reset subarray scan configuration             |
-|                      |               |                    | | Remove assigned receptors                     |
-|                      |               |                    | | Restart observing state model to EMPTY        |
-|                      |               |                    | | If in FAULT, send Abort/ObsReset to VCC       |
-|                      |               |                    | | If in FAULT, send Abort/ObsReset to           |
-|                      |               |                    | | FSP <function mode> subarrays                 |
-|                      |               |                    | | No action on hardware                         |
-|                      |               |                    | | See also :ref:`Restart Sequence`              |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-| Scan                 | JSON str*     | (ResultCode, str)  | Start scanning                                  |
-+----------------------+---------------+--------------------+-------------------------------------------------+
-   
-\* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf.html>`_
+.. generate-command-table:: Subarray
+
+\* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/midcbf/ska-mid-cbf.html>`_
 
 
+Supported ConfigureScan Validation
+------------------------------------
 
+The telescope model will validate AA4 ranges, but due to ongoing development, 
+MCS supports a subset of values for the given parameters.
+
+.. generate-command-table:: Supported_Validation

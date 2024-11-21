@@ -11,175 +11,55 @@ from __future__ import annotations
 
 import os
 import unittest
-
-# Standard imports
-from typing import Dict, Optional, Type
+from typing import Generator
 
 import pytest
-import pytest_mock
-
-# Tango imports
 import tango
+from ska_control_model import ObsState
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState, PowerMode
+from ska_tango_base.control_model import AdminMode, HealthState
+from ska_tango_testing import context
+from ska_tango_testing.harness import TangoTestHarnessContext
+from ska_tango_testing.integration import TangoEventTracer
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.controller.controller_device import CbfController
-
-# Local imports
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import (
-    DeviceToLoadType,
-    TangoHarness,
-)
 
 
-@pytest.fixture()
-def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
+@pytest.fixture(name="device_under_test")
+def device_under_test_fixture(
+    test_context: TangoTestHarnessContext,
+) -> context.DeviceProxy:
     """
     Fixture that returns the device under test.
 
-    :param tango_harness: a test harness for Tango devices
-
-    :return: the device under test
+    :param test_context: the context in which the tests run
+    :return: the DeviceProxy for the device under test
     """
-    return tango_harness.get_device("mid_csp_cbf/sub_elt/controller")
+    return test_context.get_device("mid_csp_cbf/cbf_controller/001")
 
 
-@pytest.fixture()
-def device_to_load(
-    patched_controller_device_class: Type[CbfController],
-) -> DeviceToLoadType:
+@pytest.fixture(name="event_tracer", autouse=True)
+def tango_event_tracer(
+    device_under_test: context.DeviceProxy,
+) -> Generator[TangoEventTracer, None, None]:
     """
-    Fixture that specifies the device to be loaded for testing.
+    Fixture that returns a TangoEventTracer for pertinent devices.
+    Takes as parameter all required device proxy fixtures for this test module.
 
-    :return: specification of the device to be loaded
+    :param device_under_test: the DeviceProxy for the device under test
+    :return: TangoEventTracer
     """
-    return {
-        "path": "tests/unit/controller/devicetoload.json",
-        "package": "ska_mid_cbf_mcs.controller.controller_device",
-        "device": "controller",
-        "device_class": "CbfController",
-        "proxy": CbfDeviceProxy,
-        "patch": patched_controller_device_class,
-    }
+    tracer = TangoEventTracer()
 
+    change_event_attr_list = [
+        "longRunningCommandResult",
+        "adminMode",
+        "state",
+    ]
+    for attr in change_event_attr_list:
+        tracer.subscribe_event(device_under_test, attr)
 
-@pytest.fixture
-def unique_id() -> str:
-    """
-    Return a unique ID used to test Tango layer infrastructure.
-
-    :return: a unique ID
-    """
-    return "a unique id"
-
-
-@pytest.fixture()
-def mock_component_manager(
-    mocker: pytest_mock.mocker, unique_id: str
-) -> unittest.mock.Mock:
-    """
-    Return a mock component manager.
-
-    The mock component manager is a simple mock except for one bit of
-    extra functionality: when we call start_communicating() on it, it
-    makes calls to callbacks signaling that communication is established
-    and the component is off.
-
-    :param mocker: pytest wrapper for unittest.mock
-    :param unique_id: a unique id used to check Tango layer functionality
-
-    :return: a mock component manager
-    """
-    mock = mocker.Mock()
-    mock.is_communicating = False
-
-    def _start_communicating(mock: unittest.mock.Mock) -> None:
-        mock.is_communicating = True
-        mock._communication_status_changed_callback(
-            CommunicationStatus.NOT_ESTABLISHED
-        )
-        mock._communication_status_changed_callback(
-            CommunicationStatus.ESTABLISHED
-        )
-        mock._component_power_mode_changed_callback(PowerMode.OFF)
-
-    def _on(mock: unittest.mock.Mock) -> None:
-        mock.message = "CbfController On command completed OK"
-        return (ResultCode.OK, mock.message)
-
-    def _off(mock: unittest.mock.Mock) -> None:
-        mock.message = "CbfController Off command completed OK"
-        return (ResultCode.OK, mock.message)
-
-    def _standby(mock: unittest.mock.Mock) -> None:
-        mock.message = "CbfController On command completed OK"
-        return (ResultCode.OK, mock.message)
-
-    def _init_sys_param(mock: unittest.mock.Mock) -> None:
-        mock.message = "CbfController InitSysParam command completed OK"
-        return (ResultCode.OK, mock.message)
-
-    def _retrieve_sys_param_file(mock: unittest.mock.Mock) -> None:
-        return (ResultCode.OK, mock.message)
-
-    mock.on.side_effect = lambda: _on(mock)
-    mock.off.side_effect = lambda: _off(mock)
-    mock.standby.side_effect = lambda: _standby(mock)
-    mock.init_sys_param.side_effect = lambda argin: _init_sys_param(mock)
-    mock._retrieve_sys_param_file.side_effect = (
-        lambda argin: _retrieve_sys_param_file(mock)
-    )
-    mock.start_communicating.side_effect = lambda: _start_communicating(mock)
-
-    mock.enqueue.return_value = unique_id, ResultCode.QUEUED
-
-    return mock
-
-
-@pytest.fixture()
-def patched_controller_device_class(
-    mock_component_manager: unittest.mock.Mock,
-) -> Type[CbfController]:
-    """
-    Return a controller device that is patched with a mock component manager.
-
-    :param mock_component_manager: the mock component manager with
-        which to patch the device
-
-    :return: a controller device that is patched with a mock component
-        manager.
-    """
-
-    class PatchedCbfController(CbfController):
-        """A controller device patched with a mock component manager."""
-
-        def create_component_manager(
-            self: PatchedCbfController,
-        ) -> unittest.mock.Mock:
-            """
-            Return a mock component manager instead of the usual one.
-
-            :return: a mock component manager
-            """
-            self._communication_status: Optional[CommunicationStatus] = None
-            self._component_power_mode: Optional[PowerMode] = None
-
-            mock_component_manager._communication_status_changed_callback = (
-                self._communication_status_changed
-            )
-            mock_component_manager._component_power_mode_changed_callback = (
-                self._component_power_mode_changed
-            )
-
-            self._talondx_component_manager = mock_component_manager
-
-            return mock_component_manager
-
-    return PatchedCbfController
+    return tracer
 
 
 @pytest.fixture()
@@ -188,17 +68,11 @@ def mock_vcc() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("obsState", ObsState.IDLE)
     builder.add_attribute("subarrayMembership", 0)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
-    return builder()
-
-
-@pytest.fixture()
-def mock_vcc_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
+    builder.add_property("DeviceID", {"DeviceID": ["1"]})
     return builder()
 
 
@@ -209,16 +83,9 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
-    return builder()
-
-
-@pytest.fixture()
-def mock_fsp_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
     return builder()
 
 
@@ -228,6 +95,7 @@ def mock_subarray() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("obsState", ObsState.EMPTY)
     json_file_path = (
         os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
     )
@@ -237,16 +105,9 @@ def mock_subarray() -> unittest.mock.Mock:
     with open(json_file_path + "source_init_sys_param.json") as f:
         sp = f.read()
     builder.add_attribute("sourceSysParam", sp)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
-    return builder()
-
-
-@pytest.fixture()
-def mock_subarray_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
     return builder()
 
 
@@ -256,8 +117,30 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
+    return builder()
+
+
+@pytest.fixture()
+def mock_talon_board() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
+    builder.add_property(
+        "TalonDxBoardAddress", {"TalonDxBoardAddress": ["192.168.6.2"]}
+    )
+    return builder()
+
+
+@pytest.fixture()
+def mock_power_switch() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
     return builder()
 
 
@@ -267,6 +150,7 @@ def mock_slim_mesh() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     builder.add_result_command("Configure", ResultCode.OK)
@@ -276,23 +160,19 @@ def mock_slim_mesh() -> unittest.mock.Mock:
 @pytest.fixture()
 def initial_mocks(
     mock_vcc: unittest.mock.Mock,
-    mock_vcc_group: unittest.mock.Mock,
     mock_fsp: unittest.mock.Mock,
-    mock_fsp_group: unittest.mock.Mock,
     mock_subarray: unittest.mock.Mock,
-    mock_subarray_group: unittest.mock.Mock,
     mock_talon_lru: unittest.mock.Mock,
+    mock_talon_board: unittest.mock.Mock,
+    mock_power_switch: unittest.mock.Mock,
     mock_slim_mesh: unittest.mock.Mock,
-) -> Dict[str, unittest.mock.Mock]:
+) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of proxy mocks to pre-register.
 
     :param mock_vcc: a mock Vcc that is powered off.
-    :param mock_vcc_group: a mock Vcc tango.Group.
     :param mock_fsp: a mock Fsp that is powered off.
-    :param mock_fsp_group: a mock Fsp tango.Group.
     :param mock_subarray: a mock CbfSubarray that is powered off.
-    :param mock_subarray_group: a mock CbfSubarray tango.Group.
     :param mock_talon_lru: a mock TalonLRU that is powered off.
     :param mock_slim_mesh: a mock SLIM Mesh that is powered off.
 
@@ -303,10 +183,6 @@ def initial_mocks(
         "mid_csp_cbf/vcc/002": mock_vcc,
         "mid_csp_cbf/vcc/003": mock_vcc,
         "mid_csp_cbf/vcc/004": mock_vcc,
-        "mid_csp_cbf/vcc/005": mock_vcc,
-        "mid_csp_cbf/vcc/006": mock_vcc,
-        "mid_csp_cbf/vcc/007": mock_vcc,
-        "mid_csp_cbf/vcc/008": mock_vcc,
         "mid_csp_cbf/fsp/01": mock_fsp,
         "mid_csp_cbf/fsp/02": mock_fsp,
         "mid_csp_cbf/fsp/03": mock_fsp,
@@ -318,9 +194,16 @@ def initial_mocks(
         "mid_csp_cbf/talon_lru/002": mock_talon_lru,
         "mid_csp_cbf/talon_lru/003": mock_talon_lru,
         "mid_csp_cbf/talon_lru/004": mock_talon_lru,
-        "VCC": mock_vcc_group,
-        "FSP": mock_fsp_group,
-        "CBF Subarray": mock_subarray_group,
+        "mid_csp_cbf/talon_board/001": mock_talon_board,
+        "mid_csp_cbf/talon_board/002": mock_talon_board,
+        "mid_csp_cbf/talon_board/003": mock_talon_board,
+        "mid_csp_cbf/talon_board/004": mock_talon_board,
+        "mid_csp_cbf/talon_board/005": mock_talon_board,
+        "mid_csp_cbf/talon_board/006": mock_talon_board,
+        "mid_csp_cbf/talon_board/007": mock_talon_board,
+        "mid_csp_cbf/talon_board/008": mock_talon_board,
+        "mid_csp_cbf/power_switch/001": mock_power_switch,
+        "mid_csp_cbf/power_switch/002": mock_power_switch,
         "mid_csp_cbf/slim/slim-fs": mock_slim_mesh,
         "mid_csp_cbf/slim/slim-vis": mock_slim_mesh,
     }

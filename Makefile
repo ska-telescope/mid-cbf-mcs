@@ -17,15 +17,20 @@ TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
 # Python variables
 PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs KUBE_NAMESPACE=$(KUBE_NAMESPACE) HELM_RELEASE=$(RELEASE_NAME) TANGO_HOST=$(TANGO_HOST)
 
+# CIP-2859
 # Ignoring 501 which checks line length. There are over 500 failures for this in the code due to commenting. 
 # Also ignoring 503 because operators can either be before or after line break(504). 
-# We are choosing a standard to have it before the line break and therefore 503 will be ignored.
-PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E203,E501,F407,W503
-
+# We are choosing a standard to have it before the line break.
+PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,W503
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 
-PYTHON_TEST_FILE = ./tests/unit
-PYTHON_VARS_AFTER_PYTEST = # additional pytest flags; use -k to isolate particular tests to run for unit/integration, e.g. -k CbfSubarray for subarray tests
+# unit and integration test targets
+PYTHON_TEST_FILE = ./tests/unit/
+K8S_TEST_FILE = ./tests/integration/controller ./tests/integration/subarray
+
+# additional pytest flags; use -k to isolate particular tests, e.g. -k test_Scan
+PYTHON_VARS_AFTER_PYTEST = --forked
+K8S_VARS_AFTER_PYTEST = -s
 
 CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-mcs
 
@@ -92,21 +97,22 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 
 K8S_TEST_TEST_COMMAND ?= $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
 						pytest \
-						$(PYTHON_VARS_AFTER_PYTEST) ./tests/integration \
+						$(K8S_VARS_AFTER_PYTEST) $(K8S_TEST_FILE) \
 						| tee pytest.stdout
+
+PYTHON_LINT_TARGET = src/ tests/
 
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
 # build, 'make push' docker push procedure, etc. The other Make targets
 # ('make interactive', 'make test', etc.) are defined in this file.
 #
-include .make/release.mk
+include .make/base.mk
 include .make/k8s.mk
-include .make/make.mk
 include .make/oci.mk
 include .make/helm.mk
 include .make/python.mk
-include .make/docs.mk
+
 #
 # Defines a default make target so that help is printed if make is called
 # without a target
@@ -118,6 +124,9 @@ jive: ## configure TANGO_HOST to enable Jive
 	@echo 'With the deployment active, copy and run the following command to configure TANGO_HOST for local jive:'
 	@echo
 	export TANGO_HOST=$$(kubectl describe service -n $(KUBE_NAMESPACE) $(TANGO_DATABASE)-external | grep -i 'LoadBalancer Ingress' | awk '{print $$3}'):10000
+
+# uninstall charts, rebuild OCI image, install charts
+rebuild-reinstall: k8s-uninstall-chart oci-build k8s-install-chart
 
 k8s-pre-test:
 	@kubectl exec -n $(KUBE_NAMESPACE) $(CBF_CTRL_POD) -- mkdir -p /app/mnt/talondx-config

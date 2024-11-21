@@ -11,371 +11,113 @@
 from __future__ import annotations
 
 import json
-import logging
-from typing import Callable, List, Optional, Tuple
+from threading import Event
+from typing import Any, Callable, Optional
 
 import tango
+from ska_control_model import CommunicationStatus, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
-from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
+from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.component.component_manager import (
-    CbfComponentManager,
-    CommunicationStatus,
-)
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
-    HpsFspCorrControllerSimulator,
+from ska_mid_cbf_mcs.component.obs_component_manager import (
+    CbfObsComponentManager,
 )
 
-# Data file path
-FSP_CORR_PARAM_PATH = "mnt/fsp_param/"
+FSP_CORR_PARAM_PATH = "mnt/fsp_param/internal_params_fsp_corr_subarray.json"
 
 
-class FspCorrSubarrayComponentManager(
-    CbfComponentManager, CspObsComponentManager
-):
-    """A component manager for the FspCorrSubarray device."""
+class FspCorrSubarrayComponentManager(CbfObsComponentManager):
+    """
+    A component manager for the FspCorrSubarray device.
+    """
 
     def __init__(
         self: FspCorrSubarrayComponentManager,
-        logger: logging.Logger,
+        *args: Any,
         hps_fsp_corr_controller_fqdn: str,
-        push_change_event_callback: Optional[Callable],
-        communication_status_changed_callback: Callable[
-            [CommunicationStatus], None
-        ],
-        component_power_mode_changed_callback: Callable[[PowerMode], None],
-        component_fault_callback: Callable[[bool], None],
-        component_obs_fault_callback: Callable[[bool], None],
-        simulation_mode: SimulationMode = SimulationMode.TRUE,
+        **kwargs: Any,
     ) -> None:
         """
         Initialise a new instance.
 
-        :param logger: a logger for this object to use
         # TODO: for Mid.CBF, param hps_fsp_corr_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         :param hps_fsp_corr_controller_fqdn: FQDN of the HPS FSP Correlator controller device
-        :param push_change_event: method to call when the base classes
-            want to send an event
-        :param communication_status_changed_callback: callback to be
-            called when the status of the communications channel between
-            the component manager and its component changes
-        :param component_power_mode_changed_callback: callback to be
-            called when the component power mode changes
-        :param component_fault_callback: callback to be called in event of
-            component fault (for op state model)
-        :param component_obs_fault_callback: callback to be called in event of
-            component fault (for obs state model)
         """
-        self._logger = logger
+        super().__init__(*args, **kwargs)
 
         self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
         self._proxy_hps_fsp_corr_controller = None
 
-        self._component_obs_fault_callback = component_obs_fault_callback
-
-        self._connected = False
-        self.obs_faulty = False
-
-        self._vcc_ids = []
-        self._freq_band_name = ""
-        self._frequency_band = 0
-        self._stream_tuning = (0, 0)
-        self._frequency_band_offset_stream1 = 0
-        self._frequency_band_offset_stream2 = 0
-        self._frequency_slice_id = 0
-        self._bandwidth = 0
-        self._bandwidth_actual = const.FREQUENCY_SLICE_BW
-        self._zoom_window_tuning = 0
-        self._integration_factor = 0
-        self._scan_id = 0
-        self._config_id = ""
-        self._channel_averaging_map = [
+        self.delay_model = ""
+        self.vcc_ids = []
+        self.frequency_band = 0
+        self.frequency_slice_id = 0
+        self.scan_id = 0
+        self.config_id = ""
+        self.channel_averaging_map = [
             [
-                int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS)
+                int(
+                    i
+                    * const.NUM_FINE_CHANNELS
+                    / const.NUM_CHANNELS_PER_SPEAD_STREAM
+                )
                 + 1,
                 0,
             ]
-            for i in range(const.NUM_CHANNEL_GROUPS)
+            for i in range(const.NUM_CHANNELS_PER_SPEAD_STREAM)
         ]
-        self._vis_destination_address = {
+        self.vis_destination_address = {
             "outputHost": [],
             "outputPort": [],
         }
-        self._fsp_channel_offset = 0
+        self.fsp_channel_offset = 0
 
-        self._output_link_map = [[0, 0] for i in range(40)]
+        self.output_link_map = [[0, 0] for _ in range(40)]
 
-        self._simulation_mode = simulation_mode
+        self.last_hps_scan_configuration = ""
 
-        super().__init__(
-            logger=logger,
-            push_change_event_callback=push_change_event_callback,
-            communication_status_changed_callback=communication_status_changed_callback,
-            component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=component_fault_callback,
-            obs_state_model=None,
-        )
+    # -------------
+    # Communication
+    # -------------
 
-    @property
-    def frequency_band(self: FspCorrSubarrayComponentManager) -> tango.DevEnum:
-        """
-        Frequency Band
-
-        :return: the frequency band
-        :rtype: tango.DevEnum
-        """
-        return self._frequency_band
-
-    @property
-    def stream_tuning(self: FspCorrSubarrayComponentManager) -> List[float]:
-        """
-        Band 5 Tuning
-
-        :return: an array of float,
-                (first element corresponds to the first stream,
-                second to the second stream).
-        :rtype: List[float]
-        """
-        return self._stream_tuning
-
-    @property
-    def frequency_band_offset_stream1(
-        self: FspCorrSubarrayComponentManager,
-    ) -> int:
-        """
-        Frequency Band Offset Stream 1
-
-        :return: the frequency band offset for stream 1
-        :rtype: int
-        """
-        return self._frequency_band_offset_stream1
-
-    @property
-    def frequency_band_offset_stream2(
-        self: FspCorrSubarrayComponentManager,
-    ) -> int:
-        """
-        Frequency Band Offset Stream 2
-
-        :return: the frequency band offset for stream 2
-        :rtype: int
-        """
-        return self._frequency_band_offset_stream2
-
-    @property
-    def frequency_slice_id(self: FspCorrSubarrayComponentManager) -> int:
-        """
-        Frequency Slice ID
-
-        :return: the frequency slice id
-        :rtype: int
-        """
-        return self._frequency_slice_id
-
-    @property
-    def bandwidth(self: FspCorrSubarrayComponentManager) -> int:
-        """
-        Bandwidth
-
-        :return: the corr bandwidth (bandwidth to be correlated
-                 is <Full Bandwidth>/2^bandwidth).
-        :rtype: int
-        """
-        return self._bandwidth
-
-    @property
-    def integration_factor(self: FspCorrSubarrayComponentManager) -> int:
-        """
-        Integration Factor
-
-        :return: the integration factor
-        :rtype: int
-        """
-        return self._integration_factor
-
-    @property
-    def fsp_channel_offset(self: FspCorrSubarrayComponentManager) -> int:
-        """
-        ID of the first (lowest bandwidth) channel generated on this FSP.
-        See channel_offset in telescope model for more details.
-
-        :return: the starting channel ID assigned to this FSP
-        :rtype: int
-        """
-        return self._fsp_channel_offset
-
-    @property
-    def vis_destination_address(self: FspCorrSubarrayComponentManager) -> str:
-        """
-        VIS Destination Address
-
-        :return: JSON string containing info about current SDP destination addresses being used
-        :rtype: str
-        """
-        return self._vis_destination_address
-
-    @property
-    def output_link_map(
-        self: FspCorrSubarrayComponentManager,
-    ) -> List[List[int]]:
-        """
-        Output Link Map
-
-        :return: the output link map
-        :rtype: List[List[int]]
-        """
-        return self._output_link_map
-
-    @property
-    def channel_averaging_map(
-        self: FspCorrSubarrayComponentManager,
-    ) -> List[List[int]]:
-        """
-        Channel Averaging Map
-
-        :return: the channel averaging map. Consists of 2*20 array of
-                integers(20 tupples representing 20* 744 channels).
-                The first element is the ID of the first channel in a channel group.
-                The second element is the averaging factor
-        :rtype: List[List[int]]
-        """
-        return self._channel_averaging_map
-
-    @property
-    def zoom_window_tuning(self: FspCorrSubarrayComponentManager) -> int:
-        """
-        Zoom Window Tuning
-
-        :return: the zoom window tuning
-        :rtype: int
-        """
-        return self._zoom_window_tuning
-
-    @property
-    def config_id(self: FspCorrSubarrayComponentManager) -> str:
-        """
-        Config ID
-
-        :return: the config id
-        :rtype: str
-        """
-        return self._config_id
-
-    @property
-    def scan_id(self: FspCorrSubarrayComponentManager) -> int:
-        """
-        Scan ID
-
-        :return: the scan id
-        :rtype: int
-        """
-        return self._scan_id
-
-    @property
-    def vcc_ids(self: FspCorrSubarrayComponentManager) -> List[int]:
-        """
-        Assigned VCC IDs
-
-        :return: list of VCC IDs
-        :rtype: List[int]
-        """
-        return self._vcc_ids
-
-    @property
-    def simulation_mode(
-        self: FspCorrSubarrayComponentManager,
-    ) -> SimulationMode:
-        """
-        Get the simulation mode of the component manager.
-
-        :return: simulation mode of the component manager
-        """
-        return self._simulation_mode
-
-    @simulation_mode.setter
-    def simulation_mode(
-        self: FspCorrSubarrayComponentManager, value: SimulationMode
+    def _start_communicating(
+        self: FspCorrSubarrayComponentManager, *args, **kwargs
     ) -> None:
         """
-        Set the simulation mode of the component manager.
-
-        :param value: value to set simulation mode to
+        Establish communication with the component, then start monitoring.
         """
-        self._simulation_mode = value
-
-    def start_communicating(
-        self: FspCorrSubarrayComponentManager,
-    ) -> None:
-        """Establish communication with the component, then start monitoring."""
-
-        if self._connected:
-            return
-
-        super().start_communicating()
-
-        self._connected = True
-        self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_fault(False)
-        self.update_component_power_mode(PowerMode.OFF)
-
-    def stop_communicating(self: FspCorrSubarrayComponentManager) -> None:
-        """Stop communication with the component"""
-        self._logger.info(
-            "Entering FspCorrSubarrayComponentManager.stop_communicating"
-        )
-        super().stop_communicating()
-
-        self._connected = False
-
-    def _get_capability_proxies(
-        self: FspCorrSubarrayComponentManager,
-    ) -> None:
-        """Establish connections with the capability proxies"""
-        # for now, assume that given addresses are valid
-
-        if not self._simulation_mode:
-            if self._proxy_hps_fsp_corr_controller is None:
-                self._proxy_hps_fsp_corr_controller = self._get_device_proxy(
-                    self._hps_fsp_corr_controller_fqdn
+        # Try to connect to HPS devices, which are deployed during the
+        # CbfController OnCommand sequence
+        if not self.simulation_mode:
+            try:
+                self._proxy_hps_fsp_corr_controller = context.DeviceProxy(
+                    device_name=self._hps_fsp_corr_controller_fqdn
                 )
-        else:
-            self._proxy_hps_fsp_corr_controller = (
-                HpsFspCorrControllerSimulator(
-                    self._hps_fsp_corr_controller_fqdn
+                self._proxy_hps_fsp_corr_controller.set_timeout_millis(
+                    self._lrc_timeout * 1000
                 )
-            )
-
-    def _get_device_proxy(
-        self: FspCorrSubarrayComponentManager, fqdn_or_name: str
-    ) -> CbfDeviceProxy | None:
-        """
-        Attempt to get a device proxy of the specified device.
-
-        :param fqdn_or_name: FQDN of the device to connect to
-            or the name of the group proxy to connect to
-        :return: CbfDeviceProxy or None if no connection was made
-        """
-        try:
-            self._logger.info(f"Attempting connection to {fqdn_or_name} ")
-
-            device_proxy = CbfDeviceProxy(
-                fqdn=fqdn_or_name, logger=self._logger, connect=False
-            )
-            device_proxy.connect(max_time=0)  # Make one attempt at connecting
-            return device_proxy
-        except tango.DevFailed as df:
-            for item in df.args:
-                self._logger.error(
-                    f"Failed connection to {fqdn_or_name} : {item.reason}"
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to connect to {self._hps_fsp_corr_controller_fqdn}; {df}"
                 )
-            self.update_component_fault(True)
-            return None
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return (
+                    ResultCode.FAILED,
+                    "Failed to establish proxy to HPS FSP Corr controller device.",
+                )
+
+        super()._start_communicating()
+        self._update_component_state(power=PowerState.ON)
+
+    # -------------
+    # Class Helpers
+    # -------------
 
     def _assign_vcc(
-        self: FspCorrSubarrayComponentManager, argin: List[int]
+        self: FspCorrSubarrayComponentManager, argin: list[int]
     ) -> None:
         """
         Assign specified VCCs to the FSP CORR subarray.
@@ -384,15 +126,15 @@ class FspCorrSubarrayComponentManager(
         """
 
         for vccID in argin:
-            if vccID not in self._vcc_ids:
-                self._logger.info(f"VCC {vccID} assigned.")
-                self._vcc_ids.append(vccID)
+            if vccID not in self.vcc_ids:
+                self.logger.info(f"VCC {vccID} assigned.")
+                self.vcc_ids.append(vccID)
             else:
                 log_msg = f"VCC {vccID} already assigned to current FSP CORR subarray."
-                self._logger.warning(log_msg)
+                self.logger.warning(log_msg)
 
     def _release_vcc(
-        self: FspCorrSubarrayComponentManager, argin: List[int]
+        self: FspCorrSubarrayComponentManager, argin: list[int]
     ) -> None:
         """
         Release assigned VCC from the FSP CORR subarray.
@@ -400,402 +142,406 @@ class FspCorrSubarrayComponentManager(
         :param argin: IDs of VCCs to remove.
         """
         for vccID in argin:
-            if vccID in self._vcc_ids:
-                self._logger.info(f"VCC {vccID} released.")
-                self._vcc_ids.remove(vccID)
+            if vccID in self.vcc_ids:
+                self.logger.info(f"VCC {vccID} released.")
+                self.vcc_ids.remove(vccID)
             else:
                 log_msg = (
                     "VCC {vccID} not assigned to FSP CORR subarray. Skipping."
                 )
-                self._logger.warning(log_msg)
+                self.logger.warning(log_msg)
 
-    def _release_all_vcc(self: FspCorrSubarrayComponentManager) -> None:
-        """Release all assigned VCCs from the FSP CORR subarray"""
-        self._release_vcc(self._vcc_ids.copy())
-
-    def configure_scan(
-        self: FspCorrSubarrayComponentManager, configuration: str
-    ) -> Tuple[ResultCode, str]:
+    def _build_hps_fsp_config(
+        self: FspCorrSubarrayComponentManager, configuration: dict
+    ) -> str:
         """
-        Performs the ConfigureScan() command functionality
-
-        :param configuration: The configuration as JSON formatted string
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
+        Build the input JSON string for the HPS FSP Corr controller ConfigureScan command
         """
+        # append all internal parameters to the configuration to pass to HPS
+        # first construct HPS FSP ConfigureScan input
+        hps_fsp_configuration = dict({"configure_scan": configuration})
 
-        self._deconfigure()
+        self.logger.debug(f"{hps_fsp_configuration}")
 
-        configuration = json.loads(configuration)
-
-        self._freq_band_name = configuration["frequency_band"]
-        self._frequency_band = freq_band_dict()[self._freq_band_name][
-            "band_index"
-        ]
-
-        if configuration["frequency_band"] in ["5a", "5b"]:
-            self._stream_tuning = configuration["band_5_tuning"]
-
-        if "frequency_band_offset_stream1" in configuration:
-            self._frequency_band_offset_stream1 = int(
-                configuration["frequency_band_offset_stream1"]
-            )
-        if "frequency_band_offset_stream2" in configuration:
-            self._frequency_band_offset_stream2 = int(
-                configuration["frequency_band_offset_stream2"]
-            )
-
-        # release previously assigned VCCs and assign newly specified VCCs
-        self._release_all_vcc()
-        self._assign_vcc(configuration["corr_vcc_ids"])
-
-        self._frequency_slice_id = int(configuration["frequency_slice_id"])
-
-        self._bandwidth = int(configuration["zoom_factor"])
-        self._bandwidth_actual = int(
-            const.FREQUENCY_SLICE_BW / 2 * int(configuration["zoom_factor"])
-        )
-
-        if self._bandwidth != 0:  # zoomWindowTuning is required
-            if self._frequency_band in list(
-                range(4)
-            ):  # frequency band is not band 5
-                self._zoom_window_tuning = int(
-                    configuration["zoom_window_tuning"]
-                )
-
-                frequency_band_start = [
-                    *map(
-                        lambda j: j[0] * 10**9,
-                        [
-                            const.FREQUENCY_BAND_1_RANGE,
-                            const.FREQUENCY_BAND_2_RANGE,
-                            const.FREQUENCY_BAND_3_RANGE,
-                            const.FREQUENCY_BAND_4_RANGE,
-                        ],
-                    )
-                ][self._frequency_band] + self._frequency_band_offset_stream1
-                frequency_slice_range = (
-                    frequency_band_start
-                    + (self._frequency_slice_id - 1)
-                    * const.FREQUENCY_SLICE_BW
-                    * 10**6,
-                    frequency_band_start
-                    + self._frequency_slice_id
-                    * const.FREQUENCY_SLICE_BW
-                    * 10**6,
-                )
-
-                if (
-                    frequency_slice_range[0]
-                    + self._bandwidth_actual * 10**6 / 2
-                    <= int(configuration["zoom_window_tuning"]) * 10**3
-                    <= frequency_slice_range[1]
-                    - self._bandwidth_actual * 10**6 / 2
-                ):
-                    # this is the acceptable range
-                    pass
-                else:
-                    # log a warning message
-                    log_msg = (
-                        "'zoomWindowTuning' partially out of observed frequency slice. "
-                        "Proceeding."
-                    )
-                    self._logger.warning(log_msg)
-            else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                self._zoom_window_tuning = configuration["zoom_window_tuning"]
-
-                frequency_slice_range_1 = (
-                    self._stream_tuning[0] * 10**9
-                    + self._frequency_band_offset_stream1
-                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                    + (self._frequency_slice_id - 1)
-                    * const.FREQUENCY_SLICE_BW
-                    * 10**6,
-                    self._stream_tuning[0] * 10**9
-                    + self._frequency_band_offset_stream1
-                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                    + self._frequency_slice_id
-                    * const.FREQUENCY_SLICE_BW
-                    * 10**6,
-                )
-
-                frequency_slice_range_2 = (
-                    self._stream_tuning[1] * 10**9
-                    + self._frequency_band_offset_stream2
-                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                    + (self._frequency_slice_id - 1)
-                    * const.FREQUENCY_SLICE_BW
-                    * 10**6,
-                    self._stream_tuning[1] * 10**9
-                    + self._frequency_band_offset_stream2
-                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
-                    + self._frequency_slice_id
-                    * const.FREQUENCY_SLICE_BW
-                    * 10**6,
-                )
-
-                if (
-                    frequency_slice_range_1[0]
-                    + self._bandwidth_actual * 10**6 / 2
-                    <= int(configuration["zoom_window_tuning"]) * 10**3
-                    <= frequency_slice_range_1[1]
-                    - self._bandwidth_actual * 10**6 / 2
-                ) or (
-                    frequency_slice_range_2[0]
-                    + self._bandwidth_actual * 10**6 / 2
-                    <= int(configuration["zoom_window_tuning"]) * 10**3
-                    <= frequency_slice_range_2[1]
-                    - self._bandwidth_actual * 10**6 / 2
-                ):
-                    # this is the acceptable range
-                    pass
-                else:
-                    # log a warning message
-                    log_msg = (
-                        "'zoomWindowTuning' partially out of observed frequency slice. "
-                        "Proceeding."
-                    )
-                    self._logger.warning(log_msg)
-
-        self._integration_factor = int(configuration["integration_factor"])
-
-        self._fsp_channel_offset = int(configuration["channel_offset"])
-
-        if "output_host" in configuration:
-            self._vis_destination_address["outputHost"] = configuration[
-                "output_host"
-            ]
-        elif self._vis_destination_address["outputHost"] == []:
-            self._vis_destination_address[
-                "outputHost"
-            ] = const.DEFAULT_OUTPUT_HOST
-
-        if "output_port" in configuration:
-            self._vis_destination_address["outputPort"] = configuration[
-                "output_port"
-            ]
-        elif self._vis_destination_address["outputPort"] == []:
-            self._vis_destination_address[
-                "outputPort"
-            ] = const.DEFAULT_OUTPUT_PORT
-
-        self._output_link_map = configuration["output_link_map"]
-
-        if "channel_averaging_map" in configuration:
-            self._channel_averaging_map = configuration[
-                "channel_averaging_map"
-            ]
-        else:
-            self._channel_averaging_map = [
-                [
-                    int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS)
-                    + 1,
-                    0,
-                ]
-                for i in range(const.NUM_CHANNEL_GROUPS)
-            ]
-            log_msg = (
-                "FSP specified, but 'channelAveragingMap not given. Default to averaging "
-                "factor = 0 for all channel groups."
-            )
-            self._logger.warning(log_msg)
-
-        self._config_id = configuration["config_id"]
+        # VCC IDs must be sorted in ascending order for the HPS
+        hps_fsp_configuration["configure_scan"]["subarray_vcc_ids"].sort()
+        hps_fsp_configuration["configure_scan"]["corr_vcc_ids"].sort()
 
         # Get the internal parameters from file
-        internal_params_file_name = (
-            FSP_CORR_PARAM_PATH + "internal_params_fsp_corr_subarray" + ".json"
-        )
+        internal_params_file_name = FSP_CORR_PARAM_PATH
+        with open(internal_params_file_name) as f:
+            hps_fsp_configuration.update(
+                json.loads(f.read().replace("\n", ""))
+            )
 
-        with open(internal_params_file_name) as f_in:
-            internal_params = f_in.read().replace("\n", "")
-        internal_params_obj = json.loads(internal_params)
-
-        # append all internal parameters to the configuration to pass to HPS
-        # construct HPS ConfigureScan input
-        sample_rates = configuration.pop("fs_sample_rates")
-        hps_fsp_configuration = dict({"configure_scan": configuration})
-        hps_fsp_configuration.update(internal_params_obj)
         # append the fs_sample_rates to the configuration
-        hps_fsp_configuration["fs_sample_rates"] = sample_rates
-        log_msg = f"Sample rates added to HPS FSP Corr configuration; fs_sample_rates = {sample_rates}."
-        self._logger.debug(log_msg)
+        hps_fsp_configuration["fs_sample_rates"] = configuration[
+            "fs_sample_rates"
+        ]
 
-        self._get_capability_proxies()
+        hps_fsp_configuration["vcc_id_to_rdt_freq_shifts"] = configuration[
+            "vcc_id_to_rdt_freq_shifts"
+        ]
 
-        try:
-            self._logger.info(
-                f"HPS FSP ConfigureScan input: {json.dumps(hps_fsp_configuration)}"
-            )
-            self._proxy_hps_fsp_corr_controller.set_timeout_millis(12000)
-            self._proxy_hps_fsp_corr_controller.ConfigureScan(
-                json.dumps(hps_fsp_configuration)
-            )
-        except tango.DevFailed as df:
-            self._component_obs_fault_callback(True)
-            self._logger.error(str(df.args[0].desc))
-            return (
-                ResultCode.FAILED,
-                "FspCorrSubarray ConfigureScan command failed",
-            )
+        # TODO: zoom-factor removed from configurescan, but required by HPS, to
+        # be inferred from channel_width introduced in ADR-99 when ready to
+        # implement zoom
+        hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
 
-        return (
-            ResultCode.OK,
-            "FspCorrSubarray ConfigureScan command completed OK",
+        self.logger.debug(
+            f"HPS FSP Corr configuration: {hps_fsp_configuration}."
         )
 
-    def scan(
-        self: FspCorrSubarrayComponentManager, scan_id: int
-    ) -> Tuple[ResultCode, str]:
-        """
-        Performs the Scan() command functionality
-
-        :param scan_id: The scan id
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self._scan_id = scan_id
-        try:
-            self._proxy_hps_fsp_corr_controller.Scan(scan_id)
-        except tango.DevFailed as df:
-            self._component_obs_fault_callback(True)
-            self._logger.error(str(df.args[0].desc))
-            return (ResultCode.FAILED, "FspCorrSubarray Scan command failed")
-
-        return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
-
-    def end_scan(
-        self: FspCorrSubarrayComponentManager,
-    ) -> Tuple[ResultCode, str]:
-        """
-        Performs the EndScan() command functionality
-
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        try:
-            self._proxy_hps_fsp_corr_controller.EndScan()
-        except tango.DevFailed as df:
-            self._component_obs_fault_callback(True)
-            self._logger.error(str(df.args[0].desc))
-            return (
-                ResultCode.FAILED,
-                "FspCorrSubarray EndScan command failed",
-            )
-
-        return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
+        return json.dumps(hps_fsp_configuration)
 
     def _deconfigure(
         self: FspCorrSubarrayComponentManager,
     ) -> None:
-        self._freq_band_name = ""
-        self._frequency_band = 0
-        self._stream_tuning = (0, 0)
-        self._frequency_band_offset_stream1 = 0
-        self._frequency_band_offset_stream2 = 0
-        self._frequency_slice_id = 0
-        self._bandwidth = 0
-        self._bandwidth_actual = const.FREQUENCY_SLICE_BW
-        self._zoom_window_tuning = 0
-        self._integration_factor = 0
-        self._scan_id = 0
-        self._config_id = ""
+        """Deconfigure scan configuration parameters."""
+        self.frequency_band = 0
+        self.frequency_slice_id = 0
+        self.scan_id = 0
+        self.config_id = ""
+        self.last_hps_scan_configuration = ""
 
-        self._channel_averaging_map = [
-            [
-                int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS)
-                + 1,
-                0,
-            ]
-            for i in range(const.NUM_CHANNEL_GROUPS)
-        ]
-        self._vis_destination_address = {
-            "outputHost": [],
-            "outputPort": [],
-        }
-        self._fsp_channel_offset = 0
-        self._output_link_map = [[0, 0] for i in range(40)]
+        # release all assigned VCC to reset to IDLE state
+        self._release_vcc(self.vcc_ids.copy())
 
-        self._channel_info = []
-        # self._channel_info.clear() #TODO:  not yet populated
+    # -------------
+    # Fast Commands
+    # -------------
 
-    def go_to_idle(
-        self: FspCorrSubarrayComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    def update_delay_model(
+        self: FspCorrSubarrayComponentManager, model: str
+    ) -> tuple[ResultCode, str]:
         """
-        Performs the GoToIdle() command functionality
+        Update the FSP's delay model (serialized JSON object)
 
+        :param model: the delay model data
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        try:
-            self._deconfigure()
-            self._release_all_vcc()
-            self._proxy_hps_fsp_corr_controller.GoToIdle()
-        except tango.DevFailed as df:
-            self._component_obs_fault_callback(True)
-            self._logger.error(str(df.args[0].desc))
-            return (
-                ResultCode.FAILED,
-                "FspCorrSubarray GoToIdle command failed",
-            )
+        self.logger.info("Entering FspCorrSubarray.update_delay_model()")
 
-        return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
+        if not self.simulation_mode:
+            try:
+                self._proxy_hps_fsp_corr_controller.UpdateDelayModels(model)
+            except tango.DevFailed as df:
+                self.logger.error(f"{df}")
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                return (
+                    ResultCode.FAILED,
+                    "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
+                )
 
-    def obsreset(
+        # the whole delay model must be stored
+        self.delay_model = model
+        self.device_attr_change_callback("delayModel", model)
+        self.device_attr_archive_callback("delayModel", model)
+
+        return (ResultCode.OK, "UpdateDelayModel completed OK")
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    def _configure_scan(
         self: FspCorrSubarrayComponentManager,
-    ) -> Tuple[ResultCode, str]:
+        argin: str,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
         """
-        Performs the ObsReset() command functionality
+        Execute configure scan operation.
 
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
+        :param argin: JSON string with the configure scan parameters
+
+        :return: None
         """
-        try:
-            self._deconfigure()
-            self._release_all_vcc()
-            # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
-            # self._proxy_hps_fsp_corr_controller.ObsReset()
-        except tango.DevFailed as df:
-            self._component_obs_fault_callback(True)
-            self._logger.error(str(df.args[0].desc))
-            return (
-                ResultCode.FAILED,
-                "FspCorrSubarray ObsReset command failed",
-            )
-        return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")
+        # Set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "ConfigureScan", task_callback, task_abort_event
+        ):
+            return
 
-    def abort(
+        # Release previously assigned VCCs
+        self._deconfigure()
+
+        # Load configuration JSON, store key read attribute parameters
+        configuration = json.loads(argin)
+        self.config_id = configuration["config_id"]
+        self.frequency_band = freq_band_dict()[
+            configuration["frequency_band"]
+        ]["band_index"]
+        self.frequency_slice_id = int(configuration["frequency_slice_id"])
+
+        # Assign newly specified VCCs
+        self._assign_vcc(configuration["corr_vcc_ids"])
+
+        # Issue ConfigureScan to HPS FSP Corr controller
+
+        if not self.simulation_mode:
+            hps_fsp_configuration = self._build_hps_fsp_config(configuration)
+            self.last_hps_scan_configuration = hps_fsp_configuration
+            try:
+                self._proxy_hps_fsp_corr_controller.ConfigureScan(
+                    hps_fsp_configuration
+                )
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failure in issuing ConfigureScan to HPS FSP CORR; {df}"
+                )
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue ConfigureScan command to HPS FSP Corr controller device.",
+                    ),
+                )
+                return
+
+        # Update obsState callback
+        self._update_component_state(configured=True)
+
+        task_callback(
+            result=(ResultCode.OK, "ConfigureScan completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def _scan(
         self: FspCorrSubarrayComponentManager,
-    ) -> Tuple[ResultCode, str]:
+        argin: int,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
         """
-        Performs the Abort() command functionality
+        Begin scan operation.
 
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
+        :param argin: scan ID integer
+
+        :return: None
         """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "Scan", task_callback, task_abort_event
+        ):
+            return
+
+        self.scan_id = argin
+
+        if not self.simulation_mode:
+            try:
+                self._proxy_hps_fsp_corr_controller.Scan(self.scan_id)
+            except tango.DevFailed as df:
+                self.logger.error(f"{df}")
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue Scan command to HPS FSP Corr controller device.",
+                    ),
+                )
+                return
+
+        # Update obsState callback
+        self._update_component_state(scanning=True)
+
+        task_callback(
+            result=(ResultCode.OK, "Scan completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def _end_scan(
+        self: FspCorrSubarrayComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        End scan operation.
+
+        :return: None
+        """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "EndScan", task_callback, task_abort_event
+        ):
+            return
+
+        if not self.simulation_mode:
+            try:
+                self._proxy_hps_fsp_corr_controller.EndScan()
+            except tango.DevFailed as df:
+                self.logger.error(f"{df}")
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue EndScan command to HPS FSP Corr controller device.",
+                    ),
+                )
+                return
+
+        # Update obsState callback
+        self._update_component_state(scanning=False)
+
+        task_callback(
+            result=(ResultCode.OK, "EndScan completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def _go_to_idle(
+        self: FspCorrSubarrayComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        Execute observing state transition from READY to IDLE.
+
+        :return: None
+        """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "GoToIdle", task_callback, task_abort_event
+        ):
+            return
+
+        if not self.simulation_mode:
+            try:
+                self._proxy_hps_fsp_corr_controller.GoToIdle()
+            except tango.DevFailed as df:
+                self.logger.error(f"{df}")
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue Unconfigure command to HPS FSP Corr controller device.",
+                    ),
+                )
+                return
+
+        # reset configured attributes
+        self._deconfigure()
+
+        # Update obsState callback
+        self._update_component_state(configured=False)
+
+        task_callback(
+            result=(ResultCode.OK, "GoToIdle completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def _abort(
+        self: FspCorrSubarrayComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        Abort the current scan operation.
+
+        :return: None
+        """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "Abort", task_callback, task_abort_event
+        ):
+            return
         try:
             # TODO: Abort command not implemented for the HPS FSP application
             pass
         except tango.DevFailed as df:
-            self._component_obs_fault_callback(True)
-            self._logger.error(str(df.args[0].desc))
-            return (
-                ResultCode.FAILED,
-                "FspCorrSubarray Abort command failed",
+            self.logger.error(f"{df}")
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to issue Abort command to HPS FSP Corr controller device.",
+                ),
+            )
+            return
 
-        return (ResultCode.OK, "Abort command not implemented")
+        # Update obsState callback
+        self._update_component_state(scanning=False)
+
+        task_callback(
+            result=(ResultCode.OK, "Abort completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return
+
+    def _obs_reset(
+        self: FspCorrSubarrayComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[Event] = None,
+    ) -> None:
+        """
+        Reset the scan operation from ABORTED or FAULT.
+
+        :return: None
+        """
+        # set task status in progress, check for abort event
+        task_callback(status=TaskStatus.IN_PROGRESS)
+        if self.task_abort_event_is_set(
+            "ObsReset", task_callback, task_abort_event
+        ):
+            return
+
+        if not self.simulation_mode:
+            try:
+                pass
+                # TODO: ObsReset command not implemented for the HPS FSP application, see CIP-1850
+                # self._proxy_hps_fsp_corr_controller.ObsReset()
+            except tango.DevFailed as df:
+                self.logger.error(f"{df}")
+                self._update_communication_state(
+                    communication_state=CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Failed to issue ObsReset to HPS FSP Corr controller device.",
+                    ),
+                )
+                return
+
+        # reset configured attributes
+        self._deconfigure()
+
+        # Update obsState callback
+        # There is no obsfault == False action implemented, however,
+        # we reset it it False so that obsfault == True may be triggered in the future
+        self._update_component_state(configured=False, obsfault=False)
+
+        task_callback(
+            result=(ResultCode.OK, "ObsReset completed OK"),
+            status=TaskStatus.COMPLETED,
+        )
+        return

@@ -29,7 +29,7 @@ autodoc_member_order = 'bysource'
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../src/'))
-
+sys.path.insert(0, os.path.abspath("."))
 
 def setup(app):
     app.add_css_file('css/custom.css')
@@ -67,7 +67,8 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'myst_parser',
     'sphinxcontrib.mermaid',
-    'sphinxcontrib.plantuml'
+    'sphinxcontrib.plantuml',
+    'ska_mcs_sphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

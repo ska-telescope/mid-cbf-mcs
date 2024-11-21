@@ -1,0 +1,9 @@
+links_to_fsp1:
+  - talondx-001/slim-tx-rx/fs-tx0 -> talondx-001/slim-tx-rx/fs-rx0 [x]
+  - talondx-002/slim-tx-rx/fs-tx0 -> talondx-001/slim-tx-rx/fs-rx1 [x]
+  - talondx-003/slim-tx-rx/fs-tx0 -> talondx-001/slim-tx-rx/fs-rx2 [x]
+  - talondx-004/slim-tx-rx/fs-tx0 -> talondx-001/slim-tx-rx/fs-rx3 [x]
+  - talondx-005/slim-tx-rx/fs-tx0 -> talondx-001/slim-tx-rx/fs-rx4 [x]
+  - talondx-006/slim-tx-rx/fs-tx0 -> talondx-001/slim-tx-rx/fs-rx5 [x]
+  - talondx-007/slim-tx-rx/fs-tx0 -> talondx-001/slim-tx-rx/fs-rx6 [x]
+  - talondx-008/slim-tx-rx/fs-tx0 -> talondx-001/slim-tx-rx/fs-rx7 [x]

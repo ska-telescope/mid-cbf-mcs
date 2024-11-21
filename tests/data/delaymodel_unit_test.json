@@ -1,5 +1,5 @@
 {
-  "interface": "https://schema.skao.int/ska-csp-delaymodel/3.0",
+  "interface": "https://schema.skao.int/ska-mid-csp-delaymodel/3.0",
   "start_validity_sec": 11000000.0,
   "cadence_sec": 400.0,
   "receptor_delays": [

@@ -1,0 +1,9 @@
+{{- if .Values.vis_slim }}
+apiVersion: v1
+data:
+  slim_config.yaml: |
+{{ toYaml .Values.vis_slim | indent 4 }}
+kind: ConfigMap
+metadata:
+  name: vis-slim-configmap
+{{- end }}

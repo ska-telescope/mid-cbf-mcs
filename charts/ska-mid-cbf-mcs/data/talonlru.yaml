@@ -2,12 +2,9 @@ name: talonlru
 function: talon-lru
 domain: mid-csp-cbf
 command: "TalonLRU"
-instances: ["talonlru-001", "talonlru-002", "talonlru-003", "talonlru-004"]
+instances: ["01"]
 depends_on:
-  - device: mid_csp_cbf/power_switch/001
-  - device: mid_csp_cbf/power_switch/002
-  - device: mid_csp_cbf/power_switch/003
-  - device: mid_csp_cbf/power_switch/004
+  - device: sys/database/2
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -23,7 +20,7 @@ livenessProbe:
 server:
   name: "TalonLRU"
   instances:
-  - name: "talonlru-001"
+  - name: "01"
     classes:
     - name: "TalonLRU"
       devices:
@@ -50,18 +47,6 @@ server:
           - name: "PDUCommandTimeout"
             values:
             - "20"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-  - name: "talonlru-002"
-    classes:
-    - name: "TalonLRU"
-      devices:
       - name: "mid_csp_cbf/talon_lru/002"
         properties:
           - name: "TalonDxBoard1"
@@ -85,18 +70,6 @@ server:
           - name: "PDUCommandTimeout"
             values:
             - "20"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-  - name: "talonlru-003"
-    classes:
-    - name: "TalonLRU"
-      devices:
       - name: "mid_csp_cbf/talon_lru/003"
         properties:
           - name: "TalonDxBoard1"
@@ -120,18 +93,6 @@ server:
           - name: "PDUCommandTimeout"
             values:
             - "20"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-  - name: "talonlru-004"
-    classes:
-    - name: "TalonLRU"
-      devices:
       - name: "mid_csp_cbf/talon_lru/004"
         properties:
           - name: "TalonDxBoard1"
@@ -155,14 +116,6 @@ server:
           - name: "PDUCommandTimeout"
             values:
             - "20"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

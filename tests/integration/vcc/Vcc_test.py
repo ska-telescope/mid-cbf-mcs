@@ -13,23 +13,17 @@ from __future__ import annotations
 import copy
 import json
 import os
-import time
 
 import pytest
+from ska_control_model import ResultCode, SimulationMode
 from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
-from tango import DeviceData, DevShort, DevState
+from ska_tango_testing import context
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from tango import DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
-# Standard imports
-
-# Path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-
-
-# Tango imports
-
-# SKA specific imports
 
 
 class TestVcc:
@@ -37,119 +31,144 @@ class TestVcc:
     Test class for Vcc device class integration testing.
     """
 
-    @pytest.mark.parametrize("vcc_id", [1])
-    def test_Connect(
-        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
+    def test_Online(
+        self: TestVcc,
+        device_under_test: pytest.fixture,
+        test_proxies: pytest.fixture,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        lru_change_event_callbacks: MockTangoEventCallbackGroup,
+        ps_change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Test the initial states and verify the component manager
         can start communicating
 
-        :param test_proxies: the proxies test fixture
-        :param vcc_id: the fsp id
+        :param device_under_test: the device under test
+        :param test_proxies: a test fixture containing all subdevice proxies needed by the device under test.
+        :param change_event_callbacks: a mock object that receives the DUT's subscribed change events.
+        :param lru_change_event_callbacks: a mock object that receives TalonLru's subscribed change events.
+        :param ps_change_event_callbacks: a mock object that receives PowerSwitch's subscribed change events.
         """
-        wait_time_s = 3
-        sleep_time_s = 1
+
+        # after init devices should be in DISABLE state, but just in case...
+        device_under_test.adminMode = AdminMode.OFFLINE
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.simulationMode = SimulationMode.TRUE
+        device_under_test.loggingLevel = LoggingLevel.DEBUG
 
         # Start monitoring the TalonLRUs and power switch devices
-        for proxy in test_proxies.power_switch:
-            proxy.adminMode = AdminMode.ONLINE
+        for ps in test_proxies.power_switch:
+            ps.adminMode = AdminMode.ONLINE
+            ps_change_event_callbacks["State"].assert_change_event(DevState.ON)
 
-        for proxy in test_proxies.talon_lru:
-            proxy.adminMode = AdminMode.ONLINE
-            proxy.set_timeout_millis(10000)
+        for lru in test_proxies.talon_lru:
+            lru.adminMode = AdminMode.ONLINE
+            lru_change_event_callbacks["State"].assert_change_event(
+                DevState.OFF
+            )
 
-        # The VCC and bands should be in the OFF state after being initialised
-        test_proxies.vcc[vcc_id].loggingLevel = LoggingLevel.DEBUG
-        test_proxies.vcc[vcc_id].adminMode = AdminMode.ONLINE
+        # trigger start_communicating by setting the AdminMode to ONLINE
+        device_under_test.adminMode = AdminMode.ONLINE
+        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
-        test_proxies.wait_timeout_dev(
-            [test_proxies.vcc[vcc_id]], DevState.OFF, wait_time_s, sleep_time_s
-        )
-        assert test_proxies.vcc[vcc_id].State() == DevState.OFF
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+        lru_change_event_callbacks.assert_not_called()
+        ps_change_event_callbacks.assert_not_called()
 
-    @pytest.mark.parametrize("vcc_id", [1])
     def test_On(
-        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        test_proxies: pytest.fixture,
+        lru_change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Test the "On" command
 
-        :param test_proxies: the proxies test fixture
-        :param vcc_id: the fsp id
+        :param device_under_test: the device under test
+        :param test_proxies: a test fixture containing all subdevice proxies needed by the device under test.
+        :param lru_change_event_callbacks: a mock object that receives TalonLru's subscribed change events.
         """
-        wait_time_s = 3
-        sleep_time_s = 1
-
-        device_under_test = test_proxies.vcc[vcc_id]
 
         # Turn on the LRUs and then the VCC devices
-        for proxy in test_proxies.talon_lru:
-            proxy.On()
-        device_under_test.On()
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.ON, wait_time_s, sleep_time_s
-        )
+        for lru in test_proxies.talon_lru:
+            result_code, command_id = lru.On()
+            assert result_code == [ResultCode.QUEUED]
+
+            lru_change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
+                (f"{command_id[0]}", '[0, "On completed OK"]')
+            )
+            lru_change_event_callbacks["State"].assert_change_event(
+                DevState.ON
+            )
+
+        result_code, message = device_under_test.On()  # Slow command
+        assert result_code == ResultCode.OK
         assert device_under_test.State() == DevState.ON
 
-    @pytest.mark.parametrize("vcc_id", [1])
+        # assert if any captured events have gone unaddressed
+        lru_change_event_callbacks.assert_not_called()
+
     def test_Off(
-        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Test the "Off" command
 
-        :param test_proxies: the proxies test fixture
-        :param vcc_id: the fsp id
-
+        :param device_under_test: the device under test
+        :param test_proxies: a test fixture containing all subdevice proxies needed by the device under test.
+        :param lru_change_event_callbacks: a mock object that receives TalonLru's subscribed change events.
         """
 
-        wait_time_s = 3
-        sleep_time_s = 0.1
+        result_code, message = device_under_test.Off()  # Slow command
+        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
-        device_under_test = test_proxies.vcc[vcc_id]
+        # Turn DUT back on for next test.
+        assert device_under_test.adminMode == AdminMode.ONLINE
+        device_under_test.On()
+        change_event_callbacks["State"].assert_change_event(DevState.ON)
 
-        device_under_test.Off()
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.OFF, wait_time_s, sleep_time_s
-        )
-        assert device_under_test.State() == DevState.OFF
+    # TODO: Confirm this test is not needed since we are not implementing STANDBY
+    # @pytest.mark.parametrize("vcc_id", [1])
+    # def test_Standby(
+    #     self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
+    # ) -> None:
+    #     """
+    #     Test the "Standby" command
 
-    @pytest.mark.parametrize("vcc_id", [1])
-    def test_Standby(
-        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
-    ) -> None:
-        """
-        Test the "Standby" command
+    #     :param test_proxies: the proxies test fixture
+    #     :param vcc_id: the fsp id
 
-        :param test_proxies: the proxies test fixture
-        :param vcc_id: the fsp id
+    #     """
 
-        """
+    #     wait_time_s = 3
+    #     sleep_time_s = 0.1
 
-        wait_time_s = 3
-        sleep_time_s = 0.1
+    #     device_under_test = test_proxies.vcc[vcc_id]
 
-        device_under_test = test_proxies.vcc[vcc_id]
+    #     device_under_test.Standby()
 
-        device_under_test.Standby()
-
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.STANDBY, wait_time_s, sleep_time_s
-        )
-        assert device_under_test.State() == DevState.STANDBY
+    #     test_proxies.wait_timeout_dev(
+    #         [device_under_test], DevState.STANDBY, wait_time_s, sleep_time_s
+    #     )
+    #     assert device_under_test.State() == DevState.STANDBY
 
     @pytest.mark.parametrize(
-        "config_file_name, \
-        vcc_id",
-        [("Vcc_ConfigureScan_basic.json", 1)],
+        "config_file_name",
+        ["Vcc_ConfigureScan_basic.json"],
     )
     def test_ConfigureScan(
         self: TestVcc,
-        test_proxies: pytest.fixture,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
         config_file_name: str,
-        vcc_id: int,
     ) -> None:
         """
         Test the "ConfigureScan" command
@@ -160,72 +179,59 @@ class TestVcc:
         :param vcc_id: the fsp id
 
         """
+        assert device_under_test.State() == DevState.ON
 
-        device_under_test = test_proxies.vcc[vcc_id]
-        wait_time_s = 1
-        sleep_time_s = 1
-
-        assert device_under_test.adminMode == AdminMode.ONLINE
-
-        device_under_test.On()
-
-        f = open(data_file_path + config_file_name)
-        json_str = f.read().replace("\n", "")
-        configuration = copy.deepcopy(json.loads(json_str))
-        f.close()
+        with open(data_file_path + config_file_name) as f:
+            json_str = f.read().replace("\n", "")
+            configuration = copy.deepcopy(json.loads(json_str))
 
         band_configuration = {
             "frequency_band": configuration["frequency_band"],
             "dish_sample_rate": 999999,
             "samples_per_frame": 18,
         }
-        test_proxies.vcc[vcc_id].ConfigureBand(json.dumps(band_configuration))
-        time.sleep(2)
+
+        result_code, command_id = device_under_test.ConfigureBand(
+            json.dumps(band_configuration)
+        )
+        assert result_code == [ResultCode.QUEUED]
+
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "ConfigureBand completed OK"]')
+        )
+
         assert (
-            test_proxies.vcc[vcc_id].frequencyBand
+            device_under_test.frequencyBand
             == freq_band_dict()[configuration["frequency_band"]]["band_index"]
         )
 
-        test_proxies.vcc[vcc_id].ConfigureScan(json_str)
-        test_proxies.wait_timeout_obs(
-            [test_proxies.vcc[vcc_id]],
-            ObsState.READY,
-            wait_time_s,
-            sleep_time_s,
+        result_code, command_id = device_under_test.ConfigureScan(json_str)
+        assert result_code == [ResultCode.QUEUED]
+
+        # TODO: Taylor, where does this state get set? configured=True calls the component_configured trigger..
+        # I also don't understand how it ends up as READY since component_configured destination is CONFIGURING_READY
+        change_event_callbacks["obsState"].assert_change_event(
+            ObsState.CONFIGURING
         )
 
-        assert test_proxies.vcc[vcc_id].configID == configuration["config_id"]
-        assert test_proxies.vcc[vcc_id].rfiFlaggingMask == str(
-            configuration["rfi_flagging_mask"]
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "ConfigureScan completed OK"]')
         )
-        if "band_5_tuning" in configuration:
-            if test_proxies.vcc[vcc_id].frequencyBand in [4, 5]:
-                band5Tuning_config = configuration["band_5_tuning"]
-                for i in range(0, len(band5Tuning_config)):
-                    assert (
-                        test_proxies.vcc[vcc_id].band5Tuning[i]
-                        == band5Tuning_config[i]
-                    )
-        if "frequency_band_offset_stream1" in configuration:
-            assert (
-                test_proxies.vcc[vcc_id].frequencyBandOffsetStream1
-                == configuration["frequency_band_offset_stream1"]
-            )
-        if "frequency_band_offset_stream2" in configuration:
-            assert (
-                test_proxies.vcc[vcc_id].frequencyBandOffsetStream2
-                == configuration["frequency_band_offset_stream2"]
-            )
 
-        assert device_under_test.obsState == ObsState.READY
+        change_event_callbacks["obsState"].assert_change_event(ObsState.READY)
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
-        "vcc_id, \
-        scan_id",
-        [(1, 1)],
+        "scan_id",
+        [1],
     )
     def test_Scan(
-        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int, scan_id: int
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        scan_id: int,
     ) -> None:
         """
         Test the "Scan" command
@@ -234,33 +240,27 @@ class TestVcc:
         :param vcc_id: the fsp id
 
         """
-        wait_time_s = 1
-        sleep_time_s = 1
-
-        device_under_test = test_proxies.vcc[vcc_id]
-
-        assert device_under_test.adminMode == AdminMode.ONLINE
-
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.ON, wait_time_s, sleep_time_s
-        )
         assert device_under_test.State() == DevState.ON
 
-        scan_id_device_data = DeviceData()
-        scan_id_device_data.insert(DevShort, scan_id)
+        result_code, command_id = device_under_test.Scan(scan_id)
+        assert result_code == [ResultCode.QUEUED]
 
-        device_under_test.Scan(scan_id_device_data)
-
-        test_proxies.wait_timeout_obs(
-            [device_under_test], ObsState.SCANNING, wait_time_s, sleep_time_s
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "Scan completed OK"]')
         )
-        assert device_under_test.obsState == ObsState.SCANNING
 
+        change_event_callbacks["obsState"].assert_change_event(
+            ObsState.SCANNING
+        )
         assert device_under_test.scanID == scan_id
 
-    @pytest.mark.parametrize("vcc_id", [1])
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
     def test_EndScan(
-        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Test the "EndScan" command
@@ -269,27 +269,23 @@ class TestVcc:
         :param vcc_id: the fsp id
 
         """
-        wait_time_s = 1
-        sleep_time_s = 1
-
-        device_under_test = test_proxies.vcc[vcc_id]
-
-        assert device_under_test.adminMode == AdminMode.ONLINE
-
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.ON, wait_time_s, sleep_time_s
-        )
         assert device_under_test.State() == DevState.ON
 
-        device_under_test.EndScan()
-        test_proxies.wait_timeout_obs(
-            [device_under_test], ObsState.READY, wait_time_s, sleep_time_s
-        )
-        assert device_under_test.obsState == ObsState.READY
+        result_code, command_id = device_under_test.EndScan()
+        assert result_code == [ResultCode.QUEUED]
 
-    @pytest.mark.parametrize("vcc_id", [1])
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "EndScan completed OK"]')
+        )
+        change_event_callbacks["obsState"].assert_change_event(ObsState.READY)
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
     def test_GoToIdle(
-        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Test the "GoToIdle" command
@@ -298,36 +294,30 @@ class TestVcc:
         :param vcc_id: the fsp id
 
         """
-        wait_time_s = 1
-        sleep_time_s = 1
-
-        device_under_test = test_proxies.vcc[vcc_id]
-
-        assert device_under_test.adminMode == AdminMode.ONLINE
-
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.ON, wait_time_s, sleep_time_s
-        )
         assert device_under_test.State() == DevState.ON
 
-        device_under_test.GoToIdle()
+        result_code, command_id = device_under_test.GoToIdle()
+        assert result_code == [ResultCode.QUEUED]
 
-        test_proxies.wait_timeout_obs(
-            [device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+            (f"{command_id[0]}", '[0, "GoToIdle completed OK"]')
         )
-        assert device_under_test.obsState == ObsState.IDLE
+
+        change_event_callbacks["obsState"].assert_change_event(ObsState.IDLE)
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
     @pytest.mark.parametrize(
         "config_file_name, \
-        vcc_id, \
         scan_id",
-        [("Vcc_ConfigureScan_basic.json", 1, 1)],
+        [("Vcc_ConfigureScan_basic.json", 1)],
     )
     def test_Abort_ObsReset(
         self: TestVcc,
-        test_proxies: pytest.fixture,
+        device_under_test: context.DeviceProxy,
+        change_event_callbacks: MockTangoEventCallbackGroup,
         config_file_name: str,
-        vcc_id: int,
         scan_id: int,
     ) -> None:
         """
@@ -339,47 +329,103 @@ class TestVcc:
         :param vcc_id: the fsp id
 
         """
-
-        device_under_test = test_proxies.vcc[vcc_id]
-        wait_time_s = 1
-        sleep_time_s = 1
-
-        assert device_under_test.adminMode == AdminMode.ONLINE
-
-        # abort from READY
-        self.test_ConfigureScan(test_proxies, config_file_name, vcc_id)
-
-        device_under_test.Abort()
-        test_proxies.wait_timeout_obs(
-            [device_under_test], ObsState.ABORTED, wait_time_s, sleep_time_s
-        )
-        assert device_under_test.obsState == ObsState.ABORTED
-
-        device_under_test.ObsReset()
-        test_proxies.wait_timeout_obs(
-            [device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s
-        )
         assert device_under_test.obsState == ObsState.IDLE
+        assert device_under_test.State() == DevState.ON
+
+        # dict to store return code and unique IDs of queued commands
+        command_dict = {}
+
+        # Abort from READY
+        self.test_ConfigureScan(
+            device_under_test, change_event_callbacks, config_file_name
+        )
+        assert device_under_test.obsState == ObsState.READY
+
+        command_dict["Abort"] = device_under_test.Abort()
+        command_dict["ObsReset"] = device_under_test.ObsReset()
+
+        # assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            # check that the queued command succeeded
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
+                (
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                )
+            )
+
+        # check all obsState transitions
+        for obs_state in [
+            ObsState.ABORTING,
+            ObsState.ABORTED,
+            ObsState.RESETTING,
+            ObsState.IDLE,
+        ]:
+            change_event_callbacks["obsState"].assert_change_event(
+                obs_state.value
+            )
+
+        # assert frequencyBand attribute reset during ObsReset
+        # change_event_callbacks["frequencyBand"].assert_change_event(0)
+
+        assert device_under_test.State() == DevState.ON
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
 
         # abort from SCANNING
-        self.test_ConfigureScan(test_proxies, config_file_name, vcc_id)
-        self.test_Scan(test_proxies, vcc_id, scan_id)
-
-        device_under_test.Abort()
-        test_proxies.wait_timeout_obs(
-            [device_under_test], ObsState.ABORTED, wait_time_s, sleep_time_s
+        self.test_ConfigureScan(
+            device_under_test, change_event_callbacks, config_file_name
         )
-        assert device_under_test.obsState == ObsState.ABORTED
+        self.test_Scan(device_under_test, change_event_callbacks, scan_id)
+        assert device_under_test.obsState == ObsState.SCANNING
 
-        device_under_test.ObsReset()
-        test_proxies.wait_timeout_obs(
-            [device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s
-        )
-        assert device_under_test.obsState == ObsState.IDLE
+        command_dict["Abort"] = device_under_test.Abort()
+        command_dict["ObsReset"] = device_under_test.ObsReset()
 
-    @pytest.mark.parametrize("vcc_id", [1])
+        # assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            # check that the queued command succeeded
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
+                (
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                )
+            )
+
+        # check all obsState transitions
+        for obs_state in [
+            ObsState.ABORTING,
+            ObsState.ABORTED,
+            ObsState.RESETTING,
+            ObsState.IDLE,
+        ]:
+            change_event_callbacks["obsState"].assert_change_event(
+                obs_state.value
+            )
+
+        # assert frequencyBand attribute reset during ObsReset
+        # change_event_callbacks["frequencyBand"].assert_change_event(0)
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+
     def test_Disconnect(
-        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
+        self: TestVcc,
+        device_under_test: pytest.fixture,
+        test_proxies: pytest.fixture,
+        change_event_callbacks: MockTangoEventCallbackGroup,
+        lru_change_event_callbacks: MockTangoEventCallbackGroup,
+        ps_change_event_callbacks: MockTangoEventCallbackGroup,
     ) -> None:
         """
         Verify the component manager can stop communicating
@@ -388,27 +434,41 @@ class TestVcc:
         :param vcc_id: the fsp id
 
         """
+        assert device_under_test.State() == DevState.ON
 
-        wait_time_s = 3
-        sleep_time_s = 0.1
-
-        device_under_test = device_under_test = test_proxies.vcc[vcc_id]
-
-        device_under_test.Off()
+        device_under_test.Off()  # Slow command
+        change_event_callbacks["State"].assert_change_event(DevState.OFF)
 
         # trigger stop_communicating by setting the AdminMode to OFFLINE
         device_under_test.adminMode = AdminMode.OFFLINE
-
-        # controller device should be in DISABLE state after stop_communicating
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.DISABLE, wait_time_s, sleep_time_s
-        )
-        assert device_under_test.State() == DevState.DISABLE
+        change_event_callbacks["State"].assert_change_event(DevState.DISABLE)
 
         # Stop monitoring the TalonLRUs and power switch devices
-        for proxy in test_proxies.power_switch:
-            proxy.adminMode = AdminMode.OFFLINE
+        for lru in test_proxies.talon_lru:
+            result_code, command_id = lru.Off()
+            assert result_code == [ResultCode.QUEUED]
 
-        for proxy in test_proxies.talon_lru:
-            proxy.adminMode = AdminMode.OFFLINE
-            proxy.set_timeout_millis(10000)
+            lru_change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
+                (f"{command_id[0]}", '[0, "Off completed OK"]')
+            )
+            lru_change_event_callbacks["State"].assert_change_event(
+                DevState.OFF
+            )
+
+            lru.adminMode = AdminMode.OFFLINE
+            lru_change_event_callbacks["State"].assert_change_event(
+                DevState.DISABLE
+            )
+
+        for ps in test_proxies.power_switch:
+            ps.adminMode = AdminMode.OFFLINE
+            ps_change_event_callbacks["State"].assert_change_event(
+                DevState.DISABLE
+            )
+
+        # assert if any captured events have gone unaddressed
+        change_event_callbacks.assert_not_called()
+        lru_change_event_callbacks.assert_not_called()
+        ps_change_event_callbacks.assert_not_called()

@@ -13,8 +13,6 @@ from tango.server import run
 
 from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_device import FspCorrSubarray
 from ska_mid_cbf_mcs.fsp.fsp_device import Fsp
-from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_device import FspPssSubarray
-from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_device import FspPstSubarray
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -23,11 +21,7 @@ __all__ = ["main"]
 
 
 def main(args=None, **kwargs):
-    return run(
-        classes=(FspCorrSubarray, FspPssSubarray, FspPstSubarray, Fsp),
-        args=args,
-        **kwargs
-    )
+    return run(classes=(FspCorrSubarray, Fsp), args=args, **kwargs)
 
 
 if __name__ == "__main__":

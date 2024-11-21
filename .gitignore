@@ -117,11 +117,6 @@ charts/ska-mid-cbf-mcs/charts/
 # ssl certs for MDA network workaround
 certs/
 
-# Contents of mounted folder
-mnt/talondx-config/*
-!mnt/talondx-config/example-talondx-config.json
-!mnt/talondx-config/README.md
-
 # docs folder (copied content during document generation)
 docs/src/README.md
 docs/src/diagrams/*.~vsdx

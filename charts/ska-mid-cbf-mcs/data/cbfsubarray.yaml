@@ -2,9 +2,9 @@ name: cbfsubarray
 function: cbf-subarray-observation
 domain: subarray
 command: "CbfSubarray"
-instances: ["cbfsubarray-01", "cbfsubarray-02", "cbfsubarray-03"]
+instances: ["cbfsubarray"]
 depends_on:
-  - device: mid_csp_cbf/sub_elt/controller
+  - device: sys/database/2
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -20,18 +20,13 @@ livenessProbe:
 server:
   name: "CbfSubarray"
   instances:
-  - name: "cbfsubarray-01"
+  - name: "cbfsubarray"
     classes:
     - name: "CbfSubarray"
       devices:
-      - name: "mid_csp_cbf/sub_elt/subarray_01"
-        attribute_properties:
-        - attribute: "scanID"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
+      {{ $count := (.Values.num_subarrays | int) }}
+      {{- range $i, $e := until $count }}
+      - name: "mid_csp_cbf/sub_elt/subarray_0{{ add1 $i }}"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -44,37 +39,10 @@ server:
             - "mid_csp_cbf/fsp/04"
           - name: "FspCorrSubarray"
             values:
-            - "mid_csp_cbf/fspCorrSubarray/01_01"
-            - "mid_csp_cbf/fspCorrSubarray/02_01"
-            - "mid_csp_cbf/fspCorrSubarray/03_01"
-            - "mid_csp_cbf/fspCorrSubarray/04_01"
-          - name: "FspPssSubarray"
-            values:
-            - "mid_csp_cbf/fspPssSubarray/01_01"
-            - "mid_csp_cbf/fspPssSubarray/02_01"
-            - "mid_csp_cbf/fspPssSubarray/03_01"
-            - "mid_csp_cbf/fspPssSubarray/04_01"
-          - name: "FspPstSubarray"
-            values:
-            - "mid_csp_cbf/fspPstSubarray/01_01"
-            - "mid_csp_cbf/fspPstSubarray/02_01"
-            - "mid_csp_cbf/fspPstSubarray/03_01"
-            - "mid_csp_cbf/fspPstSubarray/04_01"
-          - name: "SW1Address"
-            values:
-            - "mid_csp_cbf/sw1/001"
-          - name: "SW2Address"
-            values:
-            - "mid_csp_cbf/sw2/001"
-          - name: "CorrConfigAddress"
-            values:
-            - "mid_csp_cbf/corrconfig/01"
-          - name: "PssConfigAddress"
-            values:
-            - "mid_csp_cbf/pssconfig/01"
-          - name: "PstConfigAddress"
-            values:
-            - "mid_csp_cbf/pstconfig/01"
+            - "mid_csp_cbf/fspCorrSubarray/01_0{{ add1 $i }}"
+            - "mid_csp_cbf/fspCorrSubarray/02_0{{ add1 $i }}"
+            - "mid_csp_cbf/fspCorrSubarray/03_0{{ add1 $i }}"
+            - "mid_csp_cbf/fspCorrSubarray/04_0{{ add1 $i }}"
           - name: "SubID"
             values:
             - "1"
@@ -84,10 +52,6 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
           - name: "TalonBoard"
             values:
             - "mid_csp_cbf/talon_board/001"
@@ -98,164 +62,10 @@ server:
             - "mid_csp_cbf/talon_board/006"
             - "mid_csp_cbf/talon_board/007"
             - "mid_csp_cbf/talon_board/008"
-
-  - name: "cbfsubarray-02"
-    classes:
-    - name: "CbfSubarray"
-      devices:
-      - name: "mid_csp_cbf/sub_elt/subarray_02"
-        attribute_properties:
-        - attribute: "scanID"
-          properties:
-          - name: "abs_change"
+          - name: "VisSLIM"
             values:
-            - "-1"
-            - "1"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "FSP"
-            values:
-            - "mid_csp_cbf/fsp/01"
-            - "mid_csp_cbf/fsp/02"
-            - "mid_csp_cbf/fsp/03"
-            - "mid_csp_cbf/fsp/04"
-          - name: "FspCorrSubarray"
-            values:
-            - "mid_csp_cbf/fspCorrSubarray/01_02"
-            - "mid_csp_cbf/fspCorrSubarray/02_02"
-            - "mid_csp_cbf/fspCorrSubarray/03_02"
-            - "mid_csp_cbf/fspCorrSubarray/04_02"
-          - name: "FspPssSubarray"
-            values:
-            - "mid_csp_cbf/fspPssSubarray/01_02"
-            - "mid_csp_cbf/fspPssSubarray/02_02"
-            - "mid_csp_cbf/fspPssSubarray/03_02"
-            - "mid_csp_cbf/fspPssSubarray/04_02"
-          - name: "FspPstSubarray"
-            values:
-            - "mid_csp_cbf/fspPstSubarray/01_02"
-            - "mid_csp_cbf/fspPstSubarray/02_02"
-            - "mid_csp_cbf/fspPstSubarray/03_02"
-            - "mid_csp_cbf/fspPstSubarray/04_02"
-          - name: "SW1Address"
-            values:
-            - "mid_csp_cbf/sw1/002"
-          - name: "SW2Address"
-            values:
-            - "mid_csp_cbf/sw2/002"
-          - name: "CorrConfigAddress"
-            values:
-            - "mid_csp_cbf/corrconfig/02"
-          - name: "PssConfigAddress"
-            values:
-            - "mid_csp_cbf/pssconfig/02"
-          - name: "PstConfigAddress"
-            values:
-            - "mid_csp_cbf/pstconfig/02"
-          - name: "SubID"
-            values:
-            - "2"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-          - name: "TalonBoard"
-            values:
-            - "mid_csp_cbf/talon_board/001"
-            - "mid_csp_cbf/talon_board/002"
-            - "mid_csp_cbf/talon_board/003"
-            - "mid_csp_cbf/talon_board/004"
-            - "mid_csp_cbf/talon_board/005"
-            - "mid_csp_cbf/talon_board/006"
-            - "mid_csp_cbf/talon_board/007"
-            - "mid_csp_cbf/talon_board/008"
-
-  - name: "cbfsubarray-03"
-    classes:
-    - name: "CbfSubarray"
-      devices:
-      - name: "mid_csp_cbf/sub_elt/subarray_03"
-        attribute_properties:
-        - attribute: "scanID"
-          properties:
-          - name: "abs_change"
-            values:
-            - "-1"
-            - "1"
-        properties:
-          - name: "CbfControllerAddress"
-            values:
-            - "mid_csp_cbf/sub_elt/controller"
-          - name: "FSP"
-            values:
-            - "mid_csp_cbf/fsp/01"
-            - "mid_csp_cbf/fsp/02"
-            - "mid_csp_cbf/fsp/03"
-            - "mid_csp_cbf/fsp/04"
-          - name: "FspCorrSubarray"
-            values:
-            - "mid_csp_cbf/fspCorrSubarray/01_03"
-            - "mid_csp_cbf/fspCorrSubarray/02_03"
-            - "mid_csp_cbf/fspCorrSubarray/03_03"
-            - "mid_csp_cbf/fspCorrSubarray/04_03"
-          - name: "FspPssSubarray"
-            values:
-            - "mid_csp_cbf/fspPssSubarray/01_03"
-            - "mid_csp_cbf/fspPssSubarray/02_03"
-            - "mid_csp_cbf/fspPssSubarray/03_03"
-            - "mid_csp_cbf/fspPssSubarray/04_03"
-          - name: "FspPstSubarray"
-            values:
-            - "mid_csp_cbf/fspPstSubarray/01_03"
-            - "mid_csp_cbf/fspPstSubarray/02_03"
-            - "mid_csp_cbf/fspPstSubarray/03_03"
-            - "mid_csp_cbf/fspPstSubarray/04_03"
-          - name: "SW1Address"
-            values:
-            - "mid_csp_cbf/sw1/003"
-          - name: "SW2Address"
-            values:
-            - "mid_csp_cbf/sw2/003"
-          - name: "CorrConfigAddress"
-            values:
-            - "mid_csp_cbf/corrconfig/03"
-          - name: "PssConfigAddress"
-            values:
-            - "mid_csp_cbf/pssconfig/03"
-          - name: "PstConfigAddress"
-            values:
-            - "mid_csp_cbf/pstconfig/03"
-          - name: "SubID"
-            values:
-            - "3"
-          - name: "VCC"
-            values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
-          - name: "TalonBoard"
-            values:
-            - "mid_csp_cbf/talon_board/001"
-            - "mid_csp_cbf/talon_board/002"
-            - "mid_csp_cbf/talon_board/003"
-            - "mid_csp_cbf/talon_board/004"
-            - "mid_csp_cbf/talon_board/005"
-            - "mid_csp_cbf/talon_board/006"
-            - "mid_csp_cbf/talon_board/007"
-            - "mid_csp_cbf/talon_board/008"
+            - "mid_csp_cbf/slim/slim-vis"
+      {{- end}}
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

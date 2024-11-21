@@ -10,8 +10,10 @@ enabled: true
 system: csp
 subsystem: cbfmcs-mid
 telescope: SKA-mid
-engineeringConsoleVersion: 0.10.3
 signalVerificationVersion: 0.2.16
+svImageRegistry: "artefact.skao.int"
+
+num_subarrays: 1
 
 labels:
   app: ska-mid-cbf-mcs
@@ -32,7 +34,7 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 0.15.0
+    tag: 1.1.0-rc.2
     pullPolicy: IfNotPresent
 
 resources:
@@ -85,6 +87,10 @@ deviceServers:
     enabled: true
     file: "data/talondxlogconsumer.yaml"
 
+controllerTimeout: 60
+fspTimeout: 15
+slimLinkTimeout: 10
+vccTimeout: 3
 
 nodeSelector: {}
 

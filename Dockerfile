@@ -1,8 +1,7 @@
-ARG BUILD_IMAGE="artefact.skao.int/ska-tango-images-pytango-builder:9.4.3"
-ARG BASE_IMAGE="artefact.skao.int/ska-tango-images-pytango-runtime:9.4.3"
-FROM $BUILD_IMAGE AS buildenv
-
-FROM $BASE_IMAGE
+FROM artefact.skao.int/ska-tango-images-pytango-builder:9.5.0 AS buildenv
+FROM artefact.skao.int/ska-tango-images-pytango-runtime:9.5.0 AS runtime
+# The below line fixes an issue where `make oci-build` gives the error: ERROR: failed to solve: cannot copy from stage "buildenv", it needs to be defined before current stage "runtime"
+COPY --from=buildenv . .
 
 USER root
 
@@ -12,7 +11,6 @@ RUN poetry config virtualenvs.create false
 COPY pyproject.toml poetry.lock* ./
 
 # Install runtime dependencies and the app
-RUN poetry install
+RUN poetry install --only main
 
 USER tango
-

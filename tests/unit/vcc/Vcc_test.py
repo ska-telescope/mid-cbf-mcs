@@ -11,370 +11,857 @@
 
 from __future__ import annotations
 
+import gc
 import json
-
-# Standard imports
 import os
-import time
+from typing import Iterator
+from unittest.mock import Mock
 
 import pytest
-import tango
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
+from assertpy import assert_that
+from ska_control_model import AdminMode, ObsState, ResultCode, SimulationMode
+from ska_tango_testing import context
+from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
+
+from ... import test_utils
 
 # Path
-file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-# Tango imports
-
-# SKA imports
-
-CONST_WAIT_TIME = 2
+# Disable garbage collection to prevent tests hanging
+gc.disable()
 
 
 class TestVcc:
     """
-    Test class for Vcc tests.
+    Test class for VCC.
     """
 
-    def test_State(self: TestVcc, device_under_test: CbfDeviceProxy) -> None:
-        """
-        Test State
+    # TODO: Check configured parameters in READY and IDLE?
+    # TODO: Test invalid frequency band
+    # TODO: subarrayMembership?
+    # TODO: Simulator vs mock HPS?
+    # TODO: Validate ConfigureScan at VCC level?
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+    @pytest.fixture(name="test_context")
+    def vcc_test_context(
+        self: TestVcc, initial_mocks: dict[str, Mock]
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        Fixture that creates a test context for the Vcc device.
+
+        :param initial_mocks: A dictionary of initial mocks to be used in the test context.
+        :return: A test context for the Vcc device.
+        """
+        harness = context.ThreadedTestTangoContextManager()
+        harness.add_device(
+            device_name="mid_csp_cbf/vcc/001",
+            device_class=Vcc,
+            TalonLRUAddress="mid_csp_cbf/talon_lru/001",
+            VccControllerAddress="talondx-001/vcc-app/vcc-controller",
+            Band1And2Address="talondx-001/vcc-app/vcc-band-1-and-2",
+            Band3Address="talondx-001/vcc-app/vcc-band-3",
+            Band4Address="talondx-001/vcc-app/vcc-band-4",
+            Band5Address="talondx-001/vcc-app/vcc-band-5",
+            SW1Address="mid_csp_cbf/vcc_sw1/001",
+            SW2Address="mid_csp_cbf/vcc_sw2/001",
+            DeviceID="1",
+            LRCTimeout="3",
+        )
+        for name, mock in initial_mocks.items():
+            harness.add_mock_device(device_name=name, device_mock=mock)
+
+        with harness as test_context:
+            yield test_context
+
+    def device_online(
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+    ) -> bool:
+        """
+        Helper function to start up and turn on the DUT.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        """
+        # Set a given device to AdminMode.ONLINE and DevState.ON
+        device_under_test.simulationMode = SimulationMode.FALSE
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
+        return device_under_test.adminMode == AdminMode.ONLINE
+
+    def test_State(
+        self: TestVcc, device_under_test: context.DeviceProxy
+    ) -> None:
+        """
+        Test the State attribute just after device initialization.
+
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.state() == DevState.DISABLE
 
-    def test_Status(self: TestVcc, device_under_test: CbfDeviceProxy) -> None:
+    def test_subarrayMembership(
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test reading/writing subarrayMembership while catching the corresponding change events.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        """
+        assert device_under_test.subarrayMembership == 0
+        device_under_test.subarrayMembership = 1
+        assert device_under_test.subarrayMembership == 1
+
+        # Assert subarrayMembership attribute event change
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="subarrayMembership",
+            attribute_value=1,
+        )
+
+    def test_Status(
+        self: TestVcc, device_under_test: context.DeviceProxy
+    ) -> None:
+        """
+        Test the Status attribute just after device initialization.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestVcc, device_under_test: CbfDeviceProxy
+        self: TestVcc, device_under_test: context.DeviceProxy
     ) -> None:
+        """
+        Test the adminMode attribute just after device initialization.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
-    def test_Power_Commands(
-        self: TestVcc, device_under_test: CbfDeviceProxy, command: str
+    def test_Online(
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test the On/Off/Standby Commands
+        Test turning the device online.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param command: the command to test (one of On/Off/Standby)
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
-
+        # Set a given device to AdminMode.ONLINE and DevState.ON
+        device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.adminMode == AdminMode.ONLINE
 
-        assert device_under_test.State() == DevState.ON
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
 
-        if command == "On":
-            expected_state = DevState.ON
-            result = device_under_test.On()
-        elif command == "Off":
-            expected_state = DevState.OFF
-            result = device_under_test.Off()
-        elif command == "Standby":
-            expected_state = DevState.STANDBY
-            result = device_under_test.Standby()
-
-        time.sleep(CONST_WAIT_TIME)
-        assert result[0][0] == ResultCode.OK
-        assert device_under_test.State() == expected_state
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.ON,
+        )
 
     @pytest.mark.parametrize(
-        "config_file_name", [("Vcc_ConfigureScan_basic.json")]
+        "frequency_band, success",
+        [
+            (
+                "fail",
+                False,
+            ),
+            ("1", True),
+            ("2", True),
+            ("5a", True),
+            ("5b", True),
+        ],
     )
-    def test_Vcc_ConfigureScan(
-        self, device_under_test: CbfDeviceProxy, config_file_name: str
+    def test_ConfigureBand(
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        frequency_band: str,
+        success: bool,
+    ) -> None:
+        """
+        Test ConfigureBand with both failing and passing configurations.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param frequency_band: The frequency band to configure.
+        :param success: A parameterized value used to test success and failure conditions.
+        """
+        # Prepare device for observation
+        assert self.device_online(device_under_test, event_tracer)
+
+        # Setting band configuration with invalid frequency band
+
+        band_configuration = {
+            "frequency_band": frequency_band,
+            "dish_sample_rate": 999999,
+            "samples_per_frame": 18,
+        }
+
+        # Test issuing invalid frequency band
+        return_value = device_under_test.ConfigureBand(
+            json.dumps(band_configuration)
+        )
+
+        # check that the command was successfully queued
+        assert return_value[0] == ResultCode.QUEUED
+
+        if success:
+            # Check that the queued command succeeded
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "ConfigureBand completed OK"]',
+                ),
+            )
+
+            # Assert frequencyBand attribute was pushed
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="frequencyBand",
+                attribute_value=freq_band_dict()[frequency_band]["band_index"],
+            )
+
+        else:
+            # Check that the queued command failed
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.FAILED.value}, "frequency_band {frequency_band} is invalid."]',
+                ),
+            )
+
+    @pytest.mark.parametrize(
+        "config_file_name, scan_id", [("Vcc_ConfigureScan_basic.json", 1)]
+    )
+    def test_Scan(
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        config_file_name: str,
+        scan_id: int,
     ) -> None:
         """
         Test a minimal successful scan configuration.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration.
+        :param scan_id: An identifier for the scan operation.
         """
-        device_under_test.adminMode = AdminMode.ONLINE
-        assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.state() == DevState.ON
+        # Prepare device for observation
+        assert self.device_online(device_under_test, event_tracer)
 
-        device_under_test.On()
-
-        f = open(file_path + config_file_name)
-        json_str = f.read().replace("\n", "")
-        configuration = json.loads(json_str)
-        f.close()
-
+        # Prepare input data
+        with open(test_data_path + config_file_name) as f:
+            json_str = f.read().replace("\n", "")
+            configuration = json.loads(json_str)
+        freq_band_name = configuration["frequency_band"]
         band_configuration = {
-            "frequency_band": configuration["frequency_band"],
+            "frequency_band": freq_band_name,
             "dish_sample_rate": 999999,
             "samples_per_frame": 18,
         }
-        device_under_test.ConfigureBand(json.dumps(band_configuration))
 
-        device_under_test.ConfigureScan(json_str)
-        assert device_under_test.obsState == ObsState.READY
+        # Dict to store return code and unique IDs of queued commands
+        command_dict = {}
+
+        # Test happy path observing command sequence
+        command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
+            json.dumps(band_configuration)
+        )
+        # Assert frequencyBand attribute updated
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=freq_band_dict()[freq_band_name]["band_index"],
+        )
+
+        command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
+            json_str
+        )
+
+        # Test last input scan configuration is correct, must be done before GoToIdle
+        command_name, return_value = (
+            "ConfigureScan",
+            command_dict["ConfigureScan"],
+        )
+        assert return_value[0] == ResultCode.QUEUED
+
+        # Check that the queued command succeeded
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{return_value[1][0]}",
+                f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+            ),
+        )
+
+        assert device_under_test.lastScanConfiguration == json_str
+
+        configuration["expected_dish_id"] = device_under_test.dishID
+        assert device_under_test.lastHpsScanConfiguration == json.dumps(
+            configuration
+        )
+
+        command_dict["Scan"] = device_under_test.Scan(scan_id)
+        command_dict["EndScan"] = device_under_test.EndScan()
+        command_dict["GoToIdle"] = device_under_test.GoToIdle()
+
+        # Assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            if command_name == "ConfigureScan":
+                pass
+            # Check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            # Check that the queued command succeeded
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                ),
+            )
+        assert device_under_test.lastScanConfiguration == ""
+        assert device_under_test.lastHpsScanConfiguration == ""
+
+        # Check all obsState transitions
+        previous_state = ObsState.IDLE
+        for obs_state in [
+            ObsState.CONFIGURING,
+            ObsState.READY,
+            ObsState.SCANNING,
+            ObsState.READY,
+            ObsState.IDLE,
+        ]:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
+                previous_value=previous_state,
+            )
+            previous_state = obs_state
+
+        # Assert frequencyBand attribute reset during GoToIdle
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=0,
+        )
 
     @pytest.mark.parametrize(
-        "config_file_name", [("Vcc_ConfigureScan_basic.json")]
+        "config_file_name, scan_id",
+        [("Vcc_ConfigureScan_basic.json", 1)],
     )
-    def test_GoToIdle(
-        self, device_under_test: CbfDeviceProxy, config_file_name: str
-    ) -> None:
-        """
-        Test a the GoToIdle command from a successful scan configuration.
-
-        First calls test_Vcc_ConfigureScan to get it in the ready state
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param config_file_name: JSON file for the configuration
-        """
-        self.test_Vcc_ConfigureScan(device_under_test, config_file_name)
-
-        device_under_test.GoToIdle()
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.obsState == ObsState.IDLE
-
-    @pytest.mark.parametrize(
-        "config_file_name, \
-        scan_id",
-        [
-            ("Vcc_ConfigureScan_basic.json", 1),
-            ("Vcc_ConfigureScan_basic.json", 2),
-        ],
-    )
-    def test_Scan(
+    def test_Scan_reconfigure(
         self: TestVcc,
-        device_under_test: CbfDeviceProxy,
-        config_file_name: str,
-        scan_id: int,
-    ) -> None:
-        """
-        Test Vcc's Scan command state changes.
-
-        First calls test_Vcc_ConfigureScan to get it in the ready state
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param config_file_name: JSON file for the configuration
-        :param scan_id: the scan id
-        """
-        # turn on device and configure scan
-        self.test_Vcc_ConfigureScan(device_under_test, config_file_name)
-
-        scan_id_device_data = tango.DeviceData()
-        scan_id_device_data.insert(tango.DevShort, scan_id)
-
-        # Use callable 'Scan'  API
-        (result_code, _) = device_under_test.Scan(scan_id_device_data)
-        assert result_code == ResultCode.STARTED
-        assert device_under_test.obsState == ObsState.SCANNING
-
-    @pytest.mark.parametrize(
-        "config_file_name, \
-        scan_id",
-        [
-            ("Vcc_ConfigureScan_basic.json", 1),
-            ("Vcc_ConfigureScan_basic.json", 2),
-        ],
-    )
-    def test_EndScan(
-        self: TestVcc,
-        device_under_test: CbfDeviceProxy,
-        config_file_name: str,
-        scan_id: int,
-    ) -> None:
-        """
-        Test Vcc's EndScan command state changes.
-
-        First calls test_Scan to get it in the Scanning state
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param config_file_name: JSON file for the configuration
-        :param scan_id: the scan id
-        """
-        self.test_Scan(device_under_test, config_file_name, scan_id)
-
-        (result_code, _) = device_under_test.EndScan()
-        assert device_under_test.obsState == ObsState.READY
-
-    @pytest.mark.parametrize(
-        "config_file_name, \
-        scan_id",
-        [
-            ("Vcc_ConfigureScan_basic.json", 1),
-            ("Vcc_ConfigureScan_basic.json", 2),
-        ],
-    )
-    def test_Reconfigure_Scan_EndScan_GoToIdle(
-        self: TestVcc,
-        device_under_test: CbfDeviceProxy,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         scan_id: int,
     ) -> None:
         """
         Test Vcc's ability to reconfigure and run multiple scans.
 
-        Calls test_EndScan to get it in the ready state after a first test run.
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param config_file_name: JSON file for the configuration
-        :param scan_id: the scan id
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration.
+        :param scan_id: An identifier for the scan operation.
         """
-        self.test_EndScan(device_under_test, config_file_name, scan_id)
+        # Prepare device for observation
+        assert self.device_online(device_under_test, event_tracer)
 
-        # try reconfiguring and scanning again (w/o power cycling)
-        f = open(file_path + config_file_name)
-        json_str = f.read().replace("\n", "")
-        configuration = json.loads(json_str)
-        f.close()
-
+        # Prepare input data
+        with open(test_data_path + config_file_name) as f:
+            json_str = f.read().replace("\n", "")
+            configuration = json.loads(json_str)
+        freq_band_name = configuration["frequency_band"]
         band_configuration = {
-            "frequency_band": configuration["frequency_band"],
+            "frequency_band": freq_band_name,
             "dish_sample_rate": 999999,
             "samples_per_frame": 18,
         }
-        device_under_test.ConfigureBand(json.dumps(band_configuration))
 
-        (result_code, _) = device_under_test.ConfigureScan(json_str)
-        time.sleep(CONST_WAIT_TIME)
-        assert result_code == ResultCode.OK
-        assert device_under_test.obsState == ObsState.READY
+        # Dict to store return code and unique IDs of queued commands
+        command_dict = {}
 
-        # rescanning
-        scan_id_device_data = tango.DeviceData()
-        scan_id_device_data.insert(tango.DevShort, scan_id)
+        # Test happy path observing command sequence
+        command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
+            json.dumps(band_configuration)
+        )
+        # Assert frequencyBand attribute updated
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=freq_band_dict()[freq_band_name]["band_index"],
+        )
 
-        (result_code, _) = device_under_test.Scan(scan_id_device_data)
-        assert result_code == ResultCode.STARTED
-        assert device_under_test.obsState == ObsState.SCANNING
-        (result_code, _) = device_under_test.EndScan()
-        assert result_code == ResultCode.OK
-        assert device_under_test.obsState == ObsState.READY
+        command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
+            json_str
+        )
+        command_dict["Scan"] = device_under_test.Scan(scan_id)
+        command_dict["EndScan"] = device_under_test.EndScan()
 
-        (result_code, _) = device_under_test.GoToIdle()
-        assert device_under_test.obsState == ObsState.IDLE
-        assert result_code == ResultCode.OK
+        # Assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # Check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            # Check that the queued command succeeded
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                ),
+            )
+
+        # Check all obsState transitions
+        previous_state = ObsState.IDLE
+        for obs_state in [
+            ObsState.CONFIGURING,
+            ObsState.READY,
+            ObsState.SCANNING,
+            ObsState.READY,
+        ]:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
+                previous_value=previous_state,
+            )
+            previous_state = obs_state
+
+        # 2nd round of observation
+        command_dict = {}
+        command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
+            json_str
+        )
+        command_dict["Scan"] = device_under_test.Scan(scan_id)
+        command_dict["EndScan"] = device_under_test.EndScan()
+        command_dict["GoToIdle"] = device_under_test.GoToIdle()
+
+        # Assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # Check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            # Check that the queued command succeeded
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                ),
+            )
+
+        # Check all obsState transitions
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).cbf_has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="obsState",
+            attribute_value=ObsState.CONFIGURING,
+            previous_value=previous_state,
+        )
+
+        previous_state = ObsState.CONFIGURING
+        for obs_state in [
+            ObsState.READY,
+            ObsState.SCANNING,
+            ObsState.READY,
+        ]:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
+                previous_value=previous_state,
+                target_n_events=2,
+            )
+            previous_state = obs_state
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).cbf_has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="obsState",
+            attribute_value=ObsState.IDLE,
+            previous_value=previous_state,
+        )
+
+        # Assert frequencyBand attribute reset during GoToIdle
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=0,
+        )
 
     @pytest.mark.parametrize(
-        "config_file_name", [("Vcc_ConfigureScan_basic.json")]
+        "config_file_name",
+        ["Vcc_ConfigureScan_basic.json"],
     )
-    def test_Abort_FromReady(
-        self, device_under_test: CbfDeviceProxy, config_file_name: str
+    def test_Abort_from_ready(
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        config_file_name: str,
     ) -> None:
         """
-        Test a Abort() from ready state.
+        Test Abort from ObsState.READY.
 
-        First calls test_Vcc_ConfigureScan to get it in ready state.
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param config_file_name: JSON file for the configuration
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration.
         """
-        self.test_Vcc_ConfigureScan(device_under_test, config_file_name)
+        # Prepare device for observation
+        assert self.device_online(device_under_test, event_tracer)
 
-        device_under_test.Abort()
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.obsState == ObsState.ABORTED
+        # Prepare input data
+        with open(test_data_path + config_file_name) as f:
+            json_str = f.read().replace("\n", "")
+            configuration = json.loads(json_str)
+        freq_band_name = configuration["frequency_band"]
+        band_configuration = {
+            "frequency_band": freq_band_name,
+            "dish_sample_rate": 999999,
+            "samples_per_frame": 18,
+        }
+
+        # Dict to store return code and unique IDs of queued commands
+        command_dict = {}
+
+        # Test issuing Abort and ObsReset from READY
+        command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
+            json.dumps(band_configuration)
+        )
+        # Assert frequencyBand attribute updated
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=freq_band_dict()[freq_band_name]["band_index"],
+        )
+
+        command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
+            json_str
+        )
+        command_dict["Abort"] = device_under_test.Abort()
+        command_dict["ObsReset"] = device_under_test.ObsReset()
+
+        # Assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # Check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            # Check that the queued command succeeded
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                ),
+            )
+
+        # Check all obsState transitions
+        previous_state = ObsState.IDLE
+        for obs_state in [
+            ObsState.CONFIGURING,
+            ObsState.READY,
+            ObsState.ABORTING,
+            ObsState.ABORTED,
+            ObsState.RESETTING,
+            ObsState.IDLE,
+        ]:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
+                previous_value=previous_state,
+            )
+            previous_state = obs_state
+
+        # Assert frequencyBand attribute reset during ObsReset
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=0,
+        )
+
+        # Finally, ensure configuration works as expected after resetting
+        command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
+            json.dumps(band_configuration)
+        )
+        # Assert frequencyBand attribute updated
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=freq_band_dict()[freq_band_name]["band_index"],
+        )
+
+        command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
+            json_str
+        )
+        # Assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # Check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            # Check that the queued command succeeded
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                ),
+            )
+
+        # Check all obsState transitions
+        for obs_state in [
+            ObsState.CONFIGURING,
+            ObsState.READY,
+        ]:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
+                previous_value=previous_state,
+                target_n_events=2,
+            )
+            previous_state = obs_state
 
     @pytest.mark.parametrize(
-        "config_file_name, \
-        scan_id",
-        [
-            ("Vcc_ConfigureScan_basic.json", 1),
-            ("Vcc_ConfigureScan_basic.json", 2),
-        ],
+        "config_file_name, scan_id",
+        [("Vcc_ConfigureScan_basic.json", 1)],
     )
-    def test_Abort_FromScanning(
+    def test_Abort_from_scanning(
         self: TestVcc,
-        device_under_test: CbfDeviceProxy,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
         config_file_name: str,
         scan_id: int,
     ) -> None:
         """
-        Test a Abort() from scanning state.
+        Test Abort from ObsState.SCANNING.
 
-        First calls test_Scan to get it in the scanning state
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param config_file_name: JSON file for the configuration
-        :param scan_id: the scan id
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param config_file_name: file name for the configuration.
+        :param scan_id: An identifier for the scan operation.
         """
-        self.test_Scan(device_under_test, config_file_name, scan_id)
+        # Prepare device for observation
+        assert self.device_online(device_under_test, event_tracer)
 
-        device_under_test.Abort()
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.obsState == ObsState.ABORTED
+        # Prepare input data
+        with open(test_data_path + config_file_name) as f:
+            json_str = f.read().replace("\n", "")
+            configuration = json.loads(json_str)
+        freq_band_name = configuration["frequency_band"]
+        band_configuration = {
+            "frequency_band": freq_band_name,
+            "dish_sample_rate": 999999,
+            "samples_per_frame": 18,
+        }
 
-    @pytest.mark.parametrize(
-        "config_file_name", [("Vcc_ConfigureScan_basic.json")]
-    )
-    def test_ObsReset(
-        self, device_under_test: CbfDeviceProxy, config_file_name: str
-    ) -> None:
-        """
-        Test ObsReset() command from aborted state.
+        # Dict to store return code and unique IDs of queued commands
+        command_dict = {}
 
-        First calls test_Abort_FromReady to get it in aborted state.
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        :param config_file_name: JSON file for the configuration
-        """
+        # Test issuing Abort and ObsReset from SCANNING
+        command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
+            json.dumps(band_configuration)
+        )
+        # Assert frequencyBand attribute updated
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=freq_band_dict()[freq_band_name]["band_index"],
+        )
 
-        self.test_Abort_FromReady(device_under_test, config_file_name)
+        command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
+            json_str
+        )
+        command_dict["Scan"] = device_under_test.Scan(scan_id)
+        command_dict["Abort"] = device_under_test.Abort()
+        command_dict["ObsReset"] = device_under_test.ObsReset()
 
-        device_under_test.ObsReset()
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.obsState == ObsState.IDLE
+        # Assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # Check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
 
-    @pytest.mark.parametrize(
-        "sw_config_file_name, \
-        config_file_name",
-        [
-            (
-                "Vcc_ConfigureSearchWindow_basic.json",
-                "Vcc_ConfigureScan_basic.json",
+            # Check that the queued command succeeded
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                ),
             )
-        ],
-    )
-    def test_ConfigureSearchWindow_basic(
-        self: TestVcc,
-        device_under_test: CbfDeviceProxy,
-        sw_config_file_name: str,
-        config_file_name: str,
-    ):
-        """
-        Test a minimal successful search window configuration.
-        """
-        device_under_test.adminMode = AdminMode.ONLINE
-        device_under_test.loggingLevel = LoggingLevel.DEBUG
-        device_under_test.On()
-        device_under_test.loggingLevel = LoggingLevel.DEBUG
-        # set dishID to SKA001 to correctly test tdcDestinationAddress
-        device_under_test.dishID = "SKA001"
-        f = open(file_path + config_file_name)
-        json_string = f.read().replace("\n", "")
-        f.close()
-        device_under_test.ConfigureScan(json_string)
-        time.sleep(3)
 
-        # configure search window
-        f = open(file_path + sw_config_file_name)
-        device_under_test.ConfigureSearchWindow(f.read().replace("\n", ""))
-        f.close()
+        # Check all obsState transitions
+        previous_state = ObsState.IDLE
+        for obs_state in [
+            ObsState.CONFIGURING,
+            ObsState.READY,
+            ObsState.SCANNING,
+            ObsState.ABORTING,
+            ObsState.ABORTED,
+            ObsState.RESETTING,
+            ObsState.IDLE,
+        ]:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
+                previous_value=previous_state,
+            )
+            previous_state = obs_state
+
+        # Assert frequencyBand attribute reset during ObsReset
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=0,
+        )
+
+        # Finally, ensure configuration works as expected after resetting
+        command_dict["ConfigureBand"] = device_under_test.ConfigureBand(
+            json.dumps(band_configuration)
+        )
+        # Assert frequencyBand attribute updated
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="frequencyBand",
+            attribute_value=freq_band_dict()[freq_band_name]["band_index"],
+        )
+
+        command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
+            json_str
+        )
+        # Assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # Check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            # Check that the queued command succeeded
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{return_value[1][0]}",
+                    f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                ),
+            )
+
+        # Check all obsState transitions
+        for obs_state in [
+            ObsState.CONFIGURING,
+            ObsState.READY,
+        ]:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="obsState",
+                attribute_value=obs_state.value,
+                previous_value=previous_state,
+                target_n_events=2,
+            )
+            previous_state = obs_state

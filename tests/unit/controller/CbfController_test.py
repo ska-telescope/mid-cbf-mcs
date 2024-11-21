@@ -7,149 +7,349 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
+
 """Contain the tests for the CbfController."""
 
 from __future__ import annotations
 
-# Standard imports
+import gc
 import os
-import time
+from typing import Iterator
+from unittest.mock import Mock
 
 import pytest
+from assertpy import assert_that
+from ska_control_model import AdminMode, SimulationMode
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode
-from tango import DevFailed, DevState
+from ska_tango_testing import context
+from ska_tango_testing.integration import TangoEventTracer
+from tango import DevState
 
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.controller.controller_device import CbfController
 
-# Path
-file_path = os.path.dirname(os.path.abspath(__file__))  # Path
+from ... import test_utils
+
+# Paths
+file_path = os.path.dirname(os.path.abspath(__file__))
 json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-# SKA imports
-
-# Tango imports
-
-
-CONST_WAIT_TIME = 4
+# Disable garbage collection to prevent tests hanging
+gc.disable()
 
 
 class TestCbfController:
     """
-    Test class for CbfController tests.
+    Test class for CbfController.
     """
 
+    @pytest.fixture(name="test_context", scope="function")
+    def cbf_controller_test_context(
+        self: TestCbfController,
+        initial_mocks: dict[str, Mock],
+    ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
+        """
+        Fixture that creates a test context for the CbfController.
+
+        :param initial_mocks: A dictionary of device mocks to be added to the test context.
+        :return: A test context for the CbfController.
+        """
+        harness = context.ThreadedTestTangoContextManager()
+        harness.add_device(
+            device_class=CbfController,
+            device_name="mid_csp_cbf/cbf_controller/001",
+            CbfSubarray=[
+                "mid_csp_cbf/sub_elt/subarray_01",
+                "mid_csp_cbf/sub_elt/subarray_02",
+                "mid_csp_cbf/sub_elt/subarray_03",
+            ],
+            VCC=[
+                "mid_csp_cbf/vcc/001",
+                "mid_csp_cbf/vcc/002",
+                "mid_csp_cbf/vcc/003",
+                "mid_csp_cbf/vcc/004",
+            ],
+            FSP=[
+                "mid_csp_cbf/fsp/01",
+                "mid_csp_cbf/fsp/02",
+                "mid_csp_cbf/fsp/03",
+                "mid_csp_cbf/fsp/04",
+            ],
+            TalonLRU=[
+                "mid_csp_cbf/talon_lru/001",
+                "mid_csp_cbf/talon_lru/002",
+                "mid_csp_cbf/talon_lru/003",
+                "mid_csp_cbf/talon_lru/004",
+            ],
+            TalonBoard=[
+                "mid_csp_cbf/talon_board/001",
+                "mid_csp_cbf/talon_board/002",
+                "mid_csp_cbf/talon_board/003",
+                "mid_csp_cbf/talon_board/004",
+                "mid_csp_cbf/talon_board/005",
+                "mid_csp_cbf/talon_board/006",
+                "mid_csp_cbf/talon_board/007",
+                "mid_csp_cbf/talon_board/008",
+            ],
+            PowerSwitch=[
+                "mid_csp_cbf/power_switch/001",
+                "mid_csp_cbf/power_switch/002",
+            ],
+            FsSLIM="mid_csp_cbf/slim/slim-fs",
+            VisSLIM="mid_csp_cbf/slim/slim-vis",
+            TalonDxConfigPath="mnt/talondx-config",
+            HWConfigPath="mnt/hw_config/hw_config.yaml",
+            FsSLIMConfigPath="mnt/slim/fs/slim_config.yaml",
+            VisSLIMConfigPath="mnt/slim/vis/slim_config.yaml",
+            LRCTimeout="30",
+            MaxCapabilities=["VCC:8", "FSP:4", "Subarray:1"],
+        )
+
+        for name, mock in initial_mocks.items():
+            harness.add_mock_device(device_name=name, device_mock=mock)
+
+        with harness as test_context:
+            yield test_context
+
     def test_State(
-        self: TestCbfController, device_under_test: CbfDeviceProxy
+        self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
         """
-        Test State
+        Test the State attribute just after device initialization.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
         """
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestCbfController, device_under_test: CbfDeviceProxy
+        self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
+        """
+        Test the Status attribute just after device initialization.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestCbfController, device_under_test: CbfDeviceProxy
+        self: TestCbfController, device_under_test: context.DeviceProxy
     ) -> None:
+        """
+        Test the adminMode attribute just after device initialization.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    @pytest.mark.parametrize(
-        "command",
-        ["On", "Off", "Standby", "InitSysParam", "SourceInitSysParam"],
-    )
-    def test_Commands(
+    def test_Online(
         self: TestCbfController,
-        device_under_test: CbfDeviceProxy,
-        command: str,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
     ) -> None:
         """
-        Test each of CbfController's commands.
+        Test that the devState is appropriately set after device startup.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
         """
+        device_under_test.simulationMode = SimulationMode.FALSE
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
 
-        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.adminMode == AdminMode.ONLINE
-
-        assert device_under_test.State() == DevState.OFF
-
-        if command == "On":
-            expected_state = DevState.ON
-            result = device_under_test.On()
-        elif command == "Off":
-            # Off cannot be called from OFF state so On must be called first.
-            device_under_test.On()
-            time.sleep(CONST_WAIT_TIME)
-            assert device_under_test.State() == DevState.ON
-            expected_state = DevState.OFF
-            result = device_under_test.Off()
-        elif command == "Standby":
-            expected_state = DevState.STANDBY
-            result = device_under_test.Standby()
-        elif command == "InitSysParam":
-            expected_state = device_under_test.State()  # no change expected
-            with open(json_file_path + "sys_param_4_boards.json") as f:
-                sp = f.read()
-            result = device_under_test.InitSysParam(sp)
-        elif command == "SourceInitSysParam":
-            expected_state = device_under_test.State()  # no change expected
-            with open(json_file_path + "source_init_sys_param.json") as f:
-                sp = f.read()
-            result = device_under_test.InitSysParam(sp)
-
-        time.sleep(CONST_WAIT_TIME)
-        assert result[0][0] == ResultCode.OK
-        assert device_under_test.State() == expected_state
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
 
     @pytest.mark.parametrize(
-        "command",
-        ["On", "Off"],
+        "sys_param_file_path",
+        [
+            "sys_param_4_boards.json",
+            "sys_param_dup_vcc.json",
+            "sys_param_invalid_rec_id.json",
+            "sys_param_dup_dishid.json",
+            # Test using tm_data_sources params
+            "source_init_sys_param.json",
+            "source_init_sys_param_invalid_source.json",
+            "source_init_sys_param_invalid_file.json",
+            "source_init_sys_param_invalid_schema.json",
+        ],
     )
-    def test_CommandsFail(
+    def test_InitSysParam(
         self: TestCbfController,
-        device_under_test: CbfDeviceProxy,
-        command: str,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+        sys_param_file_path: str,
     ) -> None:
         """
-        Test On/Off commands from dissallowed states.
+        Test InitSysParam and failure cases.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        :param sys_param_file_path: The path to the sys_param file to be used
         """
+        self.test_Online(device_under_test, event_tracer)
 
-        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
-        assert device_under_test.adminMode == AdminMode.ONLINE
+        with open(json_file_path + sys_param_file_path) as f:
+            sp = f.read()
+        result_code, command_id = device_under_test.InitSysParam(sp)
+        assert result_code == [ResultCode.QUEUED]
 
-        assert device_under_test.State() == DevState.OFF
+        if (
+            sys_param_file_path == "sys_param_4_boards.json"
+            or sys_param_file_path == "source_init_sys_param.json"
+        ):
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{command_id[0]}",
+                    '[0, "InitSysParam completed OK"]',
+                ),
+            )
+        elif (
+            sys_param_file_path == "source_init_sys_param_invalid_source.json"
+            or sys_param_file_path == "source_init_sys_param_invalid_file.json"
+        ):
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{command_id[0]}",
+                    '[3, "Retrieving the init_sys_param file failed"]',
+                ),
+            )
+        elif sys_param_file_path == "sys_param_dup_dishid.json":
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{command_id[0]}",
+                    '[3, "Duplicated Dish ID in the init_sys_param json"]',
+                ),
+            )
+        elif (
+            sys_param_file_path == "source_init_sys_param_invalid_schema.json"
+        ):
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{command_id[0]}",
+                    '[3, "Validating init_sys_param file retrieved from tm_data_filepath against ska-telmodel schema failed"]',
+                ),
+            )
+        else:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name="longRunningCommandResult",
+                attribute_value=(
+                    f"{command_id[0]}",
+                    '[3, "Validating init_sys_param file against ska-telmodel schema failed"]',
+                ),
+            )
 
-        if command == "On":
-            # On is not allowed when controller is already on, so it must be called twice for this test.
-            device_under_test.On()
-            assert device_under_test.State() == DevState.ON
-            expected_state = DevState.ON
-            with pytest.raises(
-                DevFailed,
-                match="Command On not allowed when the device is in ON state",
-            ):
-                device_under_test.On()
-        elif command == "Off":
-            expected_state = DevState.OFF
-            with pytest.raises(
-                DevFailed,
-                match="Command Off not allowed when the device is in OFF state",
-            ):
-                device_under_test.Off()
+    def test_On_without_init_sys_param(
+        self: TestCbfController,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test On without InitSysParam.
 
-        assert device_under_test.State() == expected_state
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        """
+        self.test_Online(device_under_test, event_tracer)
+
+        result_code, command_id = device_under_test.On()
+        assert result_code == [ResultCode.QUEUED]
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                '[6, "Command is not allowed"]',
+            ),
+        )
+
+    @pytest.mark.skip(reason="Skipping test involving nested LRC")
+    def test_Commands_all(
+        self: TestCbfController,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test all of CbfController's commands, expect success.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        """
+        # Establish communication
+        self.test_Online(device_under_test, event_tracer)
+
+        with open(json_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+
+        # dict to store return code and unique IDs of queued commands
+        command_dict = {}
+
+        command_dict["InitSysParam"] = device_under_test.InitSysParam(sp)
+        command_dict["On"] = device_under_test.On()
+        command_dict["Off"] = device_under_test.Off()
+
+        attr_values = [
+            ("state", DevState.ON, DevState.OFF, 1),
+            ("state", DevState.OFF, DevState.ON, 1),
+        ]
+
+        # assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            attr_values.append(
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ),
+                )
+            )
+
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).cbf_has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                target_n_events=n,
+            )

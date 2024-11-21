@@ -9,20 +9,20 @@
 
 from __future__ import annotations
 
-import logging
+import threading
 from typing import Callable, Optional
 
 import backoff
 import tango
+from ska_control_model import HealthState, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
+from ska_tango_testing import context
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.slim.slim_link_simulator import SlimLinkSimulator
 
 
@@ -34,54 +34,29 @@ class SlimLinkComponentManager(CbfComponentManager):
 
     def __init__(
         self: SlimLinkComponentManager,
-        update_health_state: Callable[[HealthState], None],
-        logger: logging.Logger,
-        push_change_event_callback: Optional[Callable],
-        communication_status_changed_callback: Callable[
-            [CommunicationStatus], None
-        ],
-        component_power_mode_changed_callback: Callable[[PowerMode], None],
-        component_fault_callback: Callable[[bool], None],
-        simulation_mode: SimulationMode = SimulationMode.TRUE,
+        *args: any,
+        **kwargs: any,
     ) -> None:
         """
         Initialize a new instance.
-
-        :param update_health_state: method to call when link health state changes
-        :param logger: a logger for this object to use
-        :param push_change_event_callback: callback used when the base classes
-            want to send an event
-        :param communication_status_changed_callback: callback used when the status of the communications channel between
-            the component manager and its component changes
-        :param component_power_mode_changed_callback: callback used when the component power mode changes
-        :param component_fault_callback: callback used in event of
-            component fault
         """
-        self.connected = False
-        self._simulation_mode = simulation_mode
+        super().__init__(*args, **kwargs)
 
         self._link_name = ""
-
         self._tx_device_name = ""
         self._rx_device_name = ""
         self._tx_device_proxy = None
         self._rx_device_proxy = None
-
         self._link_enabled = False  # True when tx rx are connected
 
         self.slim_link_simulator = SlimLinkSimulator(
-            logger=logger, update_health_state=update_health_state
+            logger=self.logger,
+            health_state_callback=kwargs["health_state_callback"],
         )
 
-        self._update_health_state = update_health_state
-
-        super().__init__(
-            logger=logger,
-            push_change_event_callback=push_change_event_callback,
-            communication_status_changed_callback=communication_status_changed_callback,
-            component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=component_fault_callback,
-        )
+    # -----------------
+    # Device Properties
+    # -----------------
 
     @property
     def tx_device_name(self: SlimLinkComponentManager) -> str:
@@ -91,7 +66,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the tx device name.
         :rtype: str
         """
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator._tx_device_name
         return self._tx_device_name
 
@@ -104,7 +79,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         :param tx_device_name: The tx device name.
         """
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             self.slim_link_simulator.tx_device_name = tx_device_name
         self._tx_device_name = tx_device_name
 
@@ -116,7 +91,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the rx device name.
         :rtype: str
         """
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator._rx_device_name
         return self._rx_device_name
 
@@ -129,7 +104,7 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         :param rx_device_name: The rx device name.
         """
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             self.slim_link_simulator.rx_device_name = rx_device_name
         self._rx_device_name = rx_device_name
 
@@ -141,8 +116,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         :return: the link name.
         :rtype: str
         """
-        if self._simulation_mode == SimulationMode.TRUE:
-            return self.slim_link_simulator._link_name
+        if self.simulation_mode:
+            return self.slim_link_simulator.link_name
         return self._link_name
 
     @property
@@ -155,7 +130,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :raise Tango exception: if the tx device is not set.
         :rtype: int
         """
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.tx_idle_ctrl_word
         if self._tx_device_proxy is None:
             tango.Except.throw_exception(
@@ -169,13 +144,13 @@ class SlimLinkComponentManager(CbfComponentManager):
     @property
     def rx_idle_ctrl_word(self: SlimLinkComponentManager) -> int:
         """
-        The last idle control word received in the datastream by the HPS rx device.
+        The last idle control word received in the data stream by the HPS rx device.
 
         :return: the rx idle control word.
         :raise Tango exception: if the rx device is not set.
         :rtype: int
         """
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.rx_idle_ctrl_word
         if self._rx_device_proxy is None:
             tango.Except.throw_exception(
@@ -195,7 +170,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         :raise Tango exception: if the rx device is not set.
         :rtype: float
         """
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.bit_error_rate
 
         if self._rx_device_proxy is None:
@@ -212,30 +187,32 @@ class SlimLinkComponentManager(CbfComponentManager):
         self: SlimLinkComponentManager,
     ) -> list[bool]:
         """
-        Returns the Debug Alignment and Lock Status flags of the rx HPS device
-        If rx_device_proxy is not connected or tango.DevFailed is caught when accessing rx_debug_alignment_and_lock_status from the rx_device_proxy, returns an empty list
+        An array holding the debug flag values from the HPS rx device, in the order:
+        [0] 66b block alignment lost
+        [1] 66b block aligned
+        [2] Clock data recovery lock lost
+        [3] Clock data recovery locked
+
+        Empty if rx_device_proxy is not connected or tango.DevFailed is caught when accessing rx_debug_alignment_and_lock_status
 
         :return: Debug Alignment and Lock Status flags of the rx HPS Device
         :rtype: list[int]
         """
         res = []
 
-        # if in simulation mode
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.rx_debug_alignment_and_lock_status
 
-        # if the device proxy has not been set
         if self._rx_device_proxy is None:
-            self._logger.error(
+            self.logger.error(
                 "error reading  rx_debug_alignment_and_lock_status: Tx Rx are not yet connected"
             )
             return res
 
-        # catch errors when trying to read from the device proxy
         try:
             return self._rx_device_proxy.debug_alignment_and_lock_status
         except tango.DevFailed as df:
-            self._logger.error(
+            self.logger.error(
                 f"error reading rx_debug_alignment_and_lock_status: {df}"
             )
             return res
@@ -251,22 +228,19 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         res = -1.0
 
-        # if in simulation mode
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.rx_link_occupancy
 
-        # if the device proxy has not been set
         if self._rx_device_proxy is None:
-            self._logger.error(
+            self.logger.error(
                 "error reading rx_link_occupancy: Tx Rx are not yet connected"
             )
             return res
 
-        # catch errors when trying to read from the device proxy
         try:
             return self._rx_device_proxy.link_occupancy
         except tango.DevFailed as df:
-            self._logger.error(f"error reading rx_link_occupancy: {df}")
+            self.logger.error(f"error reading rx_link_occupancy: {df}")
             return res
 
     @property
@@ -280,39 +254,53 @@ class SlimLinkComponentManager(CbfComponentManager):
         """
         res = -1.0
 
-        # if in simulation mode
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.tx_link_occupancy
 
-        # if the device proxy has not been set
         if self._tx_device_proxy is None:
-            self._logger.error(
+            self.logger.error(
                 "error reading tx_link_occupancy: Tx Rx are not yet connected"
             )
             return res
 
-        # catch errors when trying to read from the device proxy
         try:
             return self._tx_device_proxy.link_occupancy
         except tango.DevFailed as df:
-            self._logger.error(f"error reading tx_link_occupancy: {df}")
+            self.logger.error(f"error reading tx_link_occupancy: {df}")
             return res
 
-    @property
-    def simulation_mode(self):
-        """
-        Get the simulation mode.
-        """
-        return self._simulation_mode
+    # -------------
+    # Communication
+    # -------------
 
-    @simulation_mode.setter
-    def simulation_mode(self, value) -> None:
+    def _start_communicating(
+        self: SlimLinkComponentManager, *args, **kwargs
+    ) -> None:
         """
-        Set the simulation mode value.
+        Establish communication with the component, then start monitoring.
+        """
+        self.logger.debug(
+            "Entering SlimLinkComponentManager.start_communicating"
+        )
 
-        :param value: The simulation mode.
+        super()._start_communicating()
+        # This moves the op state model
+        self._update_component_state(power=PowerState.ON)
+
+    def _stop_communicating(
+        self: SlimLinkComponentManager, *args, **kwargs
+    ) -> None:
         """
-        self._simulation_mode = value
+        Stop communication with the component.
+        """
+
+        self._update_component_state(power=PowerState.UNKNOWN)
+        # This moves the op state model
+        super()._stop_communicating()
+
+    # ---------------
+    # General Methods
+    # ---------------
 
     def read_counters(
         self: SlimLinkComponentManager,
@@ -333,8 +321,8 @@ class SlimLinkComponentManager(CbfComponentManager):
         :raise Tango exception: if link is not enabled.
         :rtype: list[int]
         """
-        if self._simulation_mode == SimulationMode.TRUE:
-            return self.slim_link_simulator.read_counters()
+        if self.simulation_mode:
+            return self.slim_link_simulator.read_counters
 
         if (
             not self._link_enabled
@@ -349,8 +337,8 @@ class SlimLinkComponentManager(CbfComponentManager):
 
         tx_counts = self._tx_device_proxy.read_counters
         rx_counts = self._rx_device_proxy.read_counters
-        self._logger.debug(f"tx_counts = {tx_counts}")
-        self._logger.debug(f"rx_counts = {rx_counts}")
+        self.logger.debug(f"tx_counts = {tx_counts}")
+        self.logger.debug(f"rx_counts = {rx_counts}")
         return [
             rx_counts[0],
             rx_counts[1],
@@ -363,127 +351,50 @@ class SlimLinkComponentManager(CbfComponentManager):
             tx_counts[2],
         ]
 
-    def start_communicating(self: SlimLinkComponentManager) -> None:
-        """Establish communication with the component, then start monitoring."""
-
-        self._logger.debug(
-            "Entering SlimLinkComponentManager.start_communicating()"
-        )
-
-        if self.connected:
-            self._logger.info("Already communicating.")
-            return
-
-        super().start_communicating()
-
-        self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.connected = True
-
-    def stop_communicating(self: SlimLinkComponentManager) -> None:
-        """Stop communication with the component."""
-        self._logger.debug(
-            "Entering SlimLinkComponentManager.stop_communicating()"
-        )
-        super().stop_communicating()
-        self.update_component_power_mode(PowerMode.UNKNOWN)
-        self.connected = False
-
-    def connect_slim_tx_rx(
-        self: SlimLinkComponentManager,
-    ) -> tuple[ResultCode, str]:
+    @backoff.on_exception(
+        backoff.constant,
+        (Exception, tango.DevFailed),
+        max_tries=6,
+        interval=1.5,
+        jitter=None,
+    )
+    def ping_slim_tx_rx(self: SlimLinkComponentManager) -> None:
         """
-        Link the HPS tx and rx devices by synchronizing their idle control words
-        and disabling serial loopback. Begin monitoring the Tx and Rx.
-
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
+        Attempts to ping each of the HPS SLIM devices while incrementing a count of the attempts made.
         """
-        self._logger.debug(
-            "Entering SlimLinkComponentManager.connect_slim_tx_rx()  -  "
-            + self._tx_device_name
-            + "->"
-            + self._rx_device_name
-        )
+        self._ping_count += 1
+        self._tx_device_proxy.ping()
+        self._rx_device_proxy.ping()
 
-        if self._simulation_mode == SimulationMode.TRUE:
-            return self.slim_link_simulator.connect_slim_tx_rx()
+    def sync_idle_ctrl_words(self: SlimLinkComponentManager) -> None:
+        """
+        If IdleCtrlWord is not set in the Tx device, generate a new one and set it in both Tx and Rx devices.
+        Otherwise set the Rx device's IdleCtrlWord to the Tx device's IdleCtrlWord.
+        """
+        idle_ctrl_word = self.tx_idle_ctrl_word
 
-        # Tx and Rx device names must be set to create proxies.
-        if self._rx_device_name == "" or self._tx_device_name == "":
-            msg = "Tx or Rx device FQDN have not been set."
-            return (ResultCode.FAILED, msg)
-
-        try:
-            self._tx_device_proxy = CbfDeviceProxy(
-                fqdn=self._tx_device_name, logger=self._logger
+        # If Tx's IdleCtrlWord reads as None, regenerate.
+        if idle_ctrl_word is None:
+            # 56-bit mask to match register length.
+            idle_ctrl_word = hash(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
+            self.logger.warning(
+                f"SlimTx idle_ctrl_word could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."
             )
-            self._rx_device_proxy = CbfDeviceProxy(
-                fqdn=self._rx_device_name, logger=self._logger
-            )
+            self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
+        self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
 
-            @backoff.on_exception(
-                backoff.constant,
-                (Exception, tango.DevFailed),
-                max_tries=6,
-                interval=1.5,
-                jitter=None,
-            )
-            def ping_slim_tx_rx() -> None:
-                """
-                Attempts to connect to the Talon board for the first time
-                after power-on.
-
-                :param ip: IP address of the board
-                :param ssh_client: SSH client to use for connection
-                """
-                self._ping_count += 1
-                self._tx_device_proxy.ping()
-                self._rx_device_proxy.ping()
-
-            self._ping_count = 0
-            ping_slim_tx_rx()
-            self._logger.info(
-                f"Successfully pinged DsSlimTx and DsSlimRx devices after {self._ping_count} tries"
-            )
-            # Sync the idle ctrl word between Tx and Rx
-            idle_ctrl_word = self.tx_idle_ctrl_word
-
-            # If Tx's IdleCtrlWord reads as None, regenerate.
-            if idle_ctrl_word is None:
-                idle_ctrl_word = (
-                    hash(self._tx_device_name) & 0x00FFFFFFFFFFFFFF
-                )
-                self._logger.warning(
-                    f"SlimTx idle_ctrl_word could not be read. Regenerating idle_ctrl_word={idle_ctrl_word}."
-                )
-                self._tx_device_proxy.idle_ctrl_word = idle_ctrl_word
-            self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
-
-            self._logger.info(
-                f"Tx idle_ctrl_word: {self._tx_device_proxy.idle_ctrl_word} type: {type(self._tx_device_proxy.idle_ctrl_word)}"
-            )
-            self._logger.info(
-                f"Rx idle_ctrl_word: {self._rx_device_proxy.idle_ctrl_word} type: {type(self._rx_device_proxy.idle_ctrl_word)}"
-            )
-
-            # Take SLIM Rx out of serial loopback
-            self._rx_device_proxy.initialize_connection(False)
-            self.clear_counters()
-
-        except tango.DevFailed as df:
-            msg = f"Failed to connect Tx Rx for {self._link_name}: {df.args[0].desc}"
-            self._logger.error(msg)
-            self.update_component_fault(True)
-            return (ResultCode.FAILED, msg)
-
-        self._link_enabled = True
-        self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
-        return (
-            ResultCode.OK,
-            f"Connected Tx Rx successfully: {self._link_name}",
-        )
+    def get_tx_loopback_fqdn(self: SlimLinkComponentManager) -> None:
+        """
+        Determine the Tx device name for serial loopback.
+        """
+        # To put SLIM Rx back in serial loopback, we need to determine
+        # the Tx device name it should reference for ICW comparisons.
+        rx = self._rx_device_name
+        index = rx.split("/")[2].split("-")[1][2:]
+        mesh = rx.split("/")[2].split("-")[0]
+        rx_arr = rx.split("/")
+        tx = rx_arr[0] + "/" + rx_arr[1] + "/" + mesh + "-tx" + index
+        return tx
 
     def verify_connection(
         self: SlimLinkComponentManager,
@@ -497,12 +408,12 @@ class SlimLinkComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug(
+        self.logger.debug(
             "Entering SlimLinkComponentManager.verify_connection()  -  "
             + self._link_name
         )
 
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.verify_connection()
 
         if (
@@ -510,10 +421,9 @@ class SlimLinkComponentManager(CbfComponentManager):
             or (self._tx_device_proxy is None)
             or (self._rx_device_proxy is None)
         ):
-            msg = "Tx and Rx devices have not been connected."
-            self._logger.debug(msg)
-            self._update_health_state(HealthState.UNKNOWN)
-            return ResultCode.OK, msg
+            self.logger.warning("Tx and Rx devices have not been connected.")
+            self.update_device_health_state(HealthState.UNKNOWN)
+            return ResultCode.OK, "VerifyConnection completed OK"
 
         error_msg = ""
         error_flag = False
@@ -536,71 +446,21 @@ class SlimLinkComponentManager(CbfComponentManager):
                     f"bit-error-rate higher than {const.BER_PASS_THRESHOLD}. "
                 )
         except tango.DevFailed as df:
-            error_msg = f"verify_connection() failed for {self._link_name}: {df.args[0].desc}"
-            self._logger.error(error_msg)
-            self._update_health_state(HealthState.FAILED)
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            error_msg = f"VerifyConnection FAILED: {self._link_name} - {df}"
+            self.logger.error(error_msg)
+            self.update_device_health_state(HealthState.FAILED)
             return ResultCode.FAILED, error_msg
         if error_flag:
-            self._logger.warn(
-                f"Link failed health check for {self._link_name}: {error_msg}"
+            self.logger.warning(
+                f"{self._link_name}: failed health check - {error_msg}"
             )
-            self._update_health_state(HealthState.FAILED)
-            return ResultCode.OK, error_msg
-        self._update_health_state(HealthState.OK)
-        return ResultCode.OK, f"Link health check OK: {self._link_name}"
-
-    def disconnect_slim_tx_rx(
-        self: SlimLinkComponentManager,
-    ) -> tuple[ResultCode, str]:
-        """
-        Stops controlling and monitoring the HPS tx and rx devices. The link
-        becomes inactive. Serial loopback is re-established.
-
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self._logger.debug(
-            "Entering SlimLinkComponentManager.disconnect_slim_tx_rx()  -  "
-            + self._link_name
-        )
-        if self._simulation_mode == SimulationMode.TRUE:
-            return self.slim_link_simulator.disconnect_slim_tx_rx()
-
-        try:
-            if self._rx_device_proxy is not None:
-                # Put SLIM Rx back in serial loopback
-                rx = self._rx_device_name
-                index = rx.split("/")[2].split("-")[1][2:]
-                mesh = rx.split("/")[2].split("-")[0]
-                rx_arr = rx.split("/")
-                tx = rx_arr[0] + "/" + rx_arr[1] + "/" + mesh + "-tx" + index
-                self._tx_device_name = tx
-
-                self._tx_device_proxy = CbfDeviceProxy(
-                    fqdn=self._tx_device_name, logger=self._logger
-                )
-
-                # Sync the idle ctrl word between Tx and Rx
-                idle_ctrl_word = self.tx_idle_ctrl_word
-                self._rx_device_proxy.idle_ctrl_word = idle_ctrl_word
-
-                self._rx_device_proxy.initialize_connection(True)
-        except tango.DevFailed:
-            result_msg = f"Failed to enable Rx loopback: {self._tx_device_name}->{self._rx_device_name}"
-            self._logger.warn(result_msg)
-            return ResultCode.FAILED, result_msg
-        finally:
-            self._rx_device_proxy = None
-            self._tx_device_proxy = None
-            self._link_name = ""
-            self._link_enabled = False
-
-        return (
-            ResultCode.OK,
-            f"Disconnected Tx Rx. {self._rx_device_name} now in serial loopback.",
-        )
+            self.update_device_health_state(HealthState.FAILED)
+            return ResultCode.OK, "VerifyConnection completed OK"
+        self.update_device_health_state(HealthState.OK)
+        return ResultCode.OK, "VerifyConnection completed OK"
 
     def clear_counters(
         self: SlimLinkComponentManager,
@@ -613,11 +473,11 @@ class SlimLinkComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug(
+        self.logger.debug(
             "Entering SlimLinkComponentManager.clearCounters()  -  "
             + self._link_name
         )
-        if self._simulation_mode == SimulationMode.TRUE:
+        if self.simulation_mode:
             return self.slim_link_simulator.clear_counters()
 
         if (
@@ -625,15 +485,268 @@ class SlimLinkComponentManager(CbfComponentManager):
             or (self._tx_device_proxy is None)
             or (self._rx_device_proxy is None)
         ):
-            msg = "Tx and Rx devices have not been connected."
-            return ResultCode.OK, msg
+            self.logger.warning("Tx and Rx devices have not been connected.")
+            return ResultCode.OK, "ClearCounters completed OK"
 
         try:
             self._tx_device_proxy.clear_read_counters()
             self._rx_device_proxy.clear_read_counters()
         except tango.DevFailed:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
             result_msg = f"Clearing counters failed: {self._link_name}"
-            self._logger.error(result_msg)
+            self.logger.error(result_msg)
             return ResultCode.FAILED, result_msg
 
-        return ResultCode.OK, f"Counters cleared: {self._link_name}"
+        return ResultCode.OK, "ClearCounters completed OK"
+
+    # -------------
+    # Fast Commands
+    # -------------
+
+    # None so far.
+
+    # ---------------------
+    # Long Running Commands
+    # ---------------------
+
+    # --- ConnectTxRx Command --- #
+
+    def is_connect_slim_tx_rx_allowed(self: SlimLinkComponentManager) -> bool:
+        self.logger.debug("Checking if ConnectTxRx is allowed.")
+        if not self.is_communicating:
+            return False
+        return True
+
+    def _connect_slim_tx_rx(
+        self: SlimLinkComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+        **kwargs,
+    ) -> None:
+        """
+        Link the HPS Tx and Rx devices by synchronizing their idle control words
+        and disabling serial loopback. Begin monitoring the Tx and Rx.
+
+        :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug(
+            f"Entering SlimLinkComponentManager.connect_slim_tx_rx()  -  {self._tx_device_name}->{self._rx_device_name}"
+        )
+        task_callback(status=TaskStatus.IN_PROGRESS)
+
+        if self.task_abort_event_is_set(
+            "ConnectTxRx", task_callback, task_abort_event
+        ):
+            return
+
+        if self.simulation_mode:
+            self.slim_link_simulator.connect_slim_tx_rx()
+        else:
+            # Tx and Rx device names must be set to create proxies.
+            if self._rx_device_name == "" or self._tx_device_name == "":
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "DsSlimTxRx device names have not been set.",
+                    ),
+                )
+                return
+
+            try:
+                self._tx_device_proxy = context.DeviceProxy(
+                    device_name=self._tx_device_name
+                )
+                self._tx_device_proxy.set_timeout_millis(
+                    self._lrc_timeout * 1000
+                )
+                self._rx_device_proxy = context.DeviceProxy(
+                    device_name=self._rx_device_name
+                )
+                self._rx_device_proxy.set_timeout_millis(
+                    self._lrc_timeout * 1000
+                )
+                self.logger.debug("DsSlimTxRx device proxies acquired.")
+
+                self._ping_count = 0
+                self.ping_slim_tx_rx()
+                self.logger.debug(
+                    f"DsSlimTxRx devices responded to pings after {self._ping_count} tries"
+                )
+
+                self.sync_idle_ctrl_words()
+                self.logger.debug(
+                    f"Tx idle_ctrl_word: {self._tx_device_proxy.idle_ctrl_word} type: {type(self._tx_device_proxy.idle_ctrl_word)}\n"
+                    + f"Rx idle_ctrl_word: {self._rx_device_proxy.idle_ctrl_word} type: {type(self._rx_device_proxy.idle_ctrl_word)}"
+                )
+
+                # Take SLIM Rx out of serial loopback
+                self._rx_device_proxy.initialize_connection(False)
+
+            except AttributeError as ae:
+                self._update_communication_state(
+                    CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    exception=ae,
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "AttributeError encountered. Ensure DsSlimTxRx devices are running.",
+                    ),
+                )
+                return
+            except tango.DevFailed as df:
+                self._update_communication_state(
+                    CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    exception=df,
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        f"{df}",
+                    ),
+                )
+                return
+            self._link_enabled = True
+            self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
+            self.clear_counters()
+
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result=(
+                ResultCode.OK,
+                "ConnectTxRx completed OK",
+            ),
+        )
+
+    def connect_slim_tx_rx(
+        self: SlimLinkComponentManager,
+        task_callback: Optional[Callable] = None,
+        **kwargs: any,
+    ) -> tuple[ResultCode, str]:
+        self.logger.debug(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._connect_slim_tx_rx,
+            is_cmd_allowed=self.is_connect_slim_tx_rx_allowed,
+            task_callback=task_callback,
+        )
+
+    # --- DisconnectTxRx Command --- #
+
+    def is_disconnect_slim_tx_rx_allowed(
+        self: SlimLinkComponentManager,
+    ) -> bool:
+        self.logger.debug("Checking if DisconnectTxRx is allowed.")
+        if not self.is_communicating:
+            return False
+        return True
+
+    def _disconnect_slim_tx_rx(
+        self: SlimLinkComponentManager,
+        task_callback: Optional[Callable] = None,
+        task_abort_event: Optional[threading.Event] = None,
+        **kwargs,
+    ) -> None:
+        """
+        Stops controlling and monitoring the HPS tx and rx devices. The link
+        becomes inactive. Serial loopback is re-established.
+
+        :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.logger.debug(
+            "Entering SlimLinkComponentManager.disconnect_slim_tx_rx()  -  "
+            + self._link_name
+        )
+        task_callback(status=TaskStatus.IN_PROGRESS)
+
+        if self.task_abort_event_is_set(
+            "DisconnectTxRx", task_callback, task_abort_event
+        ):
+            return
+
+        if self.simulation_mode:
+            self.slim_link_simulator.disconnect_slim_tx_rx()
+            self._link_enabled = False
+        else:
+            if self._rx_device_proxy is None:
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "Rx proxy is not set. SlimLink must be connected before it can be disconnected.",
+                    ),
+                )
+                return
+
+            try:
+                # Fetch the tx fqdn required to initialize link in serial loopback
+                loopback_tx = self.get_tx_loopback_fqdn()
+                self._tx_device_proxy = context.DeviceProxy(
+                    device_name=loopback_tx
+                )
+                self.sync_idle_ctrl_words()
+                self._rx_device_proxy.initialize_connection(True)
+            except AttributeError as ae:
+                self._update_communication_state(
+                    CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    exception=ae,
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        "AttributeError encountered. Ensure DsSlimTxRx devices are running.",
+                    ),
+                )
+                return
+            except tango.DevFailed as df:
+                self._update_communication_state(
+                    CommunicationStatus.NOT_ESTABLISHED
+                )
+                task_callback(
+                    exception=df,
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        f"{df}",
+                    ),
+                )
+                return
+            finally:
+                self._rx_device_proxy = None
+                self._tx_device_proxy = None
+                self._link_name = ""
+                self._link_enabled = False
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result=(
+                ResultCode.OK,
+                "DisconnectTxRx completed OK",
+            ),
+        )
+
+    def disconnect_slim_tx_rx(
+        self: SlimLinkComponentManager,
+        task_callback: Optional[Callable] = None,
+        **kwargs: any,
+    ) -> tuple[ResultCode, str]:
+        self.logger.info(f"ComponentState={self._component_state}")
+        return self.submit_task(
+            self._disconnect_slim_tx_rx,
+            is_cmd_allowed=self.is_disconnect_slim_tx_rx_allowed,
+            task_callback=task_callback,
+        )
