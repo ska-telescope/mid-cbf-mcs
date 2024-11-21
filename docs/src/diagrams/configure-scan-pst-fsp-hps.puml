@@ -1,0 +1,49 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+
+title HPS Configure FSP for PST Beamforming Scan\n
+
+box "MCS"
+participant "Fsp PST\nSubarray" as fsppst
+end box
+
+box "HPS"
+participant "FSP\nPST" as hpsfsppst
+participant "PST 4K\nChannelizer" as channelizer
+participant "Sync\nBuffer" as buffer
+participant "Packet Stream\nRepair" as psr
+participant "Host\nLUT" as lut
+participant "Host\nLUT2" as lut2
+participant "Resampler\nDelay Tracker" as rdt
+participant "Beam\nSummer" as summer
+
+end box
+
+fsppst     -> hpsfsppst   : ConfigureScan(json_str)
+hpsfsppst  -> channelizer : write gain([..])
+hpsfsppst  -> buffer      : reset_sync_buffer()
+hpsfsppst  -> psr         : write packet rate
+hpsfsppst  -> lut         : write channel per subarray
+hpsfsppst  -> lut         : write host_id per subarray
+hpsfsppst  -> lut2        : write mac_addr_high per host_id
+hpsfsppst  -> lut2        : write mac_addr_low per host_id
+hpsfsppst  -> lut2        : write ip_address per host_id
+hpsfsppst  -> lut2        : write udp_offset per host_id
+hpsfsppst  -> lut2        : write host_id per host_id
+hpsfsppst  -> rdt         : write attributes
+hpsfsppst  -> rdt         : set input sample rate
+hpsfsppst  -> rdt         : set output sample rate
+hpsfsppst  -> rdt         : start
+hpsfsppst  -> summer       : write enable([..])
+
+@enduml

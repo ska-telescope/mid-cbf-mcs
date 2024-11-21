@@ -99,12 +99,12 @@ Configure Scan Sequence
 The sequence diagram below shows the main sequence of calls in MCS 
 to configure a correlation scan. Return calls are not shown.
 
-.. uml:: ../../diagrams/configure-corr-scan-mcs.puml   
+.. uml:: ../../../diagrams/configure-corr-scan-mcs.puml   
 
 The sequence diagram below shows additional detail for configuration of 
 the VCC for a correlation scan, following the ConfigureScan call from LMC.
 
-.. uml:: ../../diagrams/configure-scan-vcc.puml
+.. uml:: ../../../diagrams/configure-scan-vcc.puml
 
 When the Subarray calls **ConfigureBand**, the jsonstr argument contains:
 
@@ -125,7 +125,17 @@ When the Subarray calls **ConfigureScan**, the jsonstr argument contains:
 The sequence diagram below shows details of calls to configure a FSP for a 
 correlation scan.
 
-.. uml:: ../../diagrams/configure-scan-hps-fsp.puml
+.. uml:: ../../../diagrams/configure-scan-hps-fsp.puml
+
+The sequence diagram below shows details of calls to configure a FSP for a 
+PST scan.
+
+.. uml:: ../../../diagrams/configure-scan-pst-fsp-hps.puml
+
+The sequence diagram below shows details of calls a FSP for a 
+PST scan.
+
+.. uml:: ../../../diagrams/scan-pst-hps-fsp.puml
 
 Abort Sequence
 ++++++++++++++
@@ -133,7 +143,7 @@ Abort Sequence
 The sequence diagram below shows the main sequence of calls in MCS 
 to Abort from a correlation scan. Return calls are not shown.
 
-.. uml:: ../../diagrams/abort-command.puml
+.. uml:: ../../../diagrams/abort-command.puml
 
 ObsReset Sequence
 +++++++++++++++++
@@ -142,7 +152,7 @@ The sequence diagram below shows the main sequence of calls in MCS
 to return to IDLE via the ObsReset command for a correlation scan.
 Return calls are not shown.
 
-.. uml:: ../../diagrams/obsreset-command.puml
+.. uml:: ../../../diagrams/obsreset-command.puml
 
 Restart Sequence
 ++++++++++++++++
@@ -151,7 +161,7 @@ The sequence diagram below shows the main sequence of calls in MCS
 to return to EMPTY via the Restart command for a correlation scan.
 Return calls are not shown.
 
-.. uml:: ../../diagrams/restart-command.puml
+.. uml:: ../../../diagrams/restart-command.puml
 
 
 Serial Lightweight Interconnect Mesh (SLIM) Interface
