@@ -130,12 +130,14 @@ correlation scan.
 The sequence diagram below shows details of calls to configure a FSP for a 
 PST scan.
 
-.. figure:: ../../../diagrams/configure-scan-pst-fsp-hps.png
+.. figure:: ../../diagrams/configure-scan-pst-fsp-hps.png
+    :align: center
 
 The sequence diagram below shows details of calls a FSP for a 
 PST scan.
 
-.. figure:: ../../../diagrams/scan-pst-hps-fsp.png
+.. figure:: ../../diagrams/scan-pst-hps-fsp.png
+    :align: center
 
 Abort Sequence
 ++++++++++++++
