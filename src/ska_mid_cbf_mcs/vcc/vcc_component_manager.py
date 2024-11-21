@@ -17,14 +17,6 @@ from typing import Callable, Optional
 
 # tango imports
 import tango
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
-from ska_tango_base.csp.obs import CspObsComponentManager
-
-from ska_mid_cbf_mcs.commons.gain_utils import GAINUtils
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.component.component_manager import (
-    CbfComponentManager,
 from ska_control_model import (
     CommunicationStatus,
     ObsState,
@@ -34,6 +26,7 @@ from ska_control_model import (
 )
 from ska_tango_testing import context
 
+# from ska_mid_cbf_mcs.commons.gain_utils import GAINUtils
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
@@ -296,35 +289,35 @@ class VccComponentManager(CbfObsComponentManager):
                 )
                 return
 
-            args = json.loads(json_string)
+            # args = json.loads(json_string)
 
-            log_string = str(args["vcc_gain"])
-            self._logger.info(f"Pre VCC gain values: {log_string}")
+            # log_string = str(args["vcc_gain"])
+            # self._logger.info(f"Pre VCC gain values: {log_string}")
 
-            gain_corrections = GAINUtils.get_vcc_ripple_correction(
-                self._logger
-            )
+            # gain_corrections = GAINUtils.get_vcc_ripple_correction(
+            #     self._logger
+            # )
 
-            # Apply Gain Correction to parameters
-            gain_index = 0
+            # # Apply Gain Correction to parameters
+            # gain_index = 0
 
-            # Use a default channel_offset of 0 if not passed in
-            if "channel_offset" in band_config.keys():
-                channel_index = band_config["channel_offset"]
-            else:
-                channel_index = 0
+            # # Use a default channel_offset of 0 if not passed in
+            # if "channel_offset" in band_config.keys():
+            #     channel_index = band_config["channel_offset"]
+            # else:
+            #     channel_index = 0
 
-            self._logger.info(f"channel_offset: {channel_index}")
-            for gain in args["vcc_gain"]:
-                gain = gain * gain_corrections[channel_index + gain_index]
-                args["vcc_gain"][gain_index] = gain
-                gain_index = gain_index + 1
+            # self._logger.info(f"channel_offset: {channel_index}")
+            # for gain in args["vcc_gain"]:
+            #     gain = gain * gain_corrections[channel_index + gain_index]
+            #     args["vcc_gain"][gain_index] = gain
+            #     gain_index = gain_index + 1
 
-            log_string = str(args["vcc_gain"])
-            self._logger.info(f"Post VCC gain values: {log_string}")
-            args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
-            args.update(
-                {"samples_per_frame": band_config["samples_per_frame"]}
+            # log_string = str(args["vcc_gain"])
+            # self._logger.info(f"Post VCC gain values: {log_string}")
+            # args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
+            # args.update(
+            #     {"samples_per_frame": band_config["samples_per_frame"]}
         # Set internal params for the configured band
         json_string = self._load_internal_params(
             freq_band_name=freq_band_name,
