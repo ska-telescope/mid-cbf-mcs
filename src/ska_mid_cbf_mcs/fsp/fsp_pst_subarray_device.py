@@ -12,27 +12,17 @@
 """
 from __future__ import annotations  # allow forward references in type hints
 
-import json
-
 # Additional import
 # PROTECTED REGION ID(FspPstSubarray.additionnal_import) ENABLED START #
 import os
-from typing import List, Optional, Tuple
 
 # PyTango imports
-import tango
-from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import ObsState, PowerMode, SimulationMode
-from tango import AttrWriteType, DebugIt
-from tango.server import attribute, command, device_property, run
+from tango.server import attribute, device_property, run
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.fsp.fsp_mode_subarray_device import FspModeSubarray
 from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
     FspPstSubarrayComponentManager,
 )
-
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -41,10 +31,12 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 __all__ = ["FspPstSubarray", "main"]
 
+
 class FspPstSubarray(FspModeSubarray):
     """
     FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
     """
+
     # PROTECTED REGION ID(FspPstSubarray.class_variable) ENABLED START #
     # PROTECTED REGION END #    //  FspPstSubarray.class_variable
 
@@ -76,8 +68,7 @@ class FspPstSubarray(FspModeSubarray):
         label="Enable Output",
         doc="Enable/disable transmission of output products.",
     )
-
-    def outputEnable(self:FspPstSubarray) -> bool:
+    def outputEnable(self: FspPstSubarray) -> bool:
         """
         Read the outputEnable attribute. Used to enable/disable
         transmission of the output products.
@@ -88,16 +79,15 @@ class FspPstSubarray(FspModeSubarray):
 
         return self.component_manager.output_enable
 
-
     @attribute(
         dtype=("str",),
         max_dim_x=16,
         label="TimingBeams",
         doc="List of timing beams assigned to FSP PST Subarray.",
     )
-    def timingBeams(self:FspPstSubarray) -> list[str]:
+    def timingBeams(self: FspPstSubarray) -> list[str]:
         """
-        Read the timingBeams attribute.  List of timing beams assigned to 
+        Read the timingBeams attribute.  List of timing beams assigned to
         the FSP PST Subarray
 
         :return: list of timing beams assigned to the FSP PST Subarray
@@ -106,14 +96,13 @@ class FspPstSubarray(FspModeSubarray):
 
         return self.component_manager.timing_beams
 
-
     @attribute(
         dtype=("uint16",),
         max_dim_x=16,
         label="TimingBeamID",
         doc="Identifiers of timing beams assigned to FSP PST Subarray",
     )
-    def timingBeamID(self:FspPstSubarray) -> list[int]:
+    def timingBeamID(self: FspPstSubarray) -> list[int]:
         """
         Read the list of Timing Beam IDs assigned to the FSP PST Subarray.
 
@@ -122,7 +111,7 @@ class FspPstSubarray(FspModeSubarray):
         """
 
         return self.component_manager.timing_beam_id
-    
+
     # TODO: Probably not needed? Need to double check
     # # TODO: do we need write_receptors? All receptor adding is handled by component
     # # manager. Other Fsp subarray devices do not have this
@@ -136,7 +125,6 @@ class FspPstSubarray(FspModeSubarray):
     #     self.component_manager.receptors = value
 
     # #     # PROTECTED REGION END #    //  FspPstSubarray.receptors_write
-    
 
     # ---------------
     # General methods
@@ -167,9 +155,6 @@ class FspPstSubarray(FspModeSubarray):
         :return: a component manager for this device.
         """
 
-        self._communication_status: Optional[CommunicationStatus] = None
-        self._component_power_mode: Optional[PowerMode] = None
-
         return FspPstSubarrayComponentManager(
             hps_fsp_pst_controller_fqdn=self.HpsFspPstControllerAddress,
             logger=self.logger,
@@ -180,6 +165,7 @@ class FspPstSubarray(FspModeSubarray):
             obs_command_running_callback=self._obs_command_running,
             component_state_callback=self._component_state_changed,
         )
+
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(FspPstSubarray.main) ENABLED START #
