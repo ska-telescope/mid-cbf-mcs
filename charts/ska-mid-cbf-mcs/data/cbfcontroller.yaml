@@ -112,12 +112,17 @@ volume:
   mountPath: "/app/mnt/talondx-config"
   readOnly: false
 
-{{- if or (.Values.hw_config) (.Values.fs_slim) (.Values.vis_slim) }}
+{{- if or (.Values.hw_config) (.Values.fs_slim) (.Values.vis_slim) (.Values.talondx_config) }}
 extraVolumes:
 {{- if .Values.hw_config }}
 - name: hw-config-mount
   configMap: 
     name:  hwconfig-configmap
+{{- end }}
+{{- if .Values.talondx_config }}
+- name: talondx-config-mount
+  configMap: 
+    name:  talondx-config-configmap
 {{- end }}
 {{- if .Values.fs_slim }}
 - name: fs-slim-mount
@@ -134,6 +139,10 @@ extraVolumeMounts:
   - name: hw-config-mount
     mountPath: /app/mnt/hw_config
 {{- end }}
+{{- if .Values.talondx_config }}
+  - name: talondx-config-mount
+    mountPath: /app/mnt/talondx_config
+{{- end }}
 {{- if .Values.fs_slim }}
   - name: fs-slim-mount
     mountPath: /app/mnt/slim/fs
@@ -143,5 +152,3 @@ extraVolumeMounts:
     mountPath: /app/mnt/slim/vis
 {{- end }}
 {{- end }}
-
-

@@ -82,6 +82,12 @@ class TestFsp:
         function_mode = FspModes.CORR.value
         assert test_proxies.fsp[fsp_id].functionMode == function_mode
 
+        # set function mode to CORR
+        test_proxies.fsp[fsp_id].SetFunctionMode("PST-BF")
+        time.sleep(1)
+        function_mode = FspModes.CORR.value
+        assert test_proxies.fsp[fsp_id].functionMode == function_mode
+
         # TODO AA0.5+: PSS, PST, VLBI
 
         # set function mode to IDLE
