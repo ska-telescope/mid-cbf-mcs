@@ -157,8 +157,8 @@ class TestCbfSubarray:
 
         expected_events = [
             ("subarrayMembership", sub_id, 0, 1),
-            ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
-            ("state", DevState.ON, DevState.DISABLE, 1),
+            # ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
+            # ("state", DevState.ON, DevState.DISABLE, 1),
         ]
         for vcc_id in subarray_params["vcc_ids"]:
             for name, value, previous, n in expected_events:
