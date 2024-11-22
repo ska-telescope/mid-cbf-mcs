@@ -70,7 +70,7 @@ class GAINUtils:
         )
 
         # Assuming Frequency Shifting is Applied in the ReSampler
-        scf0_fsft = (vcc_frequency_slice + 1) * (
+        scf0_fsft = vcc_frequency_slice * (
             frequency_slice_sample_rate - const.COMMON_SAMPLE_RATE
         )
         # The Actual Center Frequencies of the Secondry Channelizer
