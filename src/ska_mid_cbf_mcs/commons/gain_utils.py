@@ -89,12 +89,10 @@ class GAINUtils:
             fir_proto, a=1, worN=2 * numpy.pi * normalized_frequency
         )
         # The Gain Correction Factors
-        gc_vec = numpy.clip(
+        vcc_gain_corrections = numpy.clip(
             0.99 / abs(H), 0, 1
         )  # NOTE: The 0.99 factor avoids the saturation of gain correction factors
         # Initiating the Gain Correction Dictionary
         # chan = (np.arange(0,16383, dtype=int) + 8192) % 16384
-        channels = numpy.arange(0, 16383, dtype=int)
-        vcc_gain_corrections = dict(zip(channels, gc_vec))
 
         return vcc_gain_corrections
