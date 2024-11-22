@@ -335,8 +335,18 @@ server:
             values:
             - "{{ .Values.fspTimeout }}"
 
+      - name: "mid_csp_cbf/fspPstSubarray/04_03"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-004/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"
   tag: "{{.Values.midcbf.image.tag}}"
   pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+  
