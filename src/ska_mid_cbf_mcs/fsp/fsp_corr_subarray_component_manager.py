@@ -19,12 +19,11 @@ from ska_control_model import CommunicationStatus, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
+from ska_mid_cbf_mcs.commons.gain_utils import GAINUtils
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
-
-from ska_mid_cbf_mcs.commons.gain_utils import GAINUtils
 
 FSP_CORR_PARAM_PATH = "mnt/fsp_param/internal_params_fsp_corr_subarray.json"
 
@@ -192,10 +191,11 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         gain_index = 0
         gain_corrections = GAINUtils.get_vcc_ripple_correction(self.logger)
         for gain in hps_fsp_configuration["fine_channelizer"]["gain"]:
-            gain = gain*gain_corrections[gain_index]
-            hps_fsp_configuration["fine_channelizer"]["gain"][gain_index] = gain
+            gain = gain * gain_corrections[gain_index]
+            hps_fsp_configuration["fine_channelizer"]["gain"][
+                gain_index
+            ] = gain
             gain_index = gain_index + 1
-
 
         # TODO: zoom-factor removed from configurescan, but required by HPS, to
         # be inferred from channel_width introduced in ADR-99 when ready to
