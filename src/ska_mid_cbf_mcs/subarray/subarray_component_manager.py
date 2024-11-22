@@ -1858,19 +1858,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        # --- Configure Visibility Transport --- #
-
-        # TODO
-        # Route visibilities from each FSP to the outputting board
-        if not self.simulation_mode:
-            self.logger.info("Configuring visibility transport")
-            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-            self._vis_transport.configure(
-                self._subarray_id,
-                fsp_config=self._vis_fsp_config,
-                vis_slim_yaml=vis_slim_yaml,
-            )
-
         # Update obsState callback
         self._update_component_state(configured=True)
 
@@ -1934,6 +1921,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
+
+        # --- Configure Visibility Transport --- #
+
+        # TODO
+        # Route visibilities from each FSP to the outputting board
+        if not self.simulation_mode:
+            self.logger.info("Configuring visibility transport")
+            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+            self._vis_transport.configure(
+                self._subarray_id,
+                fsp_config=self._vis_fsp_config,
+                vis_slim_yaml=vis_slim_yaml,
+            )
 
         # issue Scan to assigned resources
         scan_id = scan["scan_id"]
