@@ -37,8 +37,6 @@ __all__ = ["CbfComponentManager"]
 # 10 ms resolution
 TIMEOUT_RESOLUTION = 0.01
 
-DEFAULT_COUNT_VCC = 4
-
 
 class CbfComponentManager(TaskExecutorComponentManager):
     """
@@ -277,8 +275,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         command_name: str,
         proxies: list[context.DeviceProxy],
+        max_workers: int,
         argin: any = None,
-        max_workers: int = DEFAULT_COUNT_VCC,
     ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded command issuance.
@@ -337,7 +335,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         attr_name: str,
         proxies: list[context.DeviceProxy],
-        max_workers: int = DEFAULT_COUNT_VCC,
+        max_workers: int,
     ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded read_attribute().
@@ -390,7 +388,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         attr_name: str,
         value: any,
         proxies: list[context.DeviceProxy],
-        max_workers: int = DEFAULT_COUNT_VCC,
+        max_workers: int,
     ) -> bool:
         """
         Helper function to perform tango.Group-like threaded write_attribute().

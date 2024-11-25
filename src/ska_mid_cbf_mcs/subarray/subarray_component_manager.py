@@ -401,6 +401,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             results_fsp = self.issue_group_command(
                 command_name="UpdateDelayModel",
                 proxies=list(self._assigned_fsp_corr_proxies),
+                max_workers=self._proxy_controller.maxCapabilities["VCC"],
                 argin=json.dumps(delay_model_json),
             )
 
@@ -960,6 +961,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name=command_name,
             proxies=list(assigned_resources),
+            max_workers=self._proxy_controller.maxCapabilities["VCC"],
             argin=argin,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
@@ -1609,6 +1611,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name="RemoveSubarrayMembership",
             proxies=list(self._assigned_fsp_proxies),
+            max_workers=self._proxy_controller.maxCapabilities["VCC"],
             argin=self._subarray_id,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
@@ -1728,6 +1731,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name="GoToIdle",
             proxies=list(self._assigned_fsp_corr_proxies),
+            max_workers=self._proxy_controller.maxCapabilities["VCC"],
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
                 self.logger.error("FSP GoToIdle command failed")

@@ -28,6 +28,7 @@ from ska_mid_cbf_mcs.device.base_device import CbfDevice
 
 __all__ = ["CbfController", "main"]
 
+
 class CbfController(CbfDevice):
 
     """
