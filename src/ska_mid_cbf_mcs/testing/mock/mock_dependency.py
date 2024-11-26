@@ -487,7 +487,6 @@ class MockDependency:
             if self._sim_ping_fault:
                 return False
             return True
-        
 
         async def do_queries(
             self: MockDependency.InfluxdbQueryClient,

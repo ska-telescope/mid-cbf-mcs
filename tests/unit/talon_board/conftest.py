@@ -152,8 +152,8 @@ def mock_talon_sysid() -> unittest.mock.Mock:
 def mock_ethernet_100g() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    builder.add_command("get_tx_stats", [1]*27)
-    builder.add_command("get_rx_stats", [1]*27)
+    builder.add_command("get_tx_stats", [1] * 27)
+    builder.add_command("get_rx_stats", [1] * 27)
     builder.add_attribute("TxFrameOctetsOK", 1)
     builder.add_attribute("RxFrameOctetsOK", 1)
     return builder
