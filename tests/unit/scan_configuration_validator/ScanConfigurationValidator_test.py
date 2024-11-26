@@ -16,6 +16,7 @@ from ska_mid_cbf_mcs.subarray.scan_configuration_validator.validator import (
 FILE_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 COUNT_FSP = 4
 
+
 class TestScanConfigurationValidator:
     logger = getLogger()
 
