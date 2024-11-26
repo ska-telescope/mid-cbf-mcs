@@ -382,6 +382,9 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
         if fqdn in used_fqdns:
+            # Skip setting VCC online, should be handled by subarray.
+            if fqdn in self._vcc_fqdn:
+                return True
             return self._set_proxy_online(fqdn)
         else:
             return self._set_proxy_not_fitted(fqdn)

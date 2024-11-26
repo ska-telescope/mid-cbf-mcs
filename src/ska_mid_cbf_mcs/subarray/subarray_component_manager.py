@@ -1394,8 +1394,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 return False
 
-            fsp_proxy.adminMode = AdminMode.ONLINE
-
             # Only set function mode if FSP is both IDLE and not configured for another mode
             current_function_mode = fsp_proxy.functionMode
             if current_function_mode != FspModes[function_mode].value:
@@ -1404,6 +1402,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         f"Unable to configure FSP {fsp_proxy.dev_name()} for function mode {function_mode}, as it is currently configured for function mode {current_function_mode}"
                     )
                     return False
+
+            fsp_proxy.adminMode = AdminMode.ONLINE
 
             # Add subarray membership, which powers on this FSP's function mode devices
             [[result_code], [command_id]] = fsp_proxy.AddSubarrayMembership(

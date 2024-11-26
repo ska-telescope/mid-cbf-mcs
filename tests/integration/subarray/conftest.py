@@ -179,6 +179,7 @@ def tm_proxy() -> context.DeviceProxy:
 # TODO: scope=test?
 @pytest.fixture(name="event_tracer", scope="function", autouse=True)
 def tango_event_tracer(
+    controller: context.DeviceProxy,
     subarray: dict[int, context.DeviceProxy],
     vcc: dict[int, context.DeviceProxy],
     fsp: dict[int, context.DeviceProxy],
@@ -191,6 +192,10 @@ def tango_event_tracer(
     :return: TangoEventTracer
     """
     tracer = TangoEventTracer()
+
+    tracer.subscribe_event(controller, "longRunningCommandResult")
+    tracer.subscribe_event(controller, "adminMode")
+    tracer.subscribe_event(controller, "state")
 
     for proxy in list(subarray.values()):
         tracer.subscribe_event(proxy, "adminMode")

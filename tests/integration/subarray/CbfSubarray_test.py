@@ -34,6 +34,7 @@ class TestCbfSubarray:
     @pytest.mark.dependency(name="CbfSubarray_Setup_1")
     def test_Setup(
         self: TestCbfSubarray,
+        event_tracer: TangoEventTracer,
         controller: context.DeviceProxy,
     ) -> None:
         """
@@ -51,9 +52,41 @@ class TestCbfSubarray:
         result_code, command_id = controller.InitSysParam(sys_param_str)
         assert result_code == [ResultCode.QUEUED]
 
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=controller,
+            attribute_name="longRunningCommandResult",
+            attribute_value=(
+                f"{command_id[0]}",
+                f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
+            ),
+        )
+
         # Send the On command
         result_code, command_id = controller.On()
         assert result_code == [ResultCode.QUEUED]
+
+        expected_events = [
+            ("state", DevState.ON, DevState.OFF, 1),
+            (
+                "longRunningCommandResult",
+                (f"{command_id[0]}", '[0, "On completed OK"]'),
+                None,
+                1,
+            ),
+        ]
+
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=controller,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                min_n_events=n,
+            )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Setup_1"], name="CbfSubarray_Online_1"
@@ -157,8 +190,8 @@ class TestCbfSubarray:
 
         expected_events = [
             ("subarrayMembership", sub_id, 0, 1),
-            # ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
-            # ("state", DevState.ON, DevState.DISABLE, 1),
+            ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
+            ("state", DevState.ON, DevState.DISABLE, 1),
         ]
         for vcc_id in subarray_params["vcc_ids"]:
             for name, value, previous, n in expected_events:
