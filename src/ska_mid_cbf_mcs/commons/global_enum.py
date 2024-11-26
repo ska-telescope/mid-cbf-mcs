@@ -69,6 +69,9 @@ class Const:
         # PST Channel Width in Hz
         self.PST_CHANNEL_WIDTH = 53760
 
+        # PST Channel Width in Hz
+        self.PST_CHANNEL_WIDTH = 53760
+
 
 const = Const()
 

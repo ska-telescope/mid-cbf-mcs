@@ -1283,6 +1283,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager,
         configuration: dict[any],
         common_configuration: dict[any],
+        pst_config: dict[any] = None,
     ) -> list[dict[any]]:
         """
         go through the different function modes' (CORR, PST, etc.) processing
@@ -1290,6 +1291,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param configuration: The Mid.CSP Function specific configurations
         :param common_configuration: The common portion of the scan configuration
+        :param pst_config: PST specific configurations.  Temporary in place until
+                            Scan Configuration 5.0 adds PST with processing regions
         :raises ValueError: if there is an exception processing any processing
         regions
         :return: list of Individual FSP configurations
