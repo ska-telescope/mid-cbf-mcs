@@ -13,8 +13,6 @@ from ska_mid_cbf_mcs.commons.global_enum import (
     scan_configuration_supported_value,
 )
 
-DEFAULT_COUNT_FSP = 4
-
 """
 SubarrayScanConfigurationValidator: Contains functions that validates a given
                                     Subarray Scan Configuration
@@ -44,7 +42,7 @@ class SubarrayScanConfigurationValidator:
         dish_ids: list[str],
         subarray_id: int,
         logger: logging.Logger,
-        count_fsp: int = DEFAULT_COUNT_FSP,
+        count_fsp: int,
     ) -> None:
         """
         Constructor for SubarrayScanConfigurationValidator

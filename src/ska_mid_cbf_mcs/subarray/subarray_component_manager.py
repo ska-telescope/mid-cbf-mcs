@@ -1030,10 +1030,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if controller_validateSupportedConfiguration is True:
             validator = SubarrayScanConfigurationValidator(
                 scan_configuration=argin,
-                count_fsp=self._count_fsp,
                 dish_ids=list(self.dish_ids),
                 subarray_id=self._subarray_id,
                 logger=self.logger,
+                count_fsp=self._count_fsp,
             )
             success, msg = validator.validate_input()
             if success:
