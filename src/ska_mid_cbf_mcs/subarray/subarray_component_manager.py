@@ -1858,6 +1858,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        # --- Configure Visibility Transport --- #
+
+        # TODO
+        # Route visibilities from each FSP to the outputting board
+        if not self.simulation_mode:
+            self.logger.info("Configuring visibility transport")
+            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+            self._vis_transport.configure(
+                self._subarray_id,
+                fsp_config=self._vis_fsp_config,
+                vis_slim_yaml=vis_slim_yaml,
+            )
+
         # Update obsState callback
         self._update_component_state(configured=True)
 
@@ -1922,19 +1935,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        # --- Configure Visibility Transport --- #
-
-        # TODO
-        # Route visibilities from each FSP to the outputting board
-        if not self.simulation_mode:
-            self.logger.info("Configuring visibility transport")
-            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-            self._vis_transport.configure(
-                self._subarray_id,
-                fsp_config=self._vis_fsp_config,
-                vis_slim_yaml=vis_slim_yaml,
-            )
-
         # issue Scan to assigned resources
         scan_id = scan["scan_id"]
         scan_status = self._issue_lrc_all_assigned_resources(
@@ -1997,6 +1997,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ):
             return
 
+        if not self.simulation_mode:
+            self.logger.info("Visibility transport disable output")
+            self._vis_transport.disable_output()
+
         # issue EndScan to assigned resources
         end_scan_status = self._issue_lrc_all_assigned_resources(
             command_name="EndScan", task_abort_event=task_abort_event
@@ -2019,10 +2023,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 ),
             )
             return
-
-        if not self.simulation_mode:
-            self.logger.info("Visibility transport disable output")
-            self._vis_transport.disable_output()
 
         # Update obsState callback
         self._update_component_state(scanning=False)
