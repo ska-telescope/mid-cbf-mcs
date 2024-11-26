@@ -268,7 +268,7 @@ class TestTalonBoard:
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
                              events from the device under test.
         """
-        # device_under_test.loggingLevel = 5
+        device_under_test.loggingLevel = 5
         # Device must be on in order to query InfluxDB
         self.test_Online(device_under_test, event_tracer)
 
@@ -276,10 +276,15 @@ class TestTalonBoard:
         assert device_under_test.subarrayID == ""
         assert device_under_test.dishID == ""
         assert device_under_test.vccID == ""
+        
+        # This will generate change events for the locally defined attr.
         device_under_test.subarrayID = "1"
         device_under_test.dishID = "2"
         device_under_test.vccID = "3"
 
+        # Since the device defaults to simulation mode, finding change events
+        # with the values from the mocks (different from the simulator) will 
+        # confirm that change events are being generated properly.
         attr_values = [
             # From device props
             ("subarrayID", "1", None),
@@ -299,136 +304,181 @@ class TestTalonBoard:
             ("ethernet0PllFault", False, None),
             ("ethernet1PllFault", False, None),
             ("slimPllFault", False, None),
+            # From Ethernet Client
+            (
+                "eth100g0Counters", 
+                None,
+                lambda e: (list(e.attribute_value) == [1]*4),
+            ),
+            (
+                "eth100g0ErrorCounters", 
+                None,
+                lambda e: (list(e.attribute_value) == [1]*6),
+            ),
+            (
+                "eth100g0AllTxCounters", 
+                None,
+                lambda e: (list(e.attribute_value) == [1]*27),
+            ),
+            (
+                "eth100g0AllRxCounters", 
+                None,
+                lambda e: (list(e.attribute_value) == [1]*27),
+            ),
+            ("eth100g0DataFlowActive", True, None),
+            ("eth100g0HasDataError", True, None),
+            (
+                "eth100g1Counters", 
+                None,
+                lambda e: (list(e.attribute_value) == [1]*4),
+            ),
+            (
+                "eth100g1ErrorCounters", 
+                None,
+                lambda e: (list(e.attribute_value) == [1]*6),
+            ),
+            (
+                "eth100g1AllTxCounters", 
+                None,
+                lambda e: (list(e.attribute_value) == [1]*27),
+            ),
+            (
+                "eth100g1AllRxCounters", 
+                None,
+                lambda e: (list(e.attribute_value) == [1]*27),
+            ),
+            ("eth100g1DataFlowActive", True, None),
+            ("eth100g1HasDataError", True, None),
             # From InfluxDB
             ("fpgaDieTemperature", 32.0, None),
-            ("fpgaDieVoltage0", 12.0, None),
-            ("fpgaDieVoltage1", 2.5, None),
-            ("fpgaDieVoltage2", 0.8, None),
-            ("fpgaDieVoltage3", 1.8, None),
-            ("fpgaDieVoltage4", 1.8, None),
-            ("fpgaDieVoltage5", 0.9, None),
-            ("fpgaDieVoltage6", 1.8, None),
+            ("fpgaDieVoltage0", 12.1, None),
+            ("fpgaDieVoltage1", 2.1, None),
+            ("fpgaDieVoltage2", 0.7, None),
+            ("fpgaDieVoltage3", 1.9, None),
+            ("fpgaDieVoltage4", 1.9, None),
+            ("fpgaDieVoltage5", 0.8, None),
+            ("fpgaDieVoltage6", 1.9, None),
             ("humiditySensorTemperature", 32.0, None),
             (
                 "dimmTemperatures",
                 None,
-                lambda e: (idx == 32.0 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [32.0]*4),
             ),
             (
                 "mboTxTemperatures",
                 None,
-                lambda e: (idx == 32.0 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [32.0]*5),
             ),
             (
                 "mboTxVccVoltages",
                 None,
-                lambda e: (idx == 3.3 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [3.1]*5),
             ),
             (
                 "mboTxFaultStatus",
                 None,
-                lambda e: (idx is False for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [True]*5),
             ),
             (
                 "mboTxLolStatus",
                 None,
-                lambda e: (idx is False for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [True]*5),
             ),
             (
                 "mboTxLosStatus",
                 None,
-                lambda e: (idx is False for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [True]*5),
             ),
             (
                 "mboRxVccVoltages",
                 None,
-                lambda e: (idx == 3.3 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [3.1]*5),
             ),
             (
                 "mboRxLolStatus",
                 None,
-                lambda e: (idx is False for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [True]*5),
             ),
             (
                 "mboRxLosStatus",
                 None,
-                lambda e: (idx is False for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [True]*5),
             ),
-            ("hasFanControl", True, None),
+            ("hasFanControl", False, None),
             (
                 "fansPwm",
                 None,
-                lambda e: (idx == 255 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [255]*4),
             ),
             (
                 "fansPwmEnable",
                 None,
-                lambda e: (idx == 1 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [0]*4),
             ),
             (
                 "fansRpm",
                 None,
-                lambda e: (idx == 100 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [0]*4),
             ),
             (
                 "fansFault",
                 None,
-                lambda e: (idx is False for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [True]*4),
             ),
             (
                 "ltmInputVoltage",
                 None,
-                lambda e: (idx == 12.0 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [11.0]*4),
             ),
             (
                 "ltmOutputVoltage1",
                 None,
-                lambda e: (idx == 1.5 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [1.5]*4),
             ),
             (
                 "ltmOutputVoltage2",
                 None,
-                lambda e: (idx == 1.5 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [1.5]*4),
             ),
             (
                 "ltmInputCurrent",
                 None,
-                lambda e: (idx == 1.0 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [1.0]*4),
             ),
             (
                 "ltmOutputCurrent1",
                 None,
-                lambda e: (idx == 1.0 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [1.0]*4),
             ),
             (
                 "ltmOutputCurrent2",
                 None,
-                lambda e: (idx == 1.0 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [1.0]*4),
             ),
             (
                 "ltmTemperature1",
                 None,
-                lambda e: (idx == 32.0 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [32.0]*4),
             ),
             (
                 "ltmTemperature2",
                 None,
-                lambda e: (idx == 32.0 for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [32.0]*4),
             ),
             (
                 "ltmVoltageWarning",
                 None,
-                lambda e: (idx is False for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [True]*4),
             ),
             (
                 "ltmCurrentWarning",
                 None,
-                lambda e: (idx is False for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [True]*4),
             ),
             (
                 "ltmTemperatureWarning",
                 None,
-                lambda e: (idx is False for idx in e.attribute_value),
+                lambda e: (list(e.attribute_value) == [True]*4),
             ),
         ]
 

@@ -338,8 +338,8 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        abs_change=0.5,
-        archive_abs_change=0.5,
+        abs_change=0.05,
+        archive_abs_change=0.05,
         label="FPGA Die 12V sensor",
         doc="Value of the 12V FPGA Die Voltage Sensor",
         unit="V",
@@ -469,8 +469,8 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        abs_change=0.02,
-        archive_abs_change=0.02,
+        abs_change=0.05,
+        archive_abs_change=0.05,
         label="FPGA Die VCCERAM sensor",
         doc="Value of the 0.9V VCCERAM FPGA Die Voltage Sensor",
         unit="V",
@@ -577,11 +577,12 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=0.1,
-        archive_abs_change=0.1,
+        abs_change=0.05,
+        archive_abs_change=0.05,
         max_dim_x=5,
         label="MBO Tx VCC 3.3V Voltages",
         doc="MBO Tx VCC 3.3V Voltages. Value set to 0 if not valid.",
+        unit="V",
         format=".3f",
         min_alarm=3.2,
         max_alarm=3.4,
@@ -646,11 +647,12 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=0.1,
-        archive_abs_change=0.1,
+        abs_change=0.05,
+        archive_abs_change=0.05,
         max_dim_x=5,
         label="MBO Rx VCC 3.3V Voltages",
         doc="MBO Rx VCC 3.3V Voltages. Value set to 0 if not valid.",
+        unit="V",
         format=".3f",
         min_alarm=3.2,
         max_alarm=3.4,
@@ -713,8 +715,8 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=10,
-        archive_abs_change=10,
+        abs_change=1,
+        archive_abs_change=1,
         max_dim_x=4,
         label="Fan PWM values",
         doc="Fan PWM values.",
@@ -753,8 +755,8 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=10,
-        archive_abs_change=10,
+        abs_change=1,
+        archive_abs_change=1,
         max_dim_x=4,
         unit="RPM",
         label="Fan RPM",
@@ -799,11 +801,12 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=1.0,
-        archive_abs_change=1.0,
+        abs_change=0.05,
+        archive_abs_change=0.05,
         max_dim_x=4,
         label="LTM Input Voltage",
         doc="LTM Input Voltage. One entry per LTM.",
+        unit="V",
         format=".3f",
         min_alarm=0.50,
     )
@@ -817,11 +820,12 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=1.0,
-        archive_abs_change=1.0,
+        abs_change=0.05,
+        archive_abs_change=0.05,
         max_dim_x=4,
         label="LTM Output Voltage 1",
         doc="LTM Output Voltage 1. One entry per LTM",
+        unit="V",
         format=".3f",
         min_alarm=0.50,
     )
@@ -835,11 +839,12 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=1.0,
-        archive_abs_change=1.0,
+        abs_change=0.05,
+        archive_abs_change=0.05,
         max_dim_x=4,
         label="LTM Output Voltage 2",
         doc="LTM Output Voltage 2. One entry per LTM",
+        unit="V",
         format=".3f",
         min_alarm=0.50,
     )
@@ -853,11 +858,12 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=1.0,
-        archive_abs_change=1.0,
+        abs_change=0.1,
+        archive_abs_change=0.1,
         max_dim_x=4,
         label="LTM Input Current",
         doc="LTM Input Current. One entry per LTM.",
+        unit="A",
         format=".3f",
     )
     def ltmInputCurrent(self: TalonBoard) -> DevVarFloatArray:
@@ -870,11 +876,12 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=1.0,
-        archive_abs_change=1.0,
+        abs_change=0.1,
+        archive_abs_change=0.1,
         max_dim_x=4,
         label="LTM Output Current 1",
         doc="LTM Output Current 1. One entry per LTM",
+        unit="A",
         format=".3f",
     )
     def ltmOutputCurrent1(self: TalonBoard) -> DevVarFloatArray:
@@ -887,11 +894,12 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=1.0,
-        archive_abs_change=1.0,
+        abs_change=0.1,
+        archive_abs_change=0.1,
         max_dim_x=4,
         label="LTM Output Current 2",
         doc="LTM Output Current 2. One entry per LTM",
+        unit="A",
         format=".3f",
     )
     def ltmOutputCurrent2(self: TalonBoard) -> DevVarFloatArray:
