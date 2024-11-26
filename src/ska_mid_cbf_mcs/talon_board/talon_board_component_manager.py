@@ -274,9 +274,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         if value is None:
             return
 
-        self.logger.error(
-            f" EVENT RECEIVED: {event_data}, NAME: {event_data.attr_name}, ATTR_NAME: {event_data.attr_value.name}"
-        )
         attr_name = event_data.attr_value.name
         dev_name = event_data.device.dev_name()
         self.logger.debug(
