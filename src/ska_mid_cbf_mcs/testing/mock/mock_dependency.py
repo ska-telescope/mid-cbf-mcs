@@ -120,16 +120,7 @@ class MockDependency:
 
             """
             self._sim_ping_fault = sim_ping_fault
-
-        async def ping(self) -> bool:
-            if self._sim_ping_fault:
-                return False
-            return True
-
-        async def do_queries(
-            self: MockDependency.InfluxdbQueryClient,
-        ) -> list[list]:
-            return [
+            self.attr_values = [
                 # _query_temperatures
                 [
                     (
@@ -168,37 +159,37 @@ class MockDependency:
                     (
                         "voltage-sensors_fpga-die-voltage-0",
                         datetime.now(),
-                        12.0,
+                        12.1,
                     ),
                     (
                         "voltage-sensors_fpga-die-voltage-1",
                         datetime.now(),
-                        2.5,
+                        2.1,
                     ),
                     (
                         "voltage-sensors_fpga-die-voltage-2",
                         datetime.now(),
-                        0.8,
+                        0.7,
                     ),
                     (
                         "voltage-sensors_fpga-die-voltage-3",
                         datetime.now(),
-                        1.8,
+                        1.9,
                     ),
                     (
                         "voltage-sensors_fpga-die-voltage-4",
                         datetime.now(),
-                        1.8,
+                        1.9,
                     ),
                     (
                         "voltage-sensors_fpga-die-voltage-5",
                         datetime.now(),
-                        0.9,
+                        0.8,
                     ),
                     (
                         "voltage-sensors_fpga-die-voltage-6",
                         datetime.now(),
-                        1.8,
+                        1.9,
                     ),
                 ],
                 # _query_mbo_temperatures
@@ -216,57 +207,57 @@ class MockDependency:
                 ],
                 # _query_mbo_voltages
                 [
-                    ("MBOs_0_TX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_1_TX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_2_TX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_3_TX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_4_TX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_0_RX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_1_RX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_2_RX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_3_RX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_4_RX_vcc-3.3-voltage", datetime.now(), 3.3),
+                    ("MBOs_0_TX_vcc-3.3-voltage", datetime.now(), 3.1),
+                    ("MBOs_1_TX_vcc-3.3-voltage", datetime.now(), 3.1),
+                    ("MBOs_2_TX_vcc-3.3-voltage", datetime.now(), 3.1),
+                    ("MBOs_3_TX_vcc-3.3-voltage", datetime.now(), 3.1),
+                    ("MBOs_4_TX_vcc-3.3-voltage", datetime.now(), 3.1),
+                    ("MBOs_0_RX_vcc-3.3-voltage", datetime.now(), 3.1),
+                    ("MBOs_1_RX_vcc-3.3-voltage", datetime.now(), 3.1),
+                    ("MBOs_2_RX_vcc-3.3-voltage", datetime.now(), 3.1),
+                    ("MBOs_3_RX_vcc-3.3-voltage", datetime.now(), 3.1),
+                    ("MBOs_4_RX_vcc-3.3-voltage", datetime.now(), 3.1),
                 ],
                 # _query_mbo_faults
                 [
-                    ("MBOs_0_TX_tx-fault-status", datetime.now(), False),
-                    ("MBOs_1_TX_tx-fault-status", datetime.now(), False),
-                    ("MBOs_2_TX_tx-fault-status", datetime.now(), False),
-                    ("MBOs_3_TX_tx-fault-status", datetime.now(), False),
-                    ("MBOs_4_TX_tx-fault-status", datetime.now(), False),
+                    ("MBOs_0_TX_tx-fault-status", datetime.now(), True),
+                    ("MBOs_1_TX_tx-fault-status", datetime.now(), True),
+                    ("MBOs_2_TX_tx-fault-status", datetime.now(), True),
+                    ("MBOs_3_TX_tx-fault-status", datetime.now(), True),
+                    ("MBOs_4_TX_tx-fault-status", datetime.now(), True),
                 ],
                 # _query_mbo_lol
                 [
-                    ("MBOs_0_TX_tx-lol-status", datetime.now(), False),
-                    ("MBOs_1_TX_tx-lol-status", datetime.now(), False),
-                    ("MBOs_2_TX_tx-lol-status", datetime.now(), False),
-                    ("MBOs_3_TX_tx-lol-status", datetime.now(), False),
-                    ("MBOs_4_TX_tx-lol-status", datetime.now(), False),
-                    ("MBOs_0_RX_rx-lol-status", datetime.now(), False),
-                    ("MBOs_1_RX_rx-lol-status", datetime.now(), False),
-                    ("MBOs_2_RX_rx-lol-status", datetime.now(), False),
-                    ("MBOs_3_RX_rx-lol-status", datetime.now(), False),
-                    ("MBOs_4_RX_rx-lol-status", datetime.now(), False),
+                    ("MBOs_0_TX_tx-lol-status", datetime.now(), True),
+                    ("MBOs_1_TX_tx-lol-status", datetime.now(), True),
+                    ("MBOs_2_TX_tx-lol-status", datetime.now(), True),
+                    ("MBOs_3_TX_tx-lol-status", datetime.now(), True),
+                    ("MBOs_4_TX_tx-lol-status", datetime.now(), True),
+                    ("MBOs_0_RX_rx-lol-status", datetime.now(), True),
+                    ("MBOs_1_RX_rx-lol-status", datetime.now(), True),
+                    ("MBOs_2_RX_rx-lol-status", datetime.now(), True),
+                    ("MBOs_3_RX_rx-lol-status", datetime.now(), True),
+                    ("MBOs_4_RX_rx-lol-status", datetime.now(), True),
                 ],
                 # _query_mbo_los
                 [
-                    ("MBOs_0_TX_tx-los-status", datetime.now(), False),
-                    ("MBOs_1_TX_tx-los-status", datetime.now(), False),
-                    ("MBOs_2_TX_tx-los-status", datetime.now(), False),
-                    ("MBOs_3_TX_tx-los-status", datetime.now(), False),
-                    ("MBOs_4_TX_tx-los-status", datetime.now(), False),
-                    ("MBOs_0_RX_rx-los-status", datetime.now(), False),
-                    ("MBOs_1_RX_rx-los-status", datetime.now(), False),
-                    ("MBOs_2_RX_rx-los-status", datetime.now(), False),
-                    ("MBOs_3_RX_rx-los-status", datetime.now(), False),
-                    ("MBOs_4_RX_rx-los-status", datetime.now(), False),
+                    ("MBOs_0_TX_tx-los-status", datetime.now(), True),
+                    ("MBOs_1_TX_tx-los-status", datetime.now(), True),
+                    ("MBOs_2_TX_tx-los-status", datetime.now(), True),
+                    ("MBOs_3_TX_tx-los-status", datetime.now(), True),
+                    ("MBOs_4_TX_tx-los-status", datetime.now(), True),
+                    ("MBOs_0_RX_rx-los-status", datetime.now(), True),
+                    ("MBOs_1_RX_rx-los-status", datetime.now(), True),
+                    ("MBOs_2_RX_rx-los-status", datetime.now(), True),
+                    ("MBOs_3_RX_rx-los-status", datetime.now(), True),
+                    ("MBOs_4_RX_rx-los-status", datetime.now(), True),
                 ],
                 # _query_fans_input
                 [
-                    ("fans_fan-input_0", datetime.now(), 100),
-                    ("fans_fan-input_1", datetime.now(), 100),
-                    ("fans_fan-input_2", datetime.now(), 100),
-                    ("fans_fan-input_3", datetime.now(), 100),
+                    ("fans_fan-input_0", datetime.now(), 0),
+                    ("fans_fan-input_1", datetime.now(), 0),
+                    ("fans_fan-input_2", datetime.now(), 0),
+                    ("fans_fan-input_3", datetime.now(), 0),
                 ],
                 # _query_fans_pwm
                 [
@@ -277,24 +268,24 @@ class MockDependency:
                 ],
                 # _query_fans_pwm_enable
                 [
-                    ("fans_pwm-enable_0", datetime.now(), 1),
-                    ("fans_pwm-enable_1", datetime.now(), 1),
-                    ("fans_pwm-enable_2", datetime.now(), 1),
-                    ("fans_pwm-enable_3", datetime.now(), 1),
+                    ("fans_pwm-enable_0", datetime.now(), 0),
+                    ("fans_pwm-enable_1", datetime.now(), 0),
+                    ("fans_pwm-enable_2", datetime.now(), 0),
+                    ("fans_pwm-enable_3", datetime.now(), 0),
                 ],
                 # _query_fans_fault
                 [
-                    ("fans_fan-fault_0", datetime.now(), False),
-                    ("fans_fan-fault_1", datetime.now(), False),
-                    ("fans_fan-fault_2", datetime.now(), False),
-                    ("fans_fan-fault_3", datetime.now(), False),
+                    ("fans_fan-fault_0", datetime.now(), True),
+                    ("fans_fan-fault_1", datetime.now(), True),
+                    ("fans_fan-fault_2", datetime.now(), True),
+                    ("fans_fan-fault_3", datetime.now(), True),
                 ],
                 # _query_ltm_voltages
                 [
-                    ("LTMs_0_LTM_voltage-input", datetime.now(), 12.0),
-                    ("LTMs_1_LTM_voltage-input", datetime.now(), 12.0),
-                    ("LTMs_2_LTM_voltage-input", datetime.now(), 12.0),
-                    ("LTMs_3_LTM_voltage-input", datetime.now(), 12.0),
+                    ("LTMs_0_LTM_voltage-input", datetime.now(), 11.0),
+                    ("LTMs_1_LTM_voltage-input", datetime.now(), 11.0),
+                    ("LTMs_2_LTM_voltage-input", datetime.now(), 11.0),
+                    ("LTMs_3_LTM_voltage-input", datetime.now(), 11.0),
                     ("LTMs_0_LTM_voltage-output-1", datetime.now(), 1.5),
                     ("LTMs_1_LTM_voltage-output-1", datetime.now(), 1.5),
                     ("LTMs_2_LTM_voltage-output-1", datetime.now(), 1.5),
@@ -306,22 +297,22 @@ class MockDependency:
                     (
                         "LTMs_0_LTM_voltage-output-max-alarm-1",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_1_LTM_voltage-output-max-alarm-1",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_2_LTM_voltage-output-max-alarm-1",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_3_LTM_voltage-output-max-alarm-1",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_0_LTM_voltage-output-max-alarm-2",
@@ -381,22 +372,22 @@ class MockDependency:
                     (
                         "LTMs_0_LTM_current-input-max-alarm",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_1_LTM_current-input-max-alarm",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_2_LTM_current-input-max-alarm",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_3_LTM_current-input-max-alarm",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_0_LTM_current-output-max-alarm-1",
@@ -452,22 +443,22 @@ class MockDependency:
                     (
                         "LTMs_0_LTM_temperature-max-alarm-1",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_1_LTM_temperature-max-alarm-1",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_2_LTM_temperature-max-alarm-1",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_3_LTM_temperature-max-alarm-1",
                         datetime.now(),
-                        False,
+                        True,
                     ),
                     (
                         "LTMs_0_LTM_temperature-max-alarm-2",
@@ -491,3 +482,14 @@ class MockDependency:
                     ),
                 ],
             ]
+
+        async def ping(self) -> bool:
+            if self._sim_ping_fault:
+                return False
+            return True
+        
+
+        async def do_queries(
+            self: MockDependency.InfluxdbQueryClient,
+        ) -> list[list]:
+            return self.attr_values

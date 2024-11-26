@@ -75,6 +75,19 @@ def tango_event_tracer(
         "ethernet0PllFault",
         "ethernet1PllFault",
         "slimPllFault",
+        # Ethernet Client Attr
+        "eth100g0Counters",
+        "eth100g0ErrorCounters",
+        "eth100g0DataFlowActive",
+        "eth100g0HasDataError",
+        "eth100g0AllTxCounters",
+        "eth100g0AllRxCounters",
+        "eth100g1Counters",
+        "eth100g1ErrorCounters",
+        "eth100g1DataFlowActive",
+        "eth100g1HasDataError",
+        "eth100g1AllTxCounters",
+        "eth100g1AllRxCounters",
         # InfluxDB Attr
         "fpgaDieTemperature",
         "fpgaDieVoltage0",
@@ -139,6 +152,10 @@ def mock_talon_sysid() -> unittest.mock.Mock:
 def mock_ethernet_100g() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
+    builder.add_command("get_tx_stats", [1]*27)
+    builder.add_command("get_rx_stats", [1]*27)
+    builder.add_attribute("TxFrameOctetsOK", 1)
+    builder.add_attribute("RxFrameOctetsOK", 1)
     return builder
 
 
