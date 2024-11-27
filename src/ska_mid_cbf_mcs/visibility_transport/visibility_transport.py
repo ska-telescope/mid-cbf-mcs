@@ -8,6 +8,7 @@ supporting up to 8 boards.
 import logging
 
 import numpy
+import tango
 from ska_tango_testing import context
 from tango import DevFailed, Except
 
@@ -159,7 +160,11 @@ class VisibilityTransport:
                 ("channel_id", self._channel_offsets[sub_id]),
                 ("visibility_count", 20 * n_baselines),
             ]:
-                list_attr = list(self._dp_spead_desc.read_attribute(attr_name))
+                read_attr = self._dp_spead_desc.read_attribute(
+                    attr_name=attr_name,
+                    extract_as=tango.ExtractAs.List,
+                )
+                list_attr = list(read_attr.value)
                 list_attr[sub_id] = attr_value
                 self._dp_spead_desc.write_attribute(attr_name, list_attr)
 
@@ -302,10 +307,10 @@ class VisibilityTransport:
         self.logger.info("Disable visibility output")
 
         try:
-            self._dp_spead_desc.command_inout("EndScan")
             for dp in self._dp_host_lut_s1:
                 dp.command_inout("Unprogram")
             self._dp_host_lut_s2.command_inout("Unprogram")
+            self._dp_spead_desc.command_inout("EndScan")
         except DevFailed as df:
             self.logger.error(
                 f"Failed to configure visibility transport devices: {df}"
