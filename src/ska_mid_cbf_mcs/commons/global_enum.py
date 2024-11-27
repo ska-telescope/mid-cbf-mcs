@@ -66,12 +66,6 @@ class Const:
         self.FINE_CHANNEL_WIDTH = 13440
         self.K_VALUE_RANGE = (1, 2222)
 
-        # PST Channel Width in Hz
-        self.PST_CHANNEL_WIDTH = 53760
-
-        # PST Channel Width in Hz
-        self.PST_CHANNEL_WIDTH = 53760
-
 
 const = Const()
 

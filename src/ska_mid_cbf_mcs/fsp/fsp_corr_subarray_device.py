@@ -25,10 +25,10 @@ from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.device.base_device import CbfFastCommand
-from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
 from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import (
     FspCorrSubarrayComponentManager,
 )
+from ska_mid_cbf_mcs.fsp.fsp_mode_subarray_device import FspModeSubarray
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -36,7 +36,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 __all__ = ["FspCorrSubarray", "main"]
 
 
-class FspCorrSubarray(CbfObsDevice):
+class FspCorrSubarray(FspModeSubarray):
     """
     FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
     """
@@ -122,7 +122,7 @@ class FspCorrSubarray(CbfObsDevice):
     # Initialization
     # --------------
 
-    class InitCommand(CbfObsDevice.InitCommand):
+    class InitCommand(FspModeSubarray.InitCommand):
         """
         A class for the FspCorrSubarray's init_device() "command".
         """
