@@ -161,8 +161,8 @@ class VisibilityTransport:
                 ("visibility_count", 20 * n_baselines),
             ]:
                 read_attr = self._dp_spead_desc.read_attribute(
-                    attr_name=attr_name,
-                    extract_as=tango.ExtractAs.List,
+                    attr_name,
+                    tango.ExtractAs.List,
                 )
                 list_attr = list(read_attr.value)
                 list_attr[sub_id] = attr_value
