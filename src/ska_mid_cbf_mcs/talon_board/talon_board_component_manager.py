@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from threading import Event, Lock, Thread
 from typing import Optional
 
@@ -228,7 +228,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_sysid_attrs = {}
         self._talon_status_attrs = {}
 
-        self._last_check = datetime.now() - timedelta(hours=1)
+        self._last_check = datetime.now(timezone.utc) - timedelta(hours=1)
         self._telemetry = dict()
         self._proxies = dict()
         self._talon_sysid_events = {}
@@ -861,11 +861,11 @@ class TalonBoardComponentManager(CbfComponentManager):
     # ----------------
 
     def _query_if_needed(self) -> None:
-        td = datetime.now() - self._last_check
+        td = datetime.now(timezone.utc) - self._last_check
         if td.total_seconds() > 10:
             try:
                 res = asyncio.run(self._db_client.do_queries())
-                self._last_check = datetime.now()
+                self._last_check = datetime.now(timezone.utc)
                 for result in res:
                     for r in result:
                         # each result is a tuple of (field, time, value)
@@ -889,7 +889,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         :param field: The field for which itsvalue is being validated
         :param t: The timestamp reported from the latest query of the field
         """
-        td = datetime.now() - t
+        td = datetime.now(timezone.utc) - t
         if td.total_seconds() > 240:
             msg = f"Time of record {field} is too old. Currently not able to monitor device."
             self.logger.error(msg)
