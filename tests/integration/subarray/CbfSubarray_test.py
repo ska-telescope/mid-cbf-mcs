@@ -288,9 +288,6 @@ class TestCbfSubarray:
                     min_n_events=n,
                 )
 
-        # --- FSP PST Checks --- #
-        # Temp until PST updated for processing regions in Scan Configuration 5.0
-
         # --- Subarray checks --- #
 
         expected_events = [
