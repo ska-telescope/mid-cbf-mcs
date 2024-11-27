@@ -145,20 +145,27 @@ class VisibilityTransport:
             self._create_device_proxies(vis_out_map)
 
             # Create the SPEAD descriptor to be sent at start of scan
-            self._dp_spead_desc.scan_id_high = [scan_id >> 32]
-            self._dp_spead_desc.scan_id_low = [scan_id & 0xFFFFFFFF]
-
+            # SPEAD descriptor expects 0 based subarray ID
+            sub_id = subarray_id - 1
             n_vcc = len(fsp_config[0]["corr_vcc_ids"])
             n_baselines = n_vcc * (n_vcc + 1) // 2
-            self._dp_spead_desc.baseline_count = [n_baselines]
-            self._dp_spead_desc.baseline_id = [0]
-            self._dp_spead_desc.channel_count = [20]
-            self._dp_spead_desc.channel_id = self._channel_offsets
-            self._dp_spead_desc.visibility_count = [20 * n_baselines]
+
+            for attr_name, attr_value in [
+                ("scan_id_high", scan_id >> 32),
+                ("scan_id_low", scan_id & 0xFFFFFFFF),
+                ("baseline_count", n_baselines),
+                ("baseline_id", 0),
+                ("channel_count", 20),
+                ("channel_id", self._channel_offsets[sub_id]),
+                ("visibility_count", 20 * n_baselines),
+            ]:
+                list_attr = list(self._dp_spead_desc.read_attribute(attr_name))
+                list_attr[sub_id] = attr_value
+                self._dp_spead_desc.write_attribute(attr_name, list_attr)
 
             # SPEAD descriptor expects 0 based subarray ID
-            self._dp_spead_desc.Configure(subarray_id - 1)
-            self._dp_spead_desc.CreateDescriptor(subarray_id - 1)
+            self._dp_spead_desc.Configure(sub_id)
+            self._dp_spead_desc.CreateDescriptor(sub_id)
 
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
