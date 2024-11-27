@@ -399,7 +399,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             with self._polled_attr_lock:
                 try:
                     self.logger.error(
-                        f"CUR={cur_val}, STORED={self._polled_attr[attr_name]}"
+                        f"{attr_name}: CUR={cur_val}, STORED={self._polled_attr[attr_name]}, TYPE={type(cur_val)}"
                     )
                     if cur_val != self._polled_attr[attr_name]:
                         self.device_attr_change_callback(attr_name, cur_val)
