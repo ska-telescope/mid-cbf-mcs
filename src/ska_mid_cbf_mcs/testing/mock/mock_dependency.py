@@ -194,11 +194,31 @@ class MockDependency:
                 ],
                 # _query_mbo_temperatures
                 [
-                    ("MBOs_0_TX_temperature", datetime.now(timezone.utc), 32.0),
-                    ("MBOs_1_TX_temperature", datetime.now(timezone.utc), 32.0),
-                    ("MBOs_2_TX_temperature", datetime.now(timezone.utc), 32.0),
-                    ("MBOs_3_TX_temperature", datetime.now(timezone.utc), 32.0),
-                    ("MBOs_4_TX_temperature", datetime.now(timezone.utc), 32.0),
+                    (
+                        "MBOs_0_TX_temperature",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "MBOs_1_TX_temperature",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "MBOs_2_TX_temperature",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "MBOs_3_TX_temperature",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "MBOs_4_TX_temperature",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
                     #     ("MBOs_0_RX_temperature", datetime.now(timezone.utc), 32.0),
                     #     ("MBOs_1_RX_temperature", datetime.now(timezone.utc), 32.0),
                     #     ("MBOs_2_RX_temperature", datetime.now(timezone.utc), 32.0),
@@ -207,50 +227,190 @@ class MockDependency:
                 ],
                 # _query_mbo_voltages
                 [
-                    ("MBOs_0_TX_vcc-3.3-voltage", datetime.now(timezone.utc), 3.1),
-                    ("MBOs_1_TX_vcc-3.3-voltage", datetime.now(timezone.utc), 3.1),
-                    ("MBOs_2_TX_vcc-3.3-voltage", datetime.now(timezone.utc), 3.1),
-                    ("MBOs_3_TX_vcc-3.3-voltage", datetime.now(timezone.utc), 3.1),
-                    ("MBOs_4_TX_vcc-3.3-voltage", datetime.now(timezone.utc), 3.1),
-                    ("MBOs_0_RX_vcc-3.3-voltage", datetime.now(timezone.utc), 3.1),
-                    ("MBOs_1_RX_vcc-3.3-voltage", datetime.now(timezone.utc), 3.1),
-                    ("MBOs_2_RX_vcc-3.3-voltage", datetime.now(timezone.utc), 3.1),
-                    ("MBOs_3_RX_vcc-3.3-voltage", datetime.now(timezone.utc), 3.1),
-                    ("MBOs_4_RX_vcc-3.3-voltage", datetime.now(timezone.utc), 3.1),
+                    (
+                        "MBOs_0_TX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_1_TX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_2_TX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_3_TX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_4_TX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_0_RX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_1_RX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_2_RX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_3_RX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_4_RX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
                 ],
                 # _query_mbo_faults
                 [
-                    ("MBOs_0_TX_tx-fault-status", datetime.now(timezone.utc), True),
-                    ("MBOs_1_TX_tx-fault-status", datetime.now(timezone.utc), True),
-                    ("MBOs_2_TX_tx-fault-status", datetime.now(timezone.utc), True),
-                    ("MBOs_3_TX_tx-fault-status", datetime.now(timezone.utc), True),
-                    ("MBOs_4_TX_tx-fault-status", datetime.now(timezone.utc), True),
+                    (
+                        "MBOs_0_TX_tx-fault-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_1_TX_tx-fault-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_2_TX_tx-fault-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_3_TX_tx-fault-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_4_TX_tx-fault-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
                 ],
                 # _query_mbo_lol
                 [
-                    ("MBOs_0_TX_tx-lol-status", datetime.now(timezone.utc), True),
-                    ("MBOs_1_TX_tx-lol-status", datetime.now(timezone.utc), True),
-                    ("MBOs_2_TX_tx-lol-status", datetime.now(timezone.utc), True),
-                    ("MBOs_3_TX_tx-lol-status", datetime.now(timezone.utc), True),
-                    ("MBOs_4_TX_tx-lol-status", datetime.now(timezone.utc), True),
-                    ("MBOs_0_RX_rx-lol-status", datetime.now(timezone.utc), True),
-                    ("MBOs_1_RX_rx-lol-status", datetime.now(timezone.utc), True),
-                    ("MBOs_2_RX_rx-lol-status", datetime.now(timezone.utc), True),
-                    ("MBOs_3_RX_rx-lol-status", datetime.now(timezone.utc), True),
-                    ("MBOs_4_RX_rx-lol-status", datetime.now(timezone.utc), True),
+                    (
+                        "MBOs_0_TX_tx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_1_TX_tx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_2_TX_tx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_3_TX_tx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_4_TX_tx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_0_RX_rx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_1_RX_rx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_2_RX_rx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_3_RX_rx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_4_RX_rx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
                 ],
                 # _query_mbo_los
                 [
-                    ("MBOs_0_TX_tx-los-status", datetime.now(timezone.utc), True),
-                    ("MBOs_1_TX_tx-los-status", datetime.now(timezone.utc), True),
-                    ("MBOs_2_TX_tx-los-status", datetime.now(timezone.utc), True),
-                    ("MBOs_3_TX_tx-los-status", datetime.now(timezone.utc), True),
-                    ("MBOs_4_TX_tx-los-status", datetime.now(timezone.utc), True),
-                    ("MBOs_0_RX_rx-los-status", datetime.now(timezone.utc), True),
-                    ("MBOs_1_RX_rx-los-status", datetime.now(timezone.utc), True),
-                    ("MBOs_2_RX_rx-los-status", datetime.now(timezone.utc), True),
-                    ("MBOs_3_RX_rx-los-status", datetime.now(timezone.utc), True),
-                    ("MBOs_4_RX_rx-los-status", datetime.now(timezone.utc), True),
+                    (
+                        "MBOs_0_TX_tx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_1_TX_tx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_2_TX_tx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_3_TX_tx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_4_TX_tx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_0_RX_rx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_1_RX_rx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_2_RX_rx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_3_RX_rx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_4_RX_rx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
                 ],
                 # _query_fans_input
                 [
@@ -282,18 +442,66 @@ class MockDependency:
                 ],
                 # _query_ltm_voltages
                 [
-                    ("LTMs_0_LTM_voltage-input", datetime.now(timezone.utc), 11.0),
-                    ("LTMs_1_LTM_voltage-input", datetime.now(timezone.utc), 11.0),
-                    ("LTMs_2_LTM_voltage-input", datetime.now(timezone.utc), 11.0),
-                    ("LTMs_3_LTM_voltage-input", datetime.now(timezone.utc), 11.0),
-                    ("LTMs_0_LTM_voltage-output-1", datetime.now(timezone.utc), 1.5),
-                    ("LTMs_1_LTM_voltage-output-1", datetime.now(timezone.utc), 1.5),
-                    ("LTMs_2_LTM_voltage-output-1", datetime.now(timezone.utc), 1.5),
-                    ("LTMs_3_LTM_voltage-output-1", datetime.now(timezone.utc), 1.5),
-                    ("LTMs_0_LTM_voltage-output-2", datetime.now(timezone.utc), 1.5),
-                    ("LTMs_1_LTM_voltage-output-2", datetime.now(timezone.utc), 1.5),
-                    ("LTMs_2_LTM_voltage-output-2", datetime.now(timezone.utc), 1.5),
-                    ("LTMs_3_LTM_voltage-output-2", datetime.now(timezone.utc), 1.5),
+                    (
+                        "LTMs_0_LTM_voltage-input",
+                        datetime.now(timezone.utc),
+                        11.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_voltage-input",
+                        datetime.now(timezone.utc),
+                        11.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_voltage-input",
+                        datetime.now(timezone.utc),
+                        11.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_voltage-input",
+                        datetime.now(timezone.utc),
+                        11.0,
+                    ),
+                    (
+                        "LTMs_0_LTM_voltage-output-1",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_1_LTM_voltage-output-1",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_2_LTM_voltage-output-1",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_3_LTM_voltage-output-1",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_0_LTM_voltage-output-2",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_1_LTM_voltage-output-2",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_2_LTM_voltage-output-2",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_3_LTM_voltage-output-2",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
                     (
                         "LTMs_0_LTM_voltage-output-max-alarm-1",
                         datetime.now(timezone.utc),
@@ -357,18 +565,66 @@ class MockDependency:
                 ],
                 # _query_ltm_currents
                 [
-                    ("LTMs_0_LTM_current-input", datetime.now(timezone.utc), 1.0),
-                    ("LTMs_1_LTM_current-input", datetime.now(timezone.utc), 1.0),
-                    ("LTMs_2_LTM_current-input", datetime.now(timezone.utc), 1.0),
-                    ("LTMs_3_LTM_current-input", datetime.now(timezone.utc), 1.0),
-                    ("LTMs_0_LTM_current-output-1", datetime.now(timezone.utc), 1.0),
-                    ("LTMs_1_LTM_current-output-1", datetime.now(timezone.utc), 1.0),
-                    ("LTMs_2_LTM_current-output-1", datetime.now(timezone.utc), 1.0),
-                    ("LTMs_3_LTM_current-output-1", datetime.now(timezone.utc), 1.0),
-                    ("LTMs_0_LTM_current-output-2", datetime.now(timezone.utc), 1.0),
-                    ("LTMs_1_LTM_current-output-2", datetime.now(timezone.utc), 1.0),
-                    ("LTMs_2_LTM_current-output-2", datetime.now(timezone.utc), 1.0),
-                    ("LTMs_3_LTM_current-output-2", datetime.now(timezone.utc), 1.0),
+                    (
+                        "LTMs_0_LTM_current-input",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_current-input",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_current-input",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_current-input",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_0_LTM_current-output-1",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_current-output-1",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_current-output-1",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_current-output-1",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_0_LTM_current-output-2",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_current-output-2",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_current-output-2",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_current-output-2",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
                     (
                         "LTMs_0_LTM_current-input-max-alarm",
                         datetime.now(timezone.utc),
@@ -432,14 +688,46 @@ class MockDependency:
                 ],
                 # _query_ltm_temperatures
                 [
-                    ("LTMs_0_LTM_temperature-1", datetime.now(timezone.utc), 32.0),
-                    ("LTMs_1_LTM_temperature-1", datetime.now(timezone.utc), 32.0),
-                    ("LTMs_2_LTM_temperature-1", datetime.now(timezone.utc), 32.0),
-                    ("LTMs_3_LTM_temperature-1", datetime.now(timezone.utc), 32.0),
-                    ("LTMs_0_LTM_temperature-2", datetime.now(timezone.utc), 32.0),
-                    ("LTMs_1_LTM_temperature-2", datetime.now(timezone.utc), 32.0),
-                    ("LTMs_2_LTM_temperature-2", datetime.now(timezone.utc), 32.0),
-                    ("LTMs_3_LTM_temperature-2", datetime.now(timezone.utc), 32.0),
+                    (
+                        "LTMs_0_LTM_temperature-1",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_temperature-1",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_temperature-1",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_temperature-1",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_0_LTM_temperature-2",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_temperature-2",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_temperature-2",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_temperature-2",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
                     (
                         "LTMs_0_LTM_temperature-max-alarm-1",
                         datetime.now(timezone.utc),
