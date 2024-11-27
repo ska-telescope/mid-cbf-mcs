@@ -163,10 +163,6 @@ class VisibilityTransport:
                 list_attr[sub_id] = attr_value
                 self._dp_spead_desc.write_attribute(attr_name, list_attr)
 
-            # SPEAD descriptor expects 0 based subarray ID
-            self._dp_spead_desc.Configure(sub_id)
-            self._dp_spead_desc.CreateDescriptor(sub_id)
-
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
                 self._dp_host_lut_s1, self._channel_offsets
@@ -273,7 +269,7 @@ class VisibilityTransport:
         spead_desc_host_data = self._parse_visibility_transport_info(
             subarray_id, self._fsp_config, "channel_offset"
         )
-        self.logger.debug(f"sped_desc_host_data: {spead_desc_host_data}")
+        self.logger.debug(f"spead_desc_host_data: {spead_desc_host_data}")
 
         host_lut_host_data = self._parse_visibility_transport_info(
             subarray_id, self._fsp_config, "host_lut_channel_offset"
@@ -281,9 +277,11 @@ class VisibilityTransport:
         self.logger.debug(f"host_lut_host_data: {host_lut_host_data}")
 
         try:
-            self._dp_spead_desc.command_inout(
-                "StartScan", spead_desc_host_data
-            )
+            # SPEAD descriptor expects 0 based subarray ID
+            sub_id = subarray_id - 1
+            self._dp_spead_desc.Configure(sub_id)
+            self._dp_spead_desc.CreateDescriptor(sub_id)
+            self._dp_spead_desc.StartScan(spead_desc_host_data)
 
             self._dp_host_lut_s2.command_inout("Program", host_lut_host_data)
 
