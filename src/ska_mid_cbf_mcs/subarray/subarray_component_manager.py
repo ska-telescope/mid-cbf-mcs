@@ -1394,7 +1394,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 )
                 return False
 
-            # Only set function mode if FSP is both IDLE and not configured for another mode
+            # Only assign if FSP is both IDLE and not configured for another mode
             current_function_mode = fsp_proxy.functionMode
             if current_function_mode != FspModes[function_mode].value:
                 if current_function_mode != FspModes.IDLE.value:

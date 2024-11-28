@@ -49,7 +49,7 @@ class TestCbfSubarray:
         controller.adminMode = AdminMode.ONLINE
 
         # Initialize the system parameters
-        result_code, command_id = controller.InitSysParam(sys_param_str)
+        result_code, init_command_id = controller.InitSysParam(sys_param_str)
         assert result_code == [ResultCode.QUEUED]
 
         assert_that(event_tracer).within_timeout(
@@ -64,14 +64,20 @@ class TestCbfSubarray:
         )
 
         # Send the On command
-        result_code, command_id = controller.On()
+        result_code, on_command_id = controller.On()
         assert result_code == [ResultCode.QUEUED]
 
         expected_events = [
+            (
+                "longRunningCommandResult",
+                (f"{init_command_id[0]}", '[0, "InitSysParam completed OK"]'),
+                None,
+                1,
+            ),
             ("state", DevState.ON, DevState.OFF, 1),
             (
                 "longRunningCommandResult",
-                (f"{command_id[0]}", '[0, "On completed OK"]'),
+                (f"{on_command_id[0]}", '[0, "On completed OK"]'),
                 None,
                 1,
             ),
