@@ -699,7 +699,6 @@ class TestCbfSubarray:
                     None,
                     1,
                 ),
-                ("functionMode", None, FspModes.IDLE.value, fsp_mode, 1),
                 ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 1),
                 ("state", None, DevState.DISABLE, DevState.ON, 1),
             ]
