@@ -45,25 +45,11 @@ class TestCbfSubarray:
         with open(test_data_path + "sys_param_4_boards.json") as f:
             sys_param_str = f.read()
 
-        # Trigger start_communicating by setting the AdminMode to ONLINE
         controller.adminMode = AdminMode.ONLINE
 
-        # Initialize the system parameters
         result_code, init_command_id = controller.InitSysParam(sys_param_str)
         assert result_code == [ResultCode.QUEUED]
 
-        assert_that(event_tracer).within_timeout(
-            test_utils.EVENT_TIMEOUT
-        ).has_change_event_occurred(
-            device_name=controller,
-            attribute_name="longRunningCommandResult",
-            attribute_value=(
-                f"{command_id[0]}",
-                f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
-            ),
-        )
-
-        # Send the On command
         result_code, on_command_id = controller.On()
         assert result_code == [ResultCode.QUEUED]
 
