@@ -78,10 +78,10 @@ class Eth100gClient:
         accumulated over the period between consecutive calls.
         """
         try:
-            self._tx_stats = self._dp_eth_100g.get_tx_stats()
-            self._rx_stats = self._dp_eth_100g.get_rx_stats()
-            self._txframeoctetsok = self._dp_eth_100g.TxFrameOctetsOK
-            self._rxframeoctetsok = self._dp_eth_100g.RxFrameOctetsOK
+            self._tx_stats = list(self._dp_eth_100g.get_tx_stats())
+            self._rx_stats = list(self._dp_eth_100g.get_rx_stats())
+            self._txframeoctetsok = int(self._dp_eth_100g.TxFrameOctetsOK)
+            self._rxframeoctetsok = int(self._dp_eth_100g.RxFrameOctetsOK)
         except tango.DevFailed as df:
             self.logger.warning(f"Error reading 100g ethernet stats: {df}")
             self._tx_stats = []
