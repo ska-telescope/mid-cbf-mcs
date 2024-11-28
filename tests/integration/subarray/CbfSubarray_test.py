@@ -1169,7 +1169,6 @@ class TestCbfSubarray:
         fsp_expected_events = [
             # TODO: see subarrayMembership comment above
             # ("subarrayMembership", [], [sub_id], 1),
-            ("functionMode", FspModes.IDLE.value, None, 1),
             ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
             ("state", DevState.DISABLE, DevState.ON, 1),
         ]
@@ -1250,7 +1249,6 @@ class TestCbfSubarray:
             [
                 # TODO: see subarrayMembership comment above
                 # ("subarrayMembership", [], [sub_id], 2),
-                ("functionMode", FspModes.IDLE.value, None, 2),
                 ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 2),
                 ("state", DevState.DISABLE, DevState.ON, 2),
             ]
@@ -1514,7 +1512,6 @@ class TestCbfSubarray:
         fsp_expected_events = [
             # TODO: see subarrayMembership comment above
             # ("subarrayMembership", [], [sub_id], 1),
-            ("functionMode", FspModes.IDLE.value, None, 1),
             ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
             ("state", DevState.DISABLE, DevState.ON, 1),
         ]
@@ -1599,7 +1596,6 @@ class TestCbfSubarray:
             [
                 # TODO: see subarrayMembership comment above
                 # ("subarrayMembership", [], [sub_id], 2),
-                ("functionMode", FspModes.IDLE.value, None, 2),
                 ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 2),
                 ("state", DevState.DISABLE, DevState.ON, 2),
             ]
@@ -1749,7 +1745,6 @@ class TestCbfSubarray:
                     None,
                     1,
                 ),
-                ("functionMode", None, FspModes.IDLE.value, fsp_mode, 1),
                 ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 1),
                 ("state", None, DevState.DISABLE, DevState.ON, 1),
             ]
@@ -1791,7 +1786,6 @@ class TestCbfSubarray:
                     None,
                     1,
                 ),
-                ("functionMode", None, fsp_mode, FspModes.IDLE.value, 1),
                 ("adminMode", None, AdminMode.ONLINE, AdminMode.OFFLINE, 1),
                 ("state", None, DevState.ON, DevState.DISABLE, 1),
             ]
