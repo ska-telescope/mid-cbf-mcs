@@ -162,7 +162,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         # first construct HPS FSP ConfigureScan input
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
-        self.logger.debug(f"{hps_fsp_configuration}")
+        self.logger.info(f"{hps_fsp_configuration}")
 
         # VCC IDs must be sorted in ascending order for the HPS
         hps_fsp_configuration["configure_scan"]["subarray_vcc_ids"].sort()
@@ -188,21 +188,19 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         # For now, we will reinitialize gain as a large (32k) sized array in the component manager
         hps_fsp_configuration["fine_channelizer"]["gain"] = [1] * 1000
 
-        gain_index = 0
         gain_corrections = GAINUtils.get_vcc_ripple_correction(self.logger)
-        for gain in hps_fsp_configuration["fine_channelizer"]["gain"]:
+        for gain_index, gain in enumerate(hps_fsp_configuration["fine_channelizer"]["gain"]):
             gain = gain * gain_corrections[gain_index]
             hps_fsp_configuration["fine_channelizer"]["gain"][
                 gain_index
             ] = gain
-            gain_index = gain_index + 1
 
         # TODO: zoom-factor removed from configurescan, but required by HPS, to
         # be inferred from channel_width introduced in ADR-99 when ready to
         # implement zoom
         hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
 
-        self.logger.debug(
+        self.logger.info(
             f"HPS FSP Corr configuration: {hps_fsp_configuration}."
         )
 
@@ -277,6 +275,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         :return: None
         """
         # Set task status in progress, check for abort event
+        self.logger.info("STARTING CONFIGSCAN")
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
             "ConfigureScan", task_callback, task_abort_event
@@ -300,12 +299,15 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         # Issue ConfigureScan to HPS FSP Corr controller
 
         if not self.simulation_mode:
+            self.logger.info("Building hps")
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
+                self.logger.error("Entering HPS FSP configurescan")
                 self._proxy_hps_fsp_corr_controller.ConfigureScan(
                     hps_fsp_configuration
                 )
+                self.logger.error("Exiting HPS FSP configurescan")
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failure in issuing ConfigureScan to HPS FSP CORR; {df}"
