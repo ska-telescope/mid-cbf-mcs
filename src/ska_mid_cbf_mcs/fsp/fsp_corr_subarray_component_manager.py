@@ -189,7 +189,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         hps_fsp_configuration["fine_channelizer"]["gain"] = [1] * 1000
 
         gain_corrections = GAINUtils.get_vcc_ripple_correction(self.logger)
-        for gain_index, gain in enumerate(hps_fsp_configuration["fine_channelizer"]["gain"]):
+        for gain_index, gain in enumerate(
+            hps_fsp_configuration["fine_channelizer"]["gain"]
+        ):
             gain = gain * gain_corrections[gain_index]
             hps_fsp_configuration["fine_channelizer"]["gain"][
                 gain_index
