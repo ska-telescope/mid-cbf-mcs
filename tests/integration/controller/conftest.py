@@ -20,6 +20,8 @@ from ska_tango_testing.integration import TangoEventTracer
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 
+# TODO: Update constants for AA2+
+
 DEFAULT_COUNT_SUBARRAY = 1
 DEFAULT_COUNT_VCC = 4
 
