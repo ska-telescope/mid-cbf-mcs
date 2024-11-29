@@ -357,7 +357,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             ("fpgaDieVoltage6", self.fpga_die_voltage_6),
             ("humiditySensorTemperature", self.humidity_sensor_temperature),
             ("dimmTemperatures", self.dimm_temperatures),
-            ("mboTxTemperatures", self.mbo_tx_temperatures),
+            ("mboTemperatures", self.mbo_temperatures),
             ("mboTxVccVoltages", self.mbo_tx_vcc_voltages),
             ("mboTxFaultStatus", self.mbo_tx_fault_status),
             ("mboTxLolStatus", self.mbo_tx_lol_status),
@@ -1040,7 +1040,9 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(0)
         return res
 
-    def mbo_tx_temperatures(self) -> list[float]:
+    # There is only one temp sensor in each MBO. It is labled Tx in the InfluxDB
+    # out of convenience but there is no distinction between temps for Tx and Rx.
+    def mbo_temperatures(self) -> list[float]:
         if self.simulation_mode:
             return SimulatedValues.get("mbo_tx_temperatures")
         self._query_if_needed()

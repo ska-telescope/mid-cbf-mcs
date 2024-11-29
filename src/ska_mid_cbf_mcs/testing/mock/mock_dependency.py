@@ -219,11 +219,6 @@ class MockDependency:
                         datetime.now(timezone.utc),
                         32.0,
                     ),
-                    #     ("MBOs_0_RX_temperature", datetime.now(timezone.utc), 32.0),
-                    #     ("MBOs_1_RX_temperature", datetime.now(timezone.utc), 32.0),
-                    #     ("MBOs_2_RX_temperature", datetime.now(timezone.utc), 32.0),
-                    #     ("MBOs_3_RX_temperature", datetime.now(timezone.utc), 32.0),
-                    #     ("MBOs_4_RX_temperature", datetime.now(timezone.utc), 32.0),
                 ],
                 # _query_mbo_voltages
                 [

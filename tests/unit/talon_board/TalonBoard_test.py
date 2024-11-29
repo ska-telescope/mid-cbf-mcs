@@ -268,7 +268,6 @@ class TestTalonBoard:
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
                              events from the device under test.
         """
-        device_under_test.loggingLevel = 5
         # Device must be on in order to query InfluxDB
         self.test_Online(device_under_test, event_tracer)
 
@@ -365,7 +364,7 @@ class TestTalonBoard:
                 lambda e: (list(e.attribute_value) == [32.0] * 4),
             ),
             (
-                "mboTxTemperatures",
+                "mboTemperatures",
                 None,
                 lambda e: (list(e.attribute_value) == [32.0] * 5),
             ),

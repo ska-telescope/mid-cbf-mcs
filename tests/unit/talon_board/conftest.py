@@ -65,7 +65,6 @@ def tango_event_tracer(
         "bitstreamChecksum",
         # TalonStatus Attr
         "iopllLockedFault",
-        "iopllLockedFault",
         "fsIopllLockedFault",
         "commsIopllLockedFault",
         "systemClkFault",
@@ -99,7 +98,7 @@ def tango_event_tracer(
         "fpgaDieVoltage6",
         "humiditySensorTemperature",
         "dimmTemperatures",
-        "mboTxTemperatures",
+        "mboTemperatures",
         "mboTxVccVoltages",
         "mboTxFaultStatus",
         "mboTxLolStatus",

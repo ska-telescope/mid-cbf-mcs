@@ -25,7 +25,7 @@ PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,W503
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 
 # unit and integration test targets
-PYTHON_TEST_FILE = ./tests/unit/talon_board
+PYTHON_TEST_FILE = ./tests/unit
 K8S_TEST_FILE = ./tests/integration/controller ./tests/integration/subarray
 
 # additional pytest flags; use -k to isolate particular tests, e.g. -k test_Scan
