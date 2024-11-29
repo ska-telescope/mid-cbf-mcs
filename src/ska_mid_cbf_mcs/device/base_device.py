@@ -75,6 +75,7 @@ class CbfDevice(SKABaseDevice):
             (result_code, msg) = super().do(*args, **kwargs)
 
             self._device._simulation_mode = SimulationMode.TRUE
+            self._device._health_state_report = []
 
             return (result_code, msg)
 
@@ -87,6 +88,25 @@ class CbfDevice(SKABaseDevice):
     # ----------
     # Attributes
     # ----------
+    
+    @attribute(dtype=[str])
+    def healthStateReport(self: CbfDevice) -> list[str]:
+        """
+        Read the HealthStateReport of the device.
+
+        :return: HealthStateReport of the device.
+        """
+        return self._health_state_report
+
+    @healthStateReport.write
+    def healthStateReport(self: CbfDevice, value: list[str]) -> None:
+        """
+        Set the HealthStateReport of the device.
+
+        :param value: a list of strings to overwrite the previous healthStateReport.
+        """
+        self.logger.info(f"Writing healthStateReport to {value}")
+        self._health_state_report = value
 
     @attribute(dtype=SimulationMode, memorized=True, hw_memorized=True)
     def simulationMode(self: CbfDevice) -> SimulationMode:

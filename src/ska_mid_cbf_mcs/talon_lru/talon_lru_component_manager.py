@@ -128,7 +128,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 return False
         return True
 
-    def _subscribe_to_subdevices(self: TalonLRUComponentManager) -> None:
+    def _subscribe_subdevice_lrcs(self: TalonLRUComponentManager) -> None:
         """
         Subscribe to command results of the subdevices. This is necessary to monitor the status of the commands.
         """
@@ -149,7 +149,19 @@ class TalonLRUComponentManager(CbfComponentManager):
         self.logger.info(
             f"event_ids after subscribing = {len(self.event_ids)}"
         )
-
+        
+    def _subscribe_health_state(self: TalonLRUComponentManager) -> None:
+        self._proxy_talon_board1 = self._get_device_proxy(self._talons[0])
+        self._proxy_talon_board2 = self._get_device_proxy(self._talons[1])
+        
+        for dp in [self._proxy_talon_board1, self._proxy_talon_board2]:
+            self.attr_event_subscribe(
+                proxy=dp,
+                attr_name="healthState",
+                callback=self._device_health_state_callback,
+            )
+        
+        
     def _start_communicating(
         self: TalonLRUComponentManager, *args, **kwargs
     ) -> None:
@@ -166,9 +178,11 @@ class TalonLRUComponentManager(CbfComponentManager):
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
             return
-
-        # Subscribe to command results of the devices
-        self._subscribe_to_subdevices()
+        
+        # Subscribe to change events
+        self._subscribe_health_state()
+        self._subscribe_subdevice_lrcs()
+        
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
