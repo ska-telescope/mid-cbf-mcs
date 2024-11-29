@@ -1924,17 +1924,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         scan_id = int(scan["scan_id"])
 
-        # Configure visibility transport
-        if not self.simulation_mode:
-            self.logger.info("Configuring visibility transport")
-            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-            self._vis_transport.configure(
-                scan_id=scan_id,
-                subarray_id=self._subarray_id,
-                fsp_config=self._vis_fsp_config,
-                vis_slim_yaml=vis_slim_yaml,
-            )
-
         # Issue Scan command to assigned resources
         scan_status = self._issue_lrc_all_assigned_resources(
             command_name="Scan",
@@ -1960,8 +1949,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        # Enable visibility transport output
+        # Configure and enable visibility transport output
         if not self.simulation_mode:
+            self.logger.info("Configuring visibility transport")
+            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+            self._vis_transport.configure(
+                scan_id=scan_id,
+                subarray_id=self._subarray_id,
+                fsp_config=self._vis_fsp_config,
+                vis_slim_yaml=vis_slim_yaml,
+            )
             self.logger.info("Visibility transport enable output")
             self._vis_transport.enable_output(self._subarray_id)
 

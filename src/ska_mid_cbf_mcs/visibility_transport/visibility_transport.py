@@ -8,7 +8,8 @@ supporting up to 8 boards.
 import logging
 
 import numpy
-import tango
+
+# import tango
 from ska_tango_testing import context
 from tango import DevFailed, Except
 
@@ -156,17 +157,17 @@ class VisibilityTransport:
                 ("scan_id_low", scan_id & 0xFFFFFFFF),
                 ("baseline_count", n_baselines),
                 ("baseline_id", 0),
-                ("channel_count", 20),
+                ("channel_count", [20]),
                 ("channel_id", self._channel_offsets[sub_id]),
                 ("visibility_count", 20 * n_baselines),
             ]:
-                read_attr = self._dp_spead_desc.read_attribute(
-                    attr_name,
-                    tango.ExtractAs.List,
-                )
-                list_attr = list(read_attr.value)
-                list_attr[sub_id] = attr_value
-                self._dp_spead_desc.write_attribute(attr_name, list_attr)
+                # read_attr = self._dp_spead_desc.read_attribute(
+                #     attr_name,
+                #     tango.ExtractAs.List,
+                # )
+                # list_attr = list(read_attr.value)
+                # list_attr[sub_id] = attr_value
+                self._dp_spead_desc.write_attribute(attr_name, attr_value)
 
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
