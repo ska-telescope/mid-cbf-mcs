@@ -962,7 +962,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name=command_name,
             proxies=list(assigned_resources),
-            max_workers=self._max_count_vcc,
+            max_workers=self._max_count_vcc + self._max_count_fsp,
             argin=argin,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
