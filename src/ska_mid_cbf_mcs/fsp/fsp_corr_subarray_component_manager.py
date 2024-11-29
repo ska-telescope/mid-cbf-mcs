@@ -305,11 +305,11 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
-                self.logger.error("Entering HPS FSP configurescan")
+                self.logger.info("Entering HPS FSP configurescan")
                 self._proxy_hps_fsp_corr_controller.ConfigureScan(
                     hps_fsp_configuration
                 )
-                self.logger.error("Exiting HPS FSP configurescan")
+                self.logger.info("Exiting HPS FSP configurescan")
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failure in issuing ConfigureScan to HPS FSP CORR; {df}"
