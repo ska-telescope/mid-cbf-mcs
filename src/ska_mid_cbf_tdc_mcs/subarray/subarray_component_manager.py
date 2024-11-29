@@ -1324,26 +1324,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # TODO: build PST fsp configs and add to all_fsp_configs
 
-        if "pst-bf" in configuration:
-            pst_config = configuration["pst-bf"]
-            # TODO: set wideband shift when ready for implementation
-            fsp_config_builder = FspScanConfigurationBuilder(
-                function_mode=FspModes.PSS_BF,
-                function_configuration=pst_config,
-                dish_utils=self._dish_utils,
-                subarray_dish_ids=self.dish_ids,
-                wideband_shift=0,
-                frequency_band=common_configuration["frequency_band"],
-            )
-            try:
-                pst_fsp_config = fsp_config_builder.build()
-            except ValueError as ve:
-                msg = f"Failure processing correlation configuration: {ve}"
-                self.logger.error(msg)
-                raise ValueError(msg)
-
-        all_fsp_configs.extend(pst_fsp_config)
-
         return all_fsp_configs
 
     def _build_fsp_config(
