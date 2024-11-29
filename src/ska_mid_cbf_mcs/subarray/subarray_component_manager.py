@@ -1283,16 +1283,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self: CbfSubarrayComponentManager,
         configuration: dict[any],
         common_configuration: dict[any],
-        pst_config: dict[any] = None,
     ) -> list[dict[any]]:
         """
         go through the different function modes' (CORR, PST, etc.) processing
         regions and convert to individual FSP configurations.
 
         :param configuration: The Mid.CSP Function specific configurations
-        :param common_configuration: The common portion of the scan configuration
-        :param pst_config: PST specific configurations.  Temporary in place until
-                            Scan Configuration 5.0 adds PST with processing regions
         :raises ValueError: if there is an exception processing any processing
         regions
         :return: list of Individual FSP configurations
@@ -1323,26 +1319,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             all_fsp_configs.extend(corr_fsp_configs)
 
         # TODO: build PST fsp configs and add to all_fsp_configs
-
-        if "pst-bf" in configuration:
-            pst_config = configuration["pst-bf"]
-            # TODO: set wideband shift when ready for implementation
-            fsp_config_builder = FspScanConfigurationBuilder(
-                function_mode=FspModes.PSS_BF,
-                function_configuration=pst_config,
-                dish_utils=self._dish_utils,
-                subarray_dish_ids=self.dish_ids,
-                wideband_shift=0,
-                frequency_band=common_configuration["frequency_band"],
-            )
-            try:
-                pst_fsp_config = fsp_config_builder.build()
-            except ValueError as ve:
-                msg = f"Failure processing correlation configuration: {ve}"
-                self.logger.error(msg)
-                raise ValueError(msg)
-
-        all_fsp_configs.extend(pst_fsp_config)
 
         return all_fsp_configs
 
