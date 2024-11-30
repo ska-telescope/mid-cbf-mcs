@@ -88,7 +88,7 @@ class CbfDevice(SKABaseDevice):
     # ----------
     # Attributes
     # ----------
-    
+
     @attribute(dtype=[str])
     def healthStateReport(self: CbfDevice) -> list[str]:
         """
