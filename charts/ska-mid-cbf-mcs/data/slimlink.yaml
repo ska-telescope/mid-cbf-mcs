@@ -365,9 +365,9 @@ server:
             - "{{ .Values.slimLinkTimeout }}"
       - name: "mid_csp_cbf/vis_links/003"
         properties:
-        - name: "LRCTimeout"
-          values:
-          - "{{ .Values.slimLinkTimeout }}"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
       - name: "mid_csp_cbf/vis_links/004"
         properties:
           - name: "LRCTimeout"
@@ -388,6 +388,7 @@ server:
         - name: "LRCTimeout"
           values:
           - "{{ .Values.slimLinkTimeout }}"
+
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

@@ -40,7 +40,7 @@ server:
           - name: "MaxCapabilities"
             values:
             - "VCC:8"
-            - "FSP:8"
+            - "FSP:4"
             - "Subarray:1"
           - name: "VCC"
             values:
