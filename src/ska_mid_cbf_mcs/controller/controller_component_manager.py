@@ -927,7 +927,6 @@ class ControllerComponentManager(CbfComponentManager):
                     return (False, message)
 
             for fsp in self._fsp_fqdn:
-                # Only set function mode if FSP is both IDLE and not configured for another mode
                 fsp_proxy = self._proxies[fsp]
 
                 # Set functionMode of FSP
@@ -1052,7 +1051,6 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        self._update_component_state(power=PowerState.ON)
         task_callback(
             result=(ResultCode.OK, "On completed OK"),
             status=TaskStatus.COMPLETED,
