@@ -944,12 +944,7 @@ class ControllerComponentManager(CbfComponentManager):
                 # Subarray controls FSP afterwords
                 fsp_proxy.adminMode = AdminMode.OFFLINE
 
-            lrc_status = self.wait_for_blocking_results()
-            if lrc_status != TaskStatus.COMPLETED:
-                self.logger.error(
-                    "All Fsp.SetFunctionMode() LRC calls failed/timed out. Check Fsp logs."
-                )
-                return False
+            self.wait_for_blocking_results()
 
         except tango.DevFailed as df:
             message = f"Error in assigning FSP Mode: {df}"
