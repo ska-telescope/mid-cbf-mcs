@@ -1009,7 +1009,7 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(event_tracer, subarray, subarray_params)
+        self.test_Online(event_tracer, controller, fsp, subarray, subarray_params)
         self.test_sysParam(event_tracer, subarray, subarray_params)
 
         # -------------------------
@@ -1096,7 +1096,7 @@ class TestCbfSubarray:
         ]
 
         # -------------------------
-        # Abort/ObsReset from READY
+        # Abort/ObsReset from REA DY
         # -------------------------
 
         self.test_ConfigureScan(
@@ -1345,7 +1345,7 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(event_tracer, subarray, subarray_params)
+        self.test_Online(event_tracer, controller, fsp, subarray, subarray_params)
         self.test_sysParam(event_tracer, subarray, subarray_params)
 
         # -------------------------
@@ -1693,7 +1693,7 @@ class TestCbfSubarray:
         alt_params = subarray_params["alt_params"]
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(event_tracer, subarray, subarray_params)
+        self.test_Online(event_tracer, controller, fsp, subarray, subarray_params)
         self.test_sysParam(event_tracer, subarray, subarray_params)
         self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
         self.test_ConfigureScan(
