@@ -106,11 +106,11 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-        for fsp_fqdn in fsp:
+        for fsp_id in fsp:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
-                device_name=fsp_fqdn,
+                device_name=fsp[fsp_id],
                 attribute_name="functionMode",
                 attribute_value=FspModes.CORR.value,
                 previous_value=FspModes.IDLE.value,
