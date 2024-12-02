@@ -31,17 +31,27 @@ test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 class TestCbfSubarray:
-    @pytest.mark.dependency(name="CbfSubarray_Setup_1")
-    def test_Setup(
+    @pytest.mark.dependency(name="CbfSubarray_Online_1")
+    def test_Online(
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
         controller: context.DeviceProxy,
+        fsp: dict[int, context.DeviceProxy],
+        subarray: dict[int, context.DeviceProxy],
+        subarray_params: dict[any],
     ) -> None:
         """
-        Setup for Subarray integration test suite by making calls to turn on controller.
+        Test the initial states and verify the component manager
+        can start communicating.
 
-        :param controller: proxy to contorller devices
+        :param event_tracer: TangoEventTracer
+        :param controller: proxy to controller devices
+        :param fsp: dict of DeviceProxy to Fsp devices
+        :param subarray: list of proxies to subarray devices
+        :param subarray_params: dict containing all test input parameters
         """
+        sub_id = subarray_params["sub_id"]
+
         with open(test_data_path + "sys_param_4_boards.json") as f:
             sys_param_str = f.read()
 
@@ -80,31 +90,9 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-    @pytest.mark.dependency(
-        depends=["CbfSubarray_Setup_1"], name="CbfSubarray_Online_1"
-    )
-    def test_Online(
-        self: TestCbfSubarray,
-        event_tracer: TangoEventTracer,
-        subarray: dict[int, context.DeviceProxy],
-        subarray_params: dict[any],
-    ) -> None:
-        """
-        Test the initial states and verify the component manager
-        can start communicating.
-
-        :param event_tracer: TangoEventTracer
-        :param subarray: list of proxies to subarray devices
-        :param subarray_params: dict containing all test input parameters
-        """
-        sub_id = subarray_params["sub_id"]
-
-        # Trigger start_communicating by setting the AdminMode to ONLINE
-        subarray[sub_id].adminMode = AdminMode.ONLINE
-
         expected_events = [
-            # ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
-            # ("state", DevState.ON, DevState.DISABLE, 1),
+            ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
+            ("state", DevState.ON, DevState.DISABLE, 1),
         ]
 
         for name, value, previous, n in expected_events:
@@ -117,6 +105,17 @@ class TestCbfSubarray:
                 previous_value=previous,
                 min_n_events=n,
             )
+
+        # for fsp_fqdn in fsp:
+        #     assert_that(event_tracer).within_timeout(
+        #         test_utils.EVENT_TIMEOUT
+        #     ).has_change_event_occurred(
+        #         device_name=fsp_fqdn,
+        #         attribute_name="functionMode",
+        #         attribute_value=FspModes.CORR.value,
+        #         previous_value=FspModes.IDLE.value,
+        #         min_n_events=1,
+        #     )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Online_1"],
