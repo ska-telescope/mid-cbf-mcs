@@ -922,7 +922,9 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.info(f"Setting FSP function mode to {fsp_mode}")
 
             for fqdn in self._fsp_fqdns_all:
-                if not self._init_device_proxy(fqdn=fqdn):
+                if not self._init_device_proxy(
+                    fqdn=fqdn, subscribe_results=True
+                ):
                     message = "Failed to _init_device_proxy for FSP."
                     self.logger.error(message)
                     return (False, message)
@@ -941,9 +943,10 @@ class ControllerComponentManager(CbfComponentManager):
                     return (False, message)
 
                 self.blocking_command_ids.add(command_id)
-                self.wait_for_blocking_results()
                 # Subarray controls FSP afterwords
                 fsp_proxy.adminMode = AdminMode.OFFLINE
+
+            self.wait_for_blocking_results()
 
         except tango.DevFailed as df:
             message = f"Error in assigning FSP Mode: {df}"
