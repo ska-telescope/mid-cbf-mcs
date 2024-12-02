@@ -941,10 +941,9 @@ class ControllerComponentManager(CbfComponentManager):
                     return (False, message)
 
                 self.blocking_command_ids.add(command_id)
+                self.wait_for_blocking_results()
                 # Subarray controls FSP afterwords
                 fsp_proxy.adminMode = AdminMode.OFFLINE
-
-            self.wait_for_blocking_results()
 
         except tango.DevFailed as df:
             message = f"Error in assigning FSP Mode: {df}"
