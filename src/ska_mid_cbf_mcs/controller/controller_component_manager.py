@@ -382,7 +382,7 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
         if fqdn in used_fqdns:
-            # Skip setting VCC online, should be handled by subarray.
+            # TODO: Untangle adminMode innit. For now, skip setting VCC online as should be handled by subarray.
             if fqdn in self._vcc_fqdn:
                 return True
             return self._set_proxy_online(fqdn)
@@ -468,6 +468,7 @@ class ControllerComponentManager(CbfComponentManager):
                 self.logger.error(f"Failed to decode talondx-config JSON: {e}")
                 return
         else:
+            # TODO: Controller hard coded to only be in CORR while in simulation mode. Should use other modes too.
             self.talondx_config_json = {
                 "config_commands": [
                     {
@@ -943,8 +944,8 @@ class ControllerComponentManager(CbfComponentManager):
                 # Subarray controls FSP afterwords
                 fsp_proxy.adminMode = AdminMode.OFFLINE
 
-        except Exception as e:
-            message = f"Error in assigning FSP Mode: {e}"
+        except tango.DevFailed as df:
+            message = f"Error in assigning FSP Mode: {df}"
             self.logger.error(message)
             return (False, message)
 
