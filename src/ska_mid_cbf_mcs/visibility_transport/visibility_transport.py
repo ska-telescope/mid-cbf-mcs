@@ -8,8 +8,7 @@ supporting up to 8 boards.
 import logging
 
 import numpy
-
-# import tango
+import tango
 from ska_tango_testing import context
 from tango import DevFailed, Except
 
@@ -157,17 +156,21 @@ class VisibilityTransport:
                 ("scan_id_low", scan_id & 0xFFFFFFFF),
                 ("baseline_count", n_baselines),
                 ("baseline_id", 0),
-                ("channel_count", [20]),
+                ("channel_count", 20),
                 ("channel_id", self._channel_offsets[sub_id]),
                 ("visibility_count", 20 * n_baselines),
             ]:
-                # read_attr = self._dp_spead_desc.read_attribute(
-                #     attr_name,
-                #     tango.ExtractAs.List,
-                # )
-                # list_attr = list(read_attr.value)
-                # list_attr[sub_id] = attr_value
-                self._dp_spead_desc.write_attribute(attr_name, attr_value)
+                # Write only the values for this subarray (indexed at sub_id)
+                read_attr = self._dp_spead_desc.read_attribute(
+                    attr_name,
+                    tango.ExtractAs.List,
+                )
+                list_attr = list(read_attr.value)
+                list_attr[sub_id] = attr_value
+                self._dp_spead_desc.write_attribute(attr_name, list_attr)
+
+            self._dp_spead_desc.Configure(sub_id)
+            self._dp_spead_desc.CreateDescriptor(sub_id)
 
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
@@ -283,10 +286,6 @@ class VisibilityTransport:
         self.logger.debug(f"host_lut_host_data: {host_lut_host_data}")
 
         try:
-            # SPEAD descriptor expects 0 based subarray ID
-            sub_id = subarray_id - 1
-            self._dp_spead_desc.Configure(sub_id)
-            self._dp_spead_desc.CreateDescriptor(sub_id)
             self._dp_spead_desc.StartScan(spead_desc_host_data)
 
             self._dp_host_lut_s2.command_inout("Program", host_lut_host_data)
