@@ -162,7 +162,7 @@ class Fsp(CbfDevice):
 
     def is_SetFunctionMode_allowed(self: Fsp) -> bool:
         """
-        Overwrite base class's is_SetFunctionMode_allowed method.
+        Returns True; SetFunctionMode must be allowed in DISABLED state for AA0.5 approach (CIP-2550)
         """
         return True
 
