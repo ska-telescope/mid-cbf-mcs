@@ -115,6 +115,9 @@ def initial_mocks(
 
     :param mock_fsp_corr_subarray_device: a mock FspCorrSubarray.
     :param mock_fsp_pst_subarray_device: a mock FspPstSubarray.
+    :param mock_hps_fsp_corr_controller: a mock HPS FSP Corr Controller
+    :param mock_hps_fsp_pst_controller: a mock HPS FSP PST Controller
+    :param mock_hps_fspcontroller: a mock HPS FSP Top Level Controller
     :return: a dictionary of device proxy mocks to pre-register.
     """
     mocks = {}
