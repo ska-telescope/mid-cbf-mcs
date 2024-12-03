@@ -943,13 +943,17 @@ class TestCbfSubarray:
         """
         Verify component manager can stop communication with the component.
 
-        Turn off controller and expect the subarray to transition to the DISABLE state.
+        Set the AdminMode to OFFLINE and expect the subarray to transition to the DISABLE state.
+        Turn off controller.
 
         :param event_tracer: TangoEventTracer
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         """
         sub_id = subarray_params["sub_id"]
+
+        # trigger stop_communicating by setting the AdminMode to OFFLINE
+        subarray[sub_id].adminMode = AdminMode.OFFLINE
 
         result_code, off_command_id = controller.Off()
         assert result_code == [ResultCode.QUEUED]
@@ -960,6 +964,13 @@ class TestCbfSubarray:
                 "longRunningCommandResult",
                 (f"{off_command_id[0]}", '[0, "Off completed OK"]'),
                 None,
+                1,
+            ),
+            (
+                subarray[sub_id],
+                "adminMode",
+                AdminMode.OFFLINE,
+                AdminMode.ONLINE,
                 1,
             ),
             (subarray[sub_id], "state", DevState.DISABLE, DevState.ON, 1),
