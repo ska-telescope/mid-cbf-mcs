@@ -36,7 +36,7 @@ class VisibilityTransport:
         self._dp_host_lut_s2 = None
         self._dp_spead_desc = None
 
-        self._channel_offsets = []
+        self._host_lut_channel_offsets = []
         self._fsp_config = None
 
     def _get_vis_output_map(self, vis_slim_yaml: str) -> dict:
@@ -127,15 +127,15 @@ class VisibilityTransport:
         self.logger.info("Configuring visibility transport devices")
 
         self._fsp_ids = [fc["fsp_id"] for fc in fsp_config]
-        self._channel_offsets = [
+        self._host_lut_channel_offsets = [
             fc["host_lut_channel_offset"] for fc in fsp_config
         ]
 
-        if len(self._channel_offsets) == 0:
-            self._channel_offsets = [0]
+        if len(self._host_lut_channel_offsets) == 0:
+            self._host_lut_channel_offsets = [0]
 
         self.logger.info(
-            f"FSP IDs = {self._fsp_ids}, channel_offsets = {self._channel_offsets}"
+            f"FSP IDs: {self._fsp_ids}, host_lut_channel_offsets: {self._host_lut_channel_offsets}"
         )
 
         # Parse the visibility SLIM yaml to determine which board will output
@@ -150,6 +150,7 @@ class VisibilityTransport:
             sub_id = subarray_id - 1
             n_vcc = len(fsp_config[0]["corr_vcc_ids"])
             n_baselines = n_vcc * (n_vcc + 1) // 2
+            spead_channel_offset = fsp_config[0]["channel_offset"]
 
             for attr_name, attr_value in [
                 ("scan_id_high", scan_id >> 32),
@@ -157,7 +158,7 @@ class VisibilityTransport:
                 ("baseline_count", n_baselines),
                 ("baseline_id", 0),
                 ("channel_count", 20),
-                ("channel_id", self._channel_offsets[sub_id]),
+                ("channel_id", spead_channel_offset),
                 ("visibility_count", 20 * n_baselines),
             ]:
                 # Write only the values for this subarray (indexed at sub_id)
@@ -174,7 +175,7 @@ class VisibilityTransport:
 
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
-                self._dp_host_lut_s1, self._channel_offsets
+                self._dp_host_lut_s1, self._host_lut_channel_offsets
             ):
                 self.logger.info(
                     f"Connecting to {self._host_lut_s2_fqdn} with channel offset {ch_offset}"
@@ -185,7 +186,7 @@ class VisibilityTransport:
 
             # write the channel offsets of each FSP to host lut s2
             self._dp_host_lut_s2.host_lut_s1_chan_offsets = (
-                self._channel_offsets
+                self._host_lut_channel_offsets
             )
         except DevFailed as df:
             self.logger.error(
