@@ -5,9 +5,9 @@ routing the visibilities from FSPs to SDP.
 It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1,
 supporting up to 8 boards.
 """
+import ctypes
 import logging
 
-import numpy
 import tango
 from ska_tango_testing import context
 from tango import DevFailed, Except
@@ -150,7 +150,7 @@ class VisibilityTransport:
             sub_id = subarray_id - 1
             n_vcc = len(fsp_config[0]["corr_vcc_ids"])
             n_baselines = n_vcc * (n_vcc + 1) // 2
-            spead_channel_offset = fsp_config[0]["fs_start_channel_offset"]
+            spead_channel_offset = fsp_config[0]["spead_channel_offset"]
 
             for attr_name, attr_value in [
                 ("scan_id_high", scan_id >> 32),
@@ -250,8 +250,8 @@ class VisibilityTransport:
             dest_info = [
                 subarray_id,
                 (
-                    numpy.uint32(numpy.int32(p[0]))
-                    if offset_param == "channel_offset"
+                    ctypes.c_uint32(p[0])
+                    if offset_param == "spead_channel_offset"
                     else p[0]
                 ),
                 host_int,
@@ -277,7 +277,7 @@ class VisibilityTransport:
         self.logger.info("Enable visibility output")
 
         spead_desc_host_data = self._parse_visibility_transport_info(
-            subarray_id, self._fsp_config, "channel_offset"
+            subarray_id, self._fsp_config, "spead_channel_offset"
         )
         self.logger.debug(f"spead_desc_host_data: {spead_desc_host_data}")
 

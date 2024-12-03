@@ -172,7 +172,7 @@ class TestFspScanConfigurationBuilder:
             assert fsp["fsp_id"] in all_fsp_ids
             all_fsp_ids.remove(fsp["fsp_id"])
 
-            assert "channel_offset" in fsp
+            assert "spead_channel_offset" in fsp
 
         # Assert that all PR-fsps_ids got configured
         assert len(fsp_to_pr) == len(
@@ -211,7 +211,7 @@ class TestFspScanConfigurationBuilder:
                             # but we can get it from the channel_offset
                             # and the fs_start_channel_offset
                             fsp_sdp_start_channel_id = (
-                                fsp_config["channel_offset"]
+                                fsp_config["spead_channel_offset"]
                                 + fsp_config["fs_start_channel_offset"]
                             )
 

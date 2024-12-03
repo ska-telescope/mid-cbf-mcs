@@ -1348,13 +1348,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             "frequency_band_offset_stream2"
         ] = self._frequency_band_offset_stream2
 
-        # channel_offset is optional
-        if "channel_offset" not in fsp_config:
-            self.logger.warning(
-                "channel_offset not defined in configuration. Assigning default of 0."
-            )
-            fsp_config["channel_offset"] = 0
-
         fsp_config["fs_sample_rates"] = self._calculate_fs_sample_rates(
             common_configuration["frequency_band"]
         )

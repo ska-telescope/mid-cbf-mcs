@@ -11,6 +11,7 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import copy
+import ctypes
 
 from ska_telmodel import channel_map
 
@@ -373,30 +374,31 @@ class FspScanConfigurationBuilder:
             ]
             fsp_config["receptors"] = copy.copy(dish_ids)
 
-            # spead / fsp channel_offset
-            # this offset flows down to SPEAD into value channel_id.
-            # channel_id needs to be set such that the 'start' is
-            # sdp_start_channel_id of the fsp.
-            #
-            # So channel_id = sdp_start_channel_id - fsp_start_ch,
-            # because the FW will add the channel number (0 to 744)*20  to this
-            # value and put it in the SPEAD packets.
-            #
-            # The fsp.sdp_start_channel_id is only relative to the
-            # assigned fsps, and not to the pr.sdp_start_channel_id, so the
-            # "absolute" sdp_start_channel_id is to add the fsp and pr
-            # sdp_start_channel_ids together.
-            fsp_config["channel_offset"] = (
-                processing_region_config["sdp_start_channel_id"]
-                + calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
-                - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
-            )
-
             # The 0-14880 channel number where we want to start processing in
             # the FS, which is the fsp_start_ch value
             fsp_config["fs_start_channel_offset"] = calculated_fsp_infos[
                 fsp_id
             ]["fsp_start_ch"]
+
+            # spead / fsp channel_offset
+            # this offset flows down to SPEAD into value channel_id.
+            # channel_id needs to be set such that the 'start' is
+            # sdp_start_channel_id of the fsp.
+            #
+            # spead_channel_offset = "absolute" sdp_start_channel_id - fsp_start_ch
+            # WITH unsigned 32-bit integer underflow, because the FW will add the
+            # channel number (0 to 744)*20  to this value WITH overflow and put it
+            # in the SPEAD packets.
+            #
+            # The fsp.sdp_start_channel_id is only relative to the
+            # assigned fsps, and not to the pr.sdp_start_channel_id, so the
+            # "absolute" sdp_start_channel_id is to add the fsp and pr
+            # sdp_start_channel_ids together.
+            fsp_config["spead_channel_offset"] = ctypes.c_uint32(
+                processing_region_config["sdp_start_channel_id"]
+                + calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
+                - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
+            )
 
             fsp_config[
                 "vcc_id_to_rdt_freq_shifts"
