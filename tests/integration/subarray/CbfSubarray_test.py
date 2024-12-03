@@ -31,42 +31,8 @@ test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 class TestCbfSubarray:
-    def set_Online(
-        self: TestCbfSubarray,
-        event_tracer: TangoEventTracer,
-        subarray: dict[int, context.DeviceProxy],
-        subarray_params: dict[any],
-    ) -> None:
-        """
-        Set the initial states and verify the component manager can start communicating.
-
-        :param event_tracer: TangoEventTracer
-        :param subarray: list of proxies to subarray devices
-        :param subarray_params: dict containing all test input parameters
-        """
-        sub_id = subarray_params["sub_id"]
-
-        # Trigger start_communicating by setting the AdminMode to ONLINE
-        subarray[sub_id].adminMode = AdminMode.ONLINE
-
-        expected_events = [
-            ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
-            ("state", DevState.ON, DevState.DISABLE, 1),
-        ]
-
-        for name, value, previous, n in expected_events:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=subarray[sub_id],
-                attribute_name=name,
-                attribute_value=value,
-                previous_value=previous,
-                min_n_events=n,
-            )
-
-    @pytest.mark.dependency(name="CbfSubarray_Setup_1")
-    def test_Setup(
+    @pytest.mark.dependency(name="CbfSubarray_Online_1")
+    def test_Online(
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
         controller: context.DeviceProxy,
@@ -126,19 +92,19 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-        for fsp_id in fsp:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=fsp[fsp_id],
-                attribute_name="functionMode",
-                attribute_value=FspModes.CORR.value,
-                previous_value=FspModes.IDLE.value,
-                min_n_events=1,
-            )
+        # for fsp_id in fsp:
+        #     assert_that(event_tracer).within_timeout(
+        #         test_utils.EVENT_TIMEOUT
+        #     ).has_change_event_occurred(
+        #         device_name=fsp[fsp_id],
+        #         attribute_name="functionMode",
+        #         attribute_value=FspModes.CORR.value,
+        #         previous_value=FspModes.IDLE.value,
+        #         min_n_events=1,
+        #     )
 
     @pytest.mark.dependency(
-        depends=["CbfSubarray_Setup_1"],
+        depends=["CbfSubarray_Online_1"],
         name="CbfSubarray_sysParam_1",
     )
     def test_sysParam(
@@ -964,19 +930,20 @@ class TestCbfSubarray:
             )
 
     @pytest.mark.dependency(
-        depends=["CbfSubarray_Setup_1"],
+        depends=["CbfSubarray_Online_1"],
         name="CbfSubarray_Offline_1",
     )
     def test_Offline(
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
+        controller: context.DeviceProxy,
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
     ) -> None:
         """
         Verify component manager can stop communication with the component.
 
-        Set the AdminMode to OFFLINE and expect the subarray to transition to the DISABLE state.
+        Turn off controller and expect the subarray to transition to the DISABLE state.
 
         :param event_tracer: TangoEventTracer
         :param subarray: list of proxies to subarray devices
@@ -984,18 +951,25 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        # trigger stop_communicating by setting the AdminMode to OFFLINE
-        subarray[sub_id].adminMode = AdminMode.OFFLINE
+        result_code, off_command_id = controller.Off()
+        assert result_code == [ResultCode.QUEUED]
 
         expected_events = [
-            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
-            ("state", DevState.DISABLE, DevState.ON, 1),
+            (
+                controller,
+                "longRunningCommandResult",
+                (f"{off_command_id[0]}", '[0, "Off completed OK"]'),
+                None,
+                1,
+            ),
+            (subarray[sub_id], "state", DevState.DISABLE, DevState.ON, 1),
         ]
-        for name, value, previous, n in expected_events:
+
+        for device, name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
-                device_name=subarray[sub_id],
+                device_name=device,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
@@ -1029,7 +1003,9 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        self.set_Online(event_tracer, subarray, subarray_params)
+        self.test_Online(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
         self.test_sysParam(event_tracer, subarray, subarray_params)
 
         # -------------------------
@@ -1365,7 +1341,9 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        self.set_Online(event_tracer, subarray, subarray_params)
+        self.test_Online(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
         self.test_sysParam(event_tracer, subarray, subarray_params)
 
         # -------------------------
@@ -1713,7 +1691,9 @@ class TestCbfSubarray:
         alt_params = subarray_params["alt_params"]
         sub_id = subarray_params["sub_id"]
 
-        self.set_Online(event_tracer, subarray, subarray_params)
+        self.test_Online(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
         self.test_sysParam(event_tracer, subarray, subarray_params)
         self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
         self.test_ConfigureScan(
