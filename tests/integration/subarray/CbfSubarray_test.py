@@ -36,7 +36,6 @@ class TestCbfSubarray:
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
         controller: context.DeviceProxy,
-        fsp: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
     ) -> None:
@@ -105,17 +104,6 @@ class TestCbfSubarray:
                 previous_value=previous,
                 min_n_events=n,
             )
-
-        # for fsp_id in fsp:
-        #     assert_that(event_tracer).within_timeout(
-        #         test_utils.EVENT_TIMEOUT
-        #     ).has_change_event_occurred(
-        #         device_name=fsp[fsp_id],
-        #         attribute_name="functionMode",
-        #         attribute_value=FspModes.CORR.value,
-        #         previous_value=FspModes.IDLE.value,
-        #         min_n_events=1,
-        #     )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Online_1"],
@@ -1009,9 +997,7 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(
-            event_tracer, controller, fsp, subarray, subarray_params
-        )
+        self.test_Online(event_tracer, controller, subarray, subarray_params)
         self.test_sysParam(event_tracer, subarray, subarray_params)
 
         # -------------------------
@@ -1347,9 +1333,7 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(
-            event_tracer, controller, fsp, subarray, subarray_params
-        )
+        self.test_Online(event_tracer, controller, subarray, subarray_params)
         self.test_sysParam(event_tracer, subarray, subarray_params)
 
         # -------------------------
@@ -1697,9 +1681,7 @@ class TestCbfSubarray:
         alt_params = subarray_params["alt_params"]
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(
-            event_tracer, controller, fsp, subarray, subarray_params
-        )
+        self.test_Online(event_tracer, controller, subarray, subarray_params)
         self.test_sysParam(event_tracer, subarray, subarray_params)
         self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
         self.test_ConfigureScan(
