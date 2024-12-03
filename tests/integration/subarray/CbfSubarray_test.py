@@ -1312,7 +1312,7 @@ class TestCbfSubarray:
         self.test_RemoveAllReceptors(
             event_tracer, subarray, subarray_params, vcc
         )
-        self.test_Offline(event_tracer, subarray, subarray_params)
+        self.test_Offline(event_tracer, controller, subarray, subarray_params)
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Abort_1"],
@@ -1658,7 +1658,7 @@ class TestCbfSubarray:
 
         # --- Cleanup --- #
 
-        self.test_Offline(event_tracer, subarray, subarray_params)
+        self.test_Offline(event_tracer, controller, subarray, subarray_params)
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Offline_1"],
@@ -1867,4 +1867,4 @@ class TestCbfSubarray:
         self.test_RemoveAllReceptors(
             event_tracer, subarray, subarray_params, vcc
         )
-        self.test_Offline(event_tracer, subarray, subarray_params)
+        self.test_Offline(event_tracer, controller, subarray, subarray_params)
