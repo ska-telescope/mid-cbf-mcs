@@ -952,7 +952,7 @@ class TestCbfSubarray:
             )
 
     @pytest.mark.dependency(
-        depends=["CbfSubarray_Online_1"],
+        depends=["CbfSubarray_Setup_1"],
         name="CbfSubarray_Offline_1",
     )
     def test_Offline(
