@@ -31,8 +31,42 @@ test_data_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 class TestCbfSubarray:
-    @pytest.mark.dependency(name="CbfSubarray_Online_1")
-    def test_Online(
+    def set_Online(
+        self: TestCbfSubarray,
+        event_tracer: TangoEventTracer,
+        subarray: dict[int, context.DeviceProxy],
+        subarray_params: dict[any],
+    ) -> None:
+        """
+        Set the initial states and verify the component manager can start communicating.
+
+        :param event_tracer: TangoEventTracer
+        :param subarray: list of proxies to subarray devices
+        :param subarray_params: dict containing all test input parameters
+        """
+        sub_id = subarray_params["sub_id"]
+
+        # Trigger start_communicating by setting the AdminMode to ONLINE
+        subarray[sub_id].adminMode = AdminMode.ONLINE
+
+        expected_events = [
+            ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
+            ("state", DevState.ON, DevState.DISABLE, 1),
+        ]
+
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=subarray[sub_id],
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                min_n_events=n,
+            )
+
+    @pytest.mark.dependency(name="CbfSubarray_Setup_1")
+    def test_Setup(
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
         controller: context.DeviceProxy,
@@ -40,8 +74,7 @@ class TestCbfSubarray:
         subarray_params: dict[any],
     ) -> None:
         """
-        Test the initial states and verify the component manager
-        can start communicating.
+        Setup the initial states for subarray through turning controller ON.
 
         :param event_tracer: TangoEventTracer
         :param controller: proxy to controller devices
@@ -93,7 +126,7 @@ class TestCbfSubarray:
             )
 
     @pytest.mark.dependency(
-        depends=["CbfSubarray_Online_1"],
+        depends=["CbfSubarray_Setup_1"],
         name="CbfSubarray_sysParam_1",
     )
     def test_sysParam(
@@ -984,7 +1017,7 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(event_tracer, controller, subarray, subarray_params)
+        self.set_Online(event_tracer, subarray, subarray_params)
         self.test_sysParam(event_tracer, subarray, subarray_params)
 
         # -------------------------
@@ -1071,7 +1104,7 @@ class TestCbfSubarray:
         ]
 
         # -------------------------
-        # Abort/ObsReset from REA DY
+        # Abort/ObsReset from READY
         # -------------------------
 
         self.test_ConfigureScan(
@@ -1320,7 +1353,7 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(event_tracer, controller, subarray, subarray_params)
+        self.set_Online(event_tracer, subarray, subarray_params)
         self.test_sysParam(event_tracer, subarray, subarray_params)
 
         # -------------------------
@@ -1668,7 +1701,7 @@ class TestCbfSubarray:
         alt_params = subarray_params["alt_params"]
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(event_tracer, controller, subarray, subarray_params)
+        self.set_Online(event_tracer, subarray, subarray_params)
         self.test_sysParam(event_tracer, subarray, subarray_params)
         self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
         self.test_ConfigureScan(
