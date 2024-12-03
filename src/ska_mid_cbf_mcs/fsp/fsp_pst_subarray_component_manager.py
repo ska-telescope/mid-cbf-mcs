@@ -50,23 +50,11 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
 
         self.obs_faulty = False
 
-        # TODO: Remove
-        # self._fsp_id = fsp_id
         self._vcc_ids = []
         self._timing_beams = []
         self._timing_beam_id = []
         self.scan_id = 0
         self._output_enable = 0
-
-        # TODO: Remove
-        # super().__init__(
-        #     logger=logger,
-        #     push_change_event_callback=push_change_event_callback,
-        #     communication_status_changed_callback=communication_status_changed_callback,
-        #     component_power_mode_changed_callback=component_power_mode_changed_callback,
-        #     component_fault_callback=component_fault_callback,
-        #     obs_state_model=None,
-        # )
 
     @property
     def fsp_id(self: FspPstSubarrayComponentManager) -> int:
@@ -211,6 +199,8 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
         Execute configure scan operation.
 
         :param argin: JSON string with the configure scan parameters
+        :param task_callback: command tracker update_command_info callback
+        :param task_abort_event: task executor abort event
 
         :return: None
         """
@@ -274,6 +264,9 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
         Performs the Scan() command functionality
 
         :param argin: The scan id
+        :param task_callback: command tracker update_command_info callback
+        :param task_abort_event: task executor abort event
+
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -322,6 +315,9 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
         """
         Performs the EndScan() command functionality
 
+        :param task_callback: command tracker update_command_info callback
+        :param task_abort_event: task executor abort event
+
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -367,6 +363,9 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
     ) -> None:
         """
         Performs the GoToIdle() command functionality
+
+        :param task_callback: command tracker update_command_info callback
+        :param task_abort_event: task executor abort event
 
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -417,6 +416,9 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
         """
         Abort the current scan operation.
 
+        :param task_callback: command tracker update_command_info callback
+        :param task_abort_event: task executor abort event
+
         :return: None
         """
         # set task status in progress, check for abort event
@@ -459,6 +461,9 @@ class FspPstSubarrayComponentManager(CbfObsComponentManager):
     ) -> None:
         """
         Performs the ObsReset() command functionality
+
+        :param task_callback: command tracker update_command_info callback
+        :param task_abort_event: task executor abort event
 
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for

@@ -145,6 +145,7 @@ class TestFspPstSubarray:
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
                              events from the device under test.
         :param config_file_name: JSON file for the configuration
+        :param scan_id: the scan id
         """
         # Prepare device for observation
         assert self.device_online_and_on(device_under_test, event_tracer)

@@ -34,7 +34,7 @@ __all__ = ["FspPstSubarray", "main"]
 
 class FspPstSubarray(FspModeSubarray):
     """
-    FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
+    FspPstSubarray TANGO device class for the FspPstSubarray prototype
     """
 
     # PROTECTED REGION ID(FspPstSubarray.class_variable) ENABLED START #
@@ -112,20 +112,6 @@ class FspPstSubarray(FspModeSubarray):
 
         return self.component_manager.timing_beam_id
 
-    # TODO: Probably not needed? Need to double check
-    # # TODO: do we need write_receptors? All receptor adding is handled by component
-    # # manager. Other Fsp subarray devices do not have this
-    # def write_receptors(self: FspPstSubarray, value: List[int]) -> None:
-    #     # PROTECTED REGION ID(FspPstSubarray.receptors_write) ENABLED START #
-    #     """
-    #     Write the receptors attribute.
-
-    #     :param value: the receptors attribute value.
-    #     """
-    #     self.component_manager.receptors = value
-
-    # #     # PROTECTED REGION END #    //  FspPstSubarray.receptors_write
-
     # ---------------
     # General methods
     # ---------------
@@ -140,7 +126,8 @@ class FspPstSubarray(FspModeSubarray):
     # Initialization
     # --------------
 
-    # Not used right now
+    # Not used right now.  PST does not implement additional commands.
+    # Reference FspCorrSubarray for future implementations
     class InitCommand(FspModeSubarray.InitCommand):
         """
         A class for the FspPstSubarray's init_device() "command".

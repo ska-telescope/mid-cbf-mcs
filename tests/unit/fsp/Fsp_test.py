@@ -326,6 +326,7 @@ class TestFsp:
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
                              events from the device under test.
         :param sub_ids: list of subarray IDs to add
+        :param fsp_mode: FspMode to be set for the device
         """
 
         # set device ONLINE, ON and set function mode to CORR
@@ -442,6 +443,7 @@ class TestFsp:
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
                              events from the device under test.
         :param sub_ids: list of subarray IDs to remove
+        :param fsp_mode: FspMode to be set for the device
         """
 
         # set device ONLINE, ON, function mode to CORR and add subarray membership
