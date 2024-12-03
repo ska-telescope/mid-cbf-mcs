@@ -160,9 +160,11 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         """
         # append all internal parameters to the configuration to pass to HPS
         # first construct HPS FSP ConfigureScan input
+
+        # Access constants for CIP-2364 through configuration[band_number] and send that to gloabl enums for values
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
-        self.logger.info(f"{hps_fsp_configuration}")
+        # self.logger.info(f"{hps_fsp_configuration}")
 
         # VCC IDs must be sorted in ascending order for the HPS
         hps_fsp_configuration["configure_scan"]["subarray_vcc_ids"].sort()
@@ -186,13 +188,16 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
 
         # TODO: Assume gain is an array
         # For now, we will reinitialize gain as a large (32k) sized array in the component manager
-        hps_fsp_configuration["fine_channelizer"]["gain"] = [1] * 16384
+        hps_fsp_configuration["fine_channelizer"]["gain"] = [1] * (16384 * 2)
 
-        gain_corrections = GAINUtils.get_vcc_ripple_correction(self.logger)
+        gain_corrections = GAINUtils.get_vcc_ripple_correction(
+            hps_fsp_configuration["configure_scan"]["frequency_band"],
+            self.logger,
+        )
         for gain_index, gain in enumerate(
             hps_fsp_configuration["fine_channelizer"]["gain"]
         ):
-            gain = gain * gain_corrections[gain_index]
+            gain = gain * gain_corrections[gain_index % 16384]
             hps_fsp_configuration["fine_channelizer"]["gain"][
                 gain_index
             ] = gain

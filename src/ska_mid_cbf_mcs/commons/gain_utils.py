@@ -15,7 +15,7 @@ import numpy
 import scipy
 import yaml
 
-from ska_mid_cbf_mcs.commons.global_enum import const
+from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 
 VCC_PARAM_PATH = "mnt/vcc_param/"
 
@@ -34,6 +34,7 @@ class GAINUtils:
 
     @staticmethod
     def get_vcc_ripple_correction(
+        freq_band: str,
         logger: logging.Logger,
     ) -> dict:
         """
@@ -60,9 +61,13 @@ class GAINUtils:
         if vcc_frequency_slice is None:
             return {chan: 1.0 for chan in range(16384)}
 
-        frequency_slice_sample_rate = (
-            const.INPUT_SAMPLE_RATE // const.INPUT_FRAME_SIZE
-        )
+        _freq_band_dict = freq_band_dict()
+        input_sample_rate = _freq_band_dict[freq_band][
+            "base_dish_sample_rate_MHz"
+        ]
+        input_frame_size = _freq_band_dict[freq_band]["num_samples_per_frame"]
+
+        frequency_slice_sample_rate = input_sample_rate // input_frame_size
 
         # The Normalized Center Frequencies of the Secondry Channelizer
         fc0 = numpy.linspace(
@@ -82,7 +87,7 @@ class GAINUtils:
         normalized_frequency = (
             actual_center_frequency
             / frequency_slice_sample_rate
-            / const.INPUT_FRAME_SIZE
+            / input_frame_size
         )
         # Evaluating the Gain of the Frequency response of the VCC Channelizer
         _, H = scipy.signal.freqz(

@@ -47,10 +47,8 @@ class Const:
 
         self.DEFAULT_TIMEOUT = 4
         self.COMMON_SAMPLE_RATE = 220200960
-        self.INPUT_SAMPLE_RATE = 3963619800
         self.FINE_CHANNELS = 16384
         self.FINE_SAMPLE_RATE = 13440
-        self.INPUT_FRAME_SIZE = 18
 
         self.BER_PASS_THRESHOLD = 8.000e-11
         self.GBPS = 25.78125 * 64 / 66
