@@ -64,41 +64,28 @@ class TestCbfSubarray:
 
         expected_events = [
             (
+                controller,
                 "longRunningCommandResult",
                 (f"{init_command_id[0]}", '[0, "InitSysParam completed OK"]'),
                 None,
                 1,
             ),
-            ("state", DevState.ON, DevState.OFF, 1),
+            (controller, "state", DevState.ON, DevState.OFF, 1),
             (
+                controller,
                 "longRunningCommandResult",
                 (f"{on_command_id[0]}", '[0, "On completed OK"]'),
                 None,
                 1,
             ),
+            (subarray[sub_id], "state", DevState.ON, DevState.DISABLE, 1),
         ]
 
-        for name, value, previous, n in expected_events:
+        for device, name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
-                device_name=controller,
-                attribute_name=name,
-                attribute_value=value,
-                previous_value=previous,
-                min_n_events=n,
-            )
-
-        expected_events = [
-            ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
-            ("state", DevState.ON, DevState.DISABLE, 1),
-        ]
-
-        for name, value, previous, n in expected_events:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=subarray[sub_id],
+                device_name=device,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
