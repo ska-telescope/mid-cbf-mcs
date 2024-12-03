@@ -113,7 +113,3 @@ stop-dev-environment:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
   environment:
     name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
-
-default:
-  artifacts:
-    expire_in: 1 week
