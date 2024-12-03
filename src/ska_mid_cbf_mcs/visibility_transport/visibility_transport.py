@@ -250,7 +250,7 @@ class VisibilityTransport:
             dest_info = [
                 subarray_id,
                 (
-                    ctypes.c_uint32(p[0])
+                    ctypes.c_uint32(p[0]).value
                     if offset_param == "spead_channel_offset"
                     else p[0]
                 ),

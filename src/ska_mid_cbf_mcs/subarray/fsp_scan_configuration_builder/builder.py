@@ -398,7 +398,7 @@ class FspScanConfigurationBuilder:
                 processing_region_config["sdp_start_channel_id"]
                 + calculated_fsp_infos[fsp_id]["sdp_start_channel_id"]
                 - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
-            )
+            ).value
 
             fsp_config[
                 "vcc_id_to_rdt_freq_shifts"
