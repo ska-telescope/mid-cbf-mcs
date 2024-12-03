@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-2660 Added back FspPstSubarray to MCS
 * CIP-2953 increase SV pod storage from 375Mi to 2Gi
 * CIP-3028 Updated hw config after systems room re-organization.
 * CIP-3034 Removed parallelization for LRU On and Off command queuing to work better with the ST PDU that is now in use.
