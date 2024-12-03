@@ -150,7 +150,7 @@ class VisibilityTransport:
             sub_id = subarray_id - 1
             n_vcc = len(fsp_config[0]["corr_vcc_ids"])
             n_baselines = n_vcc * (n_vcc + 1) // 2
-            spead_channel_offset = fsp_config[0]["channel_offset"]
+            spead_channel_offset = fsp_config[0]["fs_start_channel_offset"]
 
             for attr_name, attr_value in [
                 ("scan_id_high", scan_id >> 32),
