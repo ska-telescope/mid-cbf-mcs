@@ -56,6 +56,72 @@ def tango_event_tracer(
         "longRunningCommandResult",
         "adminMode",
         "state",
+        "subarrayID",
+        "dishID",
+        "vccID",
+        "pingResult",
+        # TalonSysID Attr
+        "bitstreamVersion",
+        "bitstreamChecksum",
+        # TalonStatus Attr
+        "iopllLockedFault",
+        "fsIopllLockedFault",
+        "commsIopllLockedFault",
+        "systemClkFault",
+        "emifBlFault",
+        "emifBrFault",
+        "emifTrFault",
+        "ethernet0PllFault",
+        "ethernet1PllFault",
+        "slimPllFault",
+        # Ethernet Client Attr
+        "eth100g0Counters",
+        "eth100g0ErrorCounters",
+        "eth100g0DataFlowActive",
+        "eth100g0HasDataError",
+        "eth100g0AllTxCounters",
+        "eth100g0AllRxCounters",
+        "eth100g1Counters",
+        "eth100g1ErrorCounters",
+        "eth100g1DataFlowActive",
+        "eth100g1HasDataError",
+        "eth100g1AllTxCounters",
+        "eth100g1AllRxCounters",
+        # InfluxDB Attr
+        "fpgaDieTemperature",
+        "fpgaDieVoltage0",
+        "fpgaDieVoltage1",
+        "fpgaDieVoltage2",
+        "fpgaDieVoltage3",
+        "fpgaDieVoltage4",
+        "fpgaDieVoltage5",
+        "fpgaDieVoltage6",
+        "humiditySensorTemperature",
+        "dimmTemperatures",
+        "mboTemperatures",
+        "mboTxVccVoltages",
+        "mboTxFaultStatus",
+        "mboTxLolStatus",
+        "mboTxLosStatus",
+        "mboRxVccVoltages",
+        "mboRxLolStatus",
+        "mboRxLosStatus",
+        "hasFanControl",
+        "fansPwm",
+        "fansPwmEnable",
+        "fansRpm",
+        "fansFault",
+        "ltmInputVoltage",
+        "ltmOutputVoltage1",
+        "ltmOutputVoltage2",
+        "ltmInputCurrent",
+        "ltmOutputCurrent1",
+        "ltmOutputCurrent2",
+        "ltmTemperature1",
+        "ltmTemperature2",
+        "ltmVoltageWarning",
+        "ltmCurrentWarning",
+        "ltmTemperatureWarning",
     ]
     for attr in change_event_attr_list:
         tracer.subscribe_event(device_under_test, attr)
@@ -77,15 +143,19 @@ def mock_talon_sysid() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     builder.add_attribute("version", "0.2.6")
-    builder.add_attribute("bitstream", 0xBEEFBABE)
-    return builder()
+    builder.add_attribute("Bitstream", 0xBEEFBABE)
+    return builder
 
 
 @pytest.fixture()
 def mock_ethernet_100g() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    return builder()
+    builder.add_command("get_tx_stats", [1] * 27)
+    builder.add_command("get_rx_stats", [1] * 27)
+    builder.add_attribute("TxFrameOctetsOK", 1)
+    builder.add_attribute("RxFrameOctetsOK", 1)
+    return builder
 
 
 @pytest.fixture()
@@ -102,14 +172,14 @@ def mock_talon_status() -> unittest.mock.Mock:
     builder.add_attribute("e100g_0_pll_fault", False)
     builder.add_attribute("e100g_1_pll_fault", False)
     builder.add_attribute("slim_pll_fault", False)
-    return builder()
+    return builder
 
 
 @pytest.fixture()
 def mock_hps_master() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
-    return builder()
+    return builder
 
 
 @pytest.fixture()
