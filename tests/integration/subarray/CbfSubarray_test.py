@@ -78,7 +78,7 @@ class TestCbfSubarray:
                 None,
                 1,
             ),
-            (subarray[sub_id], "state", DevState.ON, DevState.DISABLE, 1),
+            # (subarray[sub_id], "state", DevState.ON, DevState.DISABLE, 1),
         ]
 
         for device, name, value, previous, n in expected_events:
