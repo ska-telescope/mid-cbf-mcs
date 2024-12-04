@@ -43,7 +43,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param talons: FQDNs of the Talon DX board
         :param pdus: FQDNs of the power switch devices
         :param pdu_outlets: IDs of the PDU outlets
-        :param pdu_cmd_timeout: timeout for PDU commands in seconds
         """
         super().__init__(*args, **kwargs)
 
