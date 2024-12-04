@@ -92,16 +92,16 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-        # for fsp_id in fsp:
-        #     assert_that(event_tracer).within_timeout(
-        #         test_utils.EVENT_TIMEOUT
-        #     ).has_change_event_occurred(
-        #         device_name=fsp[fsp_id],
-        #         attribute_name="functionMode",
-        #         attribute_value=FspModes.CORR.value,
-        #         previous_value=FspModes.IDLE.value,
-        #         min_n_events=1,
-        #     )
+        # Controller doesn't reset FSP to IDLE so we don't check prev value
+        for fsp_id in fsp:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=fsp[fsp_id],
+                attribute_name="functionMode",
+                attribute_value=FspModes.CORR.value,
+                min_n_events=1,
+            )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Online_1"],
