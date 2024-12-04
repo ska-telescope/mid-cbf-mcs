@@ -186,9 +186,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             "vcc_id_to_rdt_freq_shifts"
         ]
 
-        # TODO: Assume gain is an array
+        # TODO: Assume gain is an array, check with JSON Validator, consider lowering the size of the array for testing, also print on HPS side and validate
         # For now, we will reinitialize gain as a large (32k) sized array in the component manager
-        hps_fsp_configuration["fine_channelizer"]["gain"] = [1] * (16384 * 2)
+        hps_fsp_configuration["fine_channelizer"]["gain"] = [1] * 100
 
         gain_corrections = GAINUtils.get_vcc_ripple_correction(
             hps_fsp_configuration["configure_scan"]["frequency_band"],
@@ -311,6 +311,11 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
                 self.logger.info("Entering HPS FSP configurescan")
+                # self.logger.info("Printing HPS ConfigScan")
+                # TODO: Validate this with JSON Validator
+                # TODO: Update: Valid if replace ' ' with " "
+                # self.logger.info(f"{hps_fsp_configuration}")
+                # TODO: Error is here, does this call configurescan in DsFspCorrControllerComponentManager.cpp? Or where? Timeout happens but where is error? Can't find.
                 self._proxy_hps_fsp_corr_controller.ConfigureScan(
                     hps_fsp_configuration
                 )
