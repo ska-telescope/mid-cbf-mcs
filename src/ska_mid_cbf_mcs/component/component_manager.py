@@ -32,9 +32,6 @@ from ska_tango_base.executor.executor_component_manager import (
 )
 from ska_tango_testing import context
 
-# Maximum number worker threads for group commands set to const.DEFAULT_COUNT_VCC for now
-from ska_mid_cbf_mcs.commons.global_enum import const
-
 __all__ = ["CbfComponentManager"]
 
 # 10 ms resolution
@@ -278,8 +275,8 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         command_name: str,
         proxies: list[context.DeviceProxy],
+        max_workers: int,
         argin: any = None,
-        max_workers: int = const.DEFAULT_COUNT_VCC,
     ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded command issuance.
@@ -338,7 +335,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         attr_name: str,
         proxies: list[context.DeviceProxy],
-        max_workers: int = const.DEFAULT_COUNT_VCC,
+        max_workers: int,
     ) -> list[any]:
         """
         Helper function to perform tango.Group-like threaded read_attribute().
@@ -391,7 +388,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         attr_name: str,
         value: any,
         proxies: list[context.DeviceProxy],
-        max_workers: int = const.DEFAULT_COUNT_VCC,
+        max_workers: int,
     ) -> bool:
         """
         Helper function to perform tango.Group-like threaded write_attribute().
@@ -696,7 +693,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
         """
-        Unsubscribe from a proxy's longRunningCommandResult attribute.
+        Unsubscribe from all of a proxy's attribute subscriptions.
 
         :param proxy: DeviceProxy
         """
@@ -704,9 +701,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         dev_name = proxy.dev_name()
         dev_events = self.event_ids.pop(dev_name, None)
         if dev_events is None:
-            self.logger.debug(
-                f"No longRunningCommandResult event subscription for {dev_name}"
-            )
+            self.logger.debug(f"No change event subscription for {dev_name}")
             return
         for attr_name, event_id in dev_events.items():
             self.logger.debug(

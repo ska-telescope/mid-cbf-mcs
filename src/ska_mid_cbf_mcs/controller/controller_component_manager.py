@@ -68,7 +68,6 @@ class ControllerComponentManager(CbfComponentManager):
         self._count_vcc = max_capabilities["VCC"]
         self._count_fsp = max_capabilities["FSP"]
         self._count_subarray = max_capabilities["Subarray"]
-
         # --- All FQDNs --- #
         self._subarray_fqdns_all = fqdn_dict["CbfSubarray"]
         self._vcc_fqdns_all = fqdn_dict["VCC"]
@@ -453,7 +452,6 @@ class ControllerComponentManager(CbfComponentManager):
                 f"Failed to read HW config file at {self._hw_config_path}: {e}"
             )
             return
-
         self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
 
         # Read the talondx config JSON
