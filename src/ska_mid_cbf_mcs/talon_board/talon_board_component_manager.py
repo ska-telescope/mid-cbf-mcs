@@ -229,6 +229,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._talon_status_attrs = {}
 
         self._last_check = datetime.now(timezone.utc) - timedelta(hours=1)
+        self._telemetry_lock = Lock()
         self._telemetry = dict()
         self._proxies = dict()
         self._talon_sysid_events = {}
@@ -866,10 +867,13 @@ class TalonBoardComponentManager(CbfComponentManager):
             try:
                 res = asyncio.run(self._db_client.do_queries())
                 self._last_check = datetime.now(timezone.utc)
+                self.logger.info(f"INFLUX RES @ {self._last_check}: {res}")
                 for result in res:
                     for r in result:
-                        # each result is a tuple of (field, time, value)
-                        self._telemetry[r[0]] = (r[1], r[2])
+                        with self._telemetry_lock:
+                            # each result is a tuple of (field, time, value)
+                            self._telemetry[r[0]] = (r[1], r[2])
+                self.logger.info(f"TELEMETRY: {self._telemetry}")
             except (
                 asyncio.exceptions.TimeoutError,
                 asyncio.exceptions.CancelledError,
@@ -906,7 +910,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("fpga_die_temperature")
         self._query_if_needed()
         field = "temperature-sensors_fpga-die-temp"
-        t, val = self._telemetry[field]
+        with self._telemetry_lock:
+            t, val = self._telemetry[field]
         self._validate_time(field, t)
         return val
 
@@ -921,7 +926,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("fpga_die_voltage_0")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-0"
-        t, val = self._telemetry[field]
+        with self._telemetry_lock:
+            t, val = self._telemetry[field]
         self._validate_time(field, t)
         return val
 
@@ -936,7 +942,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("fpga_die_voltage_1")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-1"
-        t, val = self._telemetry[field]
+        with self._telemetry_lock:
+            t, val = self._telemetry[field]
         self._validate_time(field, t)
         return val
 
@@ -951,7 +958,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("fpga_die_voltage_2")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-2"
-        t, val = self._telemetry[field]
+        with self._telemetry_lock:
+            t, val = self._telemetry[field]
         self._validate_time(field, t)
         return val
 
@@ -966,7 +974,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("fpga_die_voltage_3")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-3"
-        t, val = self._telemetry[field]
+        with self._telemetry_lock:
+            t, val = self._telemetry[field]
         self._validate_time(field, t)
         return val
 
@@ -981,7 +990,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("fpga_die_voltage_4")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-4"
-        t, val = self._telemetry[field]
+        with self._telemetry_lock:
+            t, val = self._telemetry[field]
         self._validate_time(field, t)
         return val
 
@@ -996,7 +1006,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("fpga_die_voltage_5")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-5"
-        t, val = self._telemetry[field]
+        with self._telemetry_lock:
+            t, val = self._telemetry[field]
         self._validate_time(field, t)
         return val
 
@@ -1011,7 +1022,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("fpga_die_voltage_6")
         self._query_if_needed()
         field = "voltage-sensors_fpga-die-voltage-6"
-        t, val = self._telemetry[field]
+        with self._telemetry_lock:
+            t, val = self._telemetry[field]
         self._validate_time(field, t)
         return val
 
@@ -1020,7 +1032,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("humidity_sensor_temperature")
         self._query_if_needed()
         field = "temperature-sensors_humidity-temp"
-        t, val = self._telemetry[field]
+        with self._telemetry_lock:
+            t, val = self._telemetry[field]
         self._validate_time(field, t)
         return val
 
@@ -1033,7 +1046,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"temperature-sensors_dimm-temps_{i}_temp"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1051,7 +1065,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 5):
             field = f"MBOs_{i}_TX_temperature"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1067,7 +1082,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 5):
             field = f"MBOs_{i}_TX_vcc-3.3-voltage"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1083,7 +1099,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 5):
             field = f"MBOs_{i}_TX_tx-fault-status"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(bool(val))
             else:
@@ -1099,7 +1116,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 5):
             field = f"MBOs_{i}_TX_tx-lol-status"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(bool(val))
             else:
@@ -1115,7 +1133,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 5):
             field = f"MBOs_{i}_TX_tx-los-status"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(bool(val))
             else:
@@ -1131,7 +1150,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 5):
             field = f"MBOs_{i}_RX_vcc-3.3-voltage"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1147,7 +1167,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 5):
             field = f"MBOs_{i}_RX_rx-lol-status"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(bool(val))
             else:
@@ -1163,7 +1184,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 5):
             field = f"MBOs_{i}_RX_rx-los-status"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(bool(val))
             else:
@@ -1188,7 +1210,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"fans_pwm_{i}"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(int(val))
             else:
@@ -1205,7 +1228,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"fans_pwm-enable_{i}"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(int(val))
             else:
@@ -1222,7 +1246,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"fans_fan-input_{i}"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(int(val))
             else:
@@ -1239,7 +1264,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"fans_fan-fault_{i}"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(bool(val))
             else:
@@ -1256,7 +1282,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"LTMs_{i}_LTM_voltage-input"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1275,7 +1302,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"LTMs_{i}_LTM_voltage-output-1"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1294,7 +1322,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"LTMs_{i}_LTM_voltage-output-2"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1313,7 +1342,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"LTMs_{i}_LTM_current-input"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1332,7 +1362,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"LTMs_{i}_LTM_current-output-1"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1351,7 +1382,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"LTMs_{i}_LTM_current-output-2"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1370,7 +1402,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"LTMs_{i}_LTM_temperature-1"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1389,7 +1422,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         for i in range(0, 4):
             field = f"LTMs_{i}_LTM_temperature-2"
             if field in self._telemetry:
-                t, val = self._telemetry[field]
+                with self._telemetry_lock:
+                    t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(val)
             else:
@@ -1415,7 +1449,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             ]
             for field in fields:
                 if field in self._telemetry:
-                    t, val = self._telemetry[field]
+                    with self._telemetry_lock:
+                        t, val = self._telemetry[field]
                     self._validate_time(field, t)
                     flag = bool(val)
                     if flag:
@@ -1438,7 +1473,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             ]
             for field in fields:
                 if field in self._telemetry:
-                    t, val = self._telemetry[field]
+                    with self._telemetry_lock:
+                        t, val = self._telemetry[field]
                     self._validate_time(field, t)
                     flag = bool(val)
                     if flag:
@@ -1460,7 +1496,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             ]
             for field in fields:
                 if field in self._telemetry:
-                    t, val = self._telemetry[field]
+                    with self._telemetry_lock:
+                        t, val = self._telemetry[field]
                     self._validate_time(field, t)
                     flag = bool(val)
                     if flag:
