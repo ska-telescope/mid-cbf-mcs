@@ -49,7 +49,7 @@ class TestCbfSubarray:
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         """
-        sub_id = subarray_params["sub_id"]
+        # sub_id = subarray_params["sub_id"]
 
         with open(test_data_path + "sys_param_4_boards.json") as f:
             sys_param_str = f.read()
