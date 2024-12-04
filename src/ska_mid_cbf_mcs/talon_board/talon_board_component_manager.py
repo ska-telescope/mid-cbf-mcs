@@ -894,6 +894,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         :param t: The timestamp reported from the latest query of the field
         """
         td = datetime.now(timezone.utc) - t
+        self.logger.info(f"VALIDATE TIME: NOW={datetime.now(timezone.utc)}, t={t}, td={td}")
         if td.total_seconds() > 240:
             msg = f"Time of record {field} is too old. Currently not able to monitor device."
             self.logger.error(msg)
