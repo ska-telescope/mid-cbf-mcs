@@ -40,11 +40,6 @@ class Const:
         self.MAX_NUM_FS_LINKS = 16  # AA0.5
         self.MAX_NUM_VIS_LINKS = 4
 
-        # TODO: update values as max capabilities increases
-        self.DEFAULT_COUNT_VCC = 4
-        self.DEFAULT_COUNT_FSP = 4
-        self.DEFAULT_COUNT_SUBARRAY = 1
-
         self.DEFAULT_TIMEOUT = 4
 
         self.BER_PASS_THRESHOLD = 8.000e-11

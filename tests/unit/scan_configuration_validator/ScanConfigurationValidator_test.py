@@ -14,6 +14,7 @@ from ska_mid_cbf_mcs.subarray.scan_configuration_validator.validator import (
 
 # Path
 FILE_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+COUNT_FSP = 4
 
 
 class TestScanConfigurationValidator:
@@ -67,6 +68,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -89,6 +91,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -113,6 +116,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -140,6 +144,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -175,6 +180,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -209,6 +215,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -238,6 +245,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -265,6 +273,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -324,6 +333,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -349,6 +359,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -377,6 +388,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -426,6 +438,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -452,6 +465,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -484,6 +498,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -506,6 +521,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -528,6 +544,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -566,6 +583,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -612,6 +630,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -654,6 +673,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -691,6 +711,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -726,6 +747,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -752,6 +774,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -774,6 +797,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()
@@ -796,6 +820,7 @@ class TestScanConfigurationValidator:
                 dish_ids=validator_params["dish_ids"],
                 subarray_id=validator_params["sub_id"],
                 logger=self.logger,
+                count_fsp=COUNT_FSP,
             )
         )
         success, msg = validator.validate_input()

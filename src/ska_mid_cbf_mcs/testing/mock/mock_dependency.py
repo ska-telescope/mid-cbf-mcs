@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import requests
@@ -120,6 +120,651 @@ class MockDependency:
 
             """
             self._sim_ping_fault = sim_ping_fault
+            self.attr_values = [
+                # _query_temperatures
+                [
+                    (
+                        "temperature-sensors_fpga-die-temp",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "temperature-sensors_humidity-temp",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "temperature-sensors_dimm-temps_0_temp",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "temperature-sensors_dimm-temps_1_temp",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "temperature-sensors_dimm-temps_2_temp",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "temperature-sensors_dimm-temps_3_temp",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                ],
+                # _query_voltages
+                [
+                    (
+                        "voltage-sensors_fpga-die-voltage-0",
+                        datetime.now(timezone.utc),
+                        12.1,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-1",
+                        datetime.now(timezone.utc),
+                        2.1,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-2",
+                        datetime.now(timezone.utc),
+                        0.7,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-3",
+                        datetime.now(timezone.utc),
+                        1.9,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-4",
+                        datetime.now(timezone.utc),
+                        1.9,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-5",
+                        datetime.now(timezone.utc),
+                        0.8,
+                    ),
+                    (
+                        "voltage-sensors_fpga-die-voltage-6",
+                        datetime.now(timezone.utc),
+                        1.9,
+                    ),
+                ],
+                # _query_mbo_temperatures
+                [
+                    (
+                        "MBOs_0_TX_temperature",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "MBOs_1_TX_temperature",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "MBOs_2_TX_temperature",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "MBOs_3_TX_temperature",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "MBOs_4_TX_temperature",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                ],
+                # _query_mbo_voltages
+                [
+                    (
+                        "MBOs_0_TX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_1_TX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_2_TX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_3_TX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_4_TX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_0_RX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_1_RX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_2_RX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_3_RX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                    (
+                        "MBOs_4_RX_vcc-3.3-voltage",
+                        datetime.now(timezone.utc),
+                        3.1,
+                    ),
+                ],
+                # _query_mbo_faults
+                [
+                    (
+                        "MBOs_0_TX_tx-fault-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_1_TX_tx-fault-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_2_TX_tx-fault-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_3_TX_tx-fault-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_4_TX_tx-fault-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                ],
+                # _query_mbo_lol
+                [
+                    (
+                        "MBOs_0_TX_tx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_1_TX_tx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_2_TX_tx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_3_TX_tx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_4_TX_tx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_0_RX_rx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_1_RX_rx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_2_RX_rx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_3_RX_rx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_4_RX_rx-lol-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                ],
+                # _query_mbo_los
+                [
+                    (
+                        "MBOs_0_TX_tx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_1_TX_tx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_2_TX_tx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_3_TX_tx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_4_TX_tx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_0_RX_rx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_1_RX_rx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_2_RX_rx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_3_RX_rx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "MBOs_4_RX_rx-los-status",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                ],
+                # _query_fans_input
+                [
+                    ("fans_fan-input_0", datetime.now(timezone.utc), 0),
+                    ("fans_fan-input_1", datetime.now(timezone.utc), 0),
+                    ("fans_fan-input_2", datetime.now(timezone.utc), 0),
+                    ("fans_fan-input_3", datetime.now(timezone.utc), 0),
+                ],
+                # _query_fans_pwm
+                [
+                    ("fans_pwm_0", datetime.now(timezone.utc), 255),
+                    ("fans_pwm_1", datetime.now(timezone.utc), 255),
+                    ("fans_pwm_2", datetime.now(timezone.utc), 255),
+                    ("fans_pwm_3", datetime.now(timezone.utc), 255),
+                ],
+                # _query_fans_pwm_enable
+                [
+                    ("fans_pwm-enable_0", datetime.now(timezone.utc), 0),
+                    ("fans_pwm-enable_1", datetime.now(timezone.utc), 0),
+                    ("fans_pwm-enable_2", datetime.now(timezone.utc), 0),
+                    ("fans_pwm-enable_3", datetime.now(timezone.utc), 0),
+                ],
+                # _query_fans_fault
+                [
+                    ("fans_fan-fault_0", datetime.now(timezone.utc), True),
+                    ("fans_fan-fault_1", datetime.now(timezone.utc), True),
+                    ("fans_fan-fault_2", datetime.now(timezone.utc), True),
+                    ("fans_fan-fault_3", datetime.now(timezone.utc), True),
+                ],
+                # _query_ltm_voltages
+                [
+                    (
+                        "LTMs_0_LTM_voltage-input",
+                        datetime.now(timezone.utc),
+                        11.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_voltage-input",
+                        datetime.now(timezone.utc),
+                        11.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_voltage-input",
+                        datetime.now(timezone.utc),
+                        11.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_voltage-input",
+                        datetime.now(timezone.utc),
+                        11.0,
+                    ),
+                    (
+                        "LTMs_0_LTM_voltage-output-1",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_1_LTM_voltage-output-1",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_2_LTM_voltage-output-1",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_3_LTM_voltage-output-1",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_0_LTM_voltage-output-2",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_1_LTM_voltage-output-2",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_2_LTM_voltage-output-2",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_3_LTM_voltage-output-2",
+                        datetime.now(timezone.utc),
+                        1.5,
+                    ),
+                    (
+                        "LTMs_0_LTM_voltage-output-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_1_LTM_voltage-output-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_2_LTM_voltage-output-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_3_LTM_voltage-output-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_0_LTM_voltage-output-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_1_LTM_voltage-output-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_2_LTM_voltage-output-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_3_LTM_voltage-output-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_0_LTM_voltage-input-crit-alarm",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_1_LTM_voltage-input-crit-alarm",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_2_LTM_voltage-input-crit-alarm",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_3_LTM_voltage-input-crit-alarm",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                ],
+                # _query_ltm_currents
+                [
+                    (
+                        "LTMs_0_LTM_current-input",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_current-input",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_current-input",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_current-input",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_0_LTM_current-output-1",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_current-output-1",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_current-output-1",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_current-output-1",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_0_LTM_current-output-2",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_current-output-2",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_current-output-2",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_current-output-2",
+                        datetime.now(timezone.utc),
+                        1.0,
+                    ),
+                    (
+                        "LTMs_0_LTM_current-input-max-alarm",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_1_LTM_current-input-max-alarm",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_2_LTM_current-input-max-alarm",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_3_LTM_current-input-max-alarm",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_0_LTM_current-output-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_1_LTM_current-output-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_2_LTM_current-output-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_3_LTM_current-output-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_0_LTM_current-output-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_1_LTM_current-output-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_2_LTM_current-output-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_3_LTM_current-output-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                ],
+                # _query_ltm_temperatures
+                [
+                    (
+                        "LTMs_0_LTM_temperature-1",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_temperature-1",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_temperature-1",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_temperature-1",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_0_LTM_temperature-2",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_1_LTM_temperature-2",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_2_LTM_temperature-2",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_3_LTM_temperature-2",
+                        datetime.now(timezone.utc),
+                        32.0,
+                    ),
+                    (
+                        "LTMs_0_LTM_temperature-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_1_LTM_temperature-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_2_LTM_temperature-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_3_LTM_temperature-max-alarm-1",
+                        datetime.now(timezone.utc),
+                        True,
+                    ),
+                    (
+                        "LTMs_0_LTM_temperature-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_1_LTM_temperature-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_2_LTM_temperature-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                    (
+                        "LTMs_3_LTM_temperature-max-alarm-2",
+                        datetime.now(timezone.utc),
+                        False,
+                    ),
+                ],
+            ]
 
         async def ping(self) -> bool:
             if self._sim_ping_fault:
@@ -129,279 +774,4 @@ class MockDependency:
         async def do_queries(
             self: MockDependency.InfluxdbQueryClient,
         ) -> list[list]:
-            return [
-                # _query_temperatures
-                [
-                    (
-                        "temperature-sensors_fpga-die-temp",
-                        datetime.now(),
-                        32.0,
-                    ),
-                    (
-                        "temperature-sensors_humidity-temp",
-                        datetime.now(),
-                        32.0,
-                    ),
-                    (
-                        "temperature-sensors_dimm-temps_0_temp",
-                        datetime.now(),
-                        32.0,
-                    ),
-                    (
-                        "temperature-sensors_dimm-temps_1_temp",
-                        datetime.now(),
-                        32.0,
-                    ),
-                    (
-                        "temperature-sensors_dimm-temps_2_temp",
-                        datetime.now(),
-                        32.0,
-                    ),
-                    (
-                        "temperature-sensors_dimm-temps_3_temp",
-                        datetime.now(),
-                        32.0,
-                    ),
-                ],
-                # _query_mbo_temperatures
-                [
-                    ("MBOs_0_TX_temperature", datetime.now(), 32.0),
-                    ("MBOs_1_TX_temperature", datetime.now(), 32.0),
-                    ("MBOs_2_TX_temperature", datetime.now(), 32.0),
-                    ("MBOs_3_TX_temperature", datetime.now(), 32.0),
-                    ("MBOs_4_TX_temperature", datetime.now(), 32.0),
-                    #     ("MBOs_0_RX_temperature", datetime.now(), 32.0),
-                    #     ("MBOs_1_RX_temperature", datetime.now(), 32.0),
-                    #     ("MBOs_2_RX_temperature", datetime.now(), 32.0),
-                    #     ("MBOs_3_RX_temperature", datetime.now(), 32.0),
-                    #     ("MBOs_4_RX_temperature", datetime.now(), 32.0),
-                ],
-                # _query_mbo_voltages
-                [
-                    ("MBOs_0_TX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_1_TX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_2_TX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_3_TX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_4_TX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_0_RX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_1_RX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_2_RX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_3_RX_vcc-3.3-voltage", datetime.now(), 3.3),
-                    ("MBOs_4_RX_vcc-3.3-voltage", datetime.now(), 3.3),
-                ],
-                # _query_fans_pwm
-                [
-                    ("fans_pwm_0", datetime.now(), 255),
-                    ("fans_pwm_1", datetime.now(), 255),
-                    ("fans_pwm_2", datetime.now(), 255),
-                    ("fans_pwm_3", datetime.now(), 255),
-                ],
-                # _query_fans_fault
-                [
-                    ("fans_fan-fault_0", datetime.now(), False),
-                    ("fans_fan-fault_1", datetime.now(), False),
-                    ("fans_fan-fault_2", datetime.now(), False),
-                    ("fans_fan-fault_3", datetime.now(), False),
-                ],
-                # _query_ltm_voltages
-                [
-                    ("LTMs_0_LTM_voltage-input", datetime.now(), 12.0),
-                    ("LTMs_1_LTM_voltage-input", datetime.now(), 12.0),
-                    ("LTMs_2_LTM_voltage-input", datetime.now(), 12.0),
-                    ("LTMs_3_LTM_voltage-input", datetime.now(), 12.0),
-                    ("LTMs_0_LTM_voltage-output-1", datetime.now(), 1.5),
-                    ("LTMs_1_LTM_voltage-output-1", datetime.now(), 1.5),
-                    ("LTMs_2_LTM_voltage-output-1", datetime.now(), 1.5),
-                    ("LTMs_3_LTM_voltage-output-1", datetime.now(), 1.5),
-                    ("LTMs_0_LTM_voltage-output-2", datetime.now(), 1.5),
-                    ("LTMs_1_LTM_voltage-output-2", datetime.now(), 1.5),
-                    ("LTMs_2_LTM_voltage-output-2", datetime.now(), 1.5),
-                    ("LTMs_3_LTM_voltage-output-2", datetime.now(), 1.5),
-                    (
-                        "LTMs_0_LTM_voltage-output-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_1_LTM_voltage-output-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_2_LTM_voltage-output-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_3_LTM_voltage-output-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_0_LTM_voltage-output-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_1_LTM_voltage-output-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_2_LTM_voltage-output-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_3_LTM_voltage-output-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_0_LTM_voltage-input-crit-alarm",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_1_LTM_voltage-input-crit-alarm",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_2_LTM_voltage-input-crit-alarm",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_3_LTM_voltage-input-crit-alarm",
-                        datetime.now(),
-                        False,
-                    ),
-                ],
-                # _query_ltm_currents
-                [
-                    ("LTMs_0_LTM_current-input", datetime.now(), 1.0),
-                    ("LTMs_1_LTM_current-input", datetime.now(), 1.0),
-                    ("LTMs_2_LTM_current-input", datetime.now(), 1.0),
-                    ("LTMs_3_LTM_current-input", datetime.now(), 1.0),
-                    ("LTMs_0_LTM_current-output-1", datetime.now(), 1.0),
-                    ("LTMs_1_LTM_current-output-1", datetime.now(), 1.0),
-                    ("LTMs_2_LTM_current-output-1", datetime.now(), 1.0),
-                    ("LTMs_3_LTM_current-output-1", datetime.now(), 1.0),
-                    ("LTMs_0_LTM_current-output-2", datetime.now(), 1.0),
-                    ("LTMs_1_LTM_current-output-2", datetime.now(), 1.0),
-                    ("LTMs_2_LTM_current-output-2", datetime.now(), 1.0),
-                    ("LTMs_3_LTM_current-output-2", datetime.now(), 1.0),
-                    (
-                        "LTMs_0_LTM_current-input-max-alarm",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_1_LTM_current-input-max-alarm",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_2_LTM_current-input-max-alarm",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_3_LTM_current-input-max-alarm",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_0_LTM_current-output-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_1_LTM_current-output-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_2_LTM_current-output-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_3_LTM_current-output-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_0_LTM_current-output-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_1_LTM_current-output-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_2_LTM_current-output-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_3_LTM_current-output-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                ],
-                # _query_ltm_temperatures
-                [
-                    ("LTMs_0_LTM_temperature-1", datetime.now(), 32.0),
-                    ("LTMs_1_LTM_temperature-1", datetime.now(), 32.0),
-                    ("LTMs_2_LTM_temperature-1", datetime.now(), 32.0),
-                    ("LTMs_3_LTM_temperature-1", datetime.now(), 32.0),
-                    ("LTMs_0_LTM_temperature-2", datetime.now(), 32.0),
-                    ("LTMs_1_LTM_temperature-2", datetime.now(), 32.0),
-                    ("LTMs_2_LTM_temperature-2", datetime.now(), 32.0),
-                    ("LTMs_3_LTM_temperature-2", datetime.now(), 32.0),
-                    (
-                        "LTMs_0_LTM_temperature-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_1_LTM_temperature-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_2_LTM_temperature-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_3_LTM_temperature-max-alarm-1",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_0_LTM_temperature-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_1_LTM_temperature-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_2_LTM_temperature-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                    (
-                        "LTMs_3_LTM_temperature-max-alarm-2",
-                        datetime.now(),
-                        False,
-                    ),
-                ],
-            ]
+            return self.attr_values
