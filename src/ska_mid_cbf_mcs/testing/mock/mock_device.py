@@ -348,10 +348,6 @@ class MockDeviceBuilder:
             mock_event_data.attr_value.value = attr_value
             mock_event_data.attr_value.quality = attr_quality
 
-            def callback_with_sleep():
-                time.sleep(sleep_time_s)
-                callback(mock_event_data)
-
             # Invoke callback asynchronously
             Timer(
                 interval=sleep_time_s,
