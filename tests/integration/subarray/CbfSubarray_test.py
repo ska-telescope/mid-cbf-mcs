@@ -952,6 +952,7 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
+        subarray[sub_id].adminMode = AdminMode.OFFLINE
         result_code, off_command_id = controller.Off()
         assert result_code == [ResultCode.QUEUED]
 
