@@ -49,7 +49,7 @@ class TestCbfSubarray:
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         """
-        # sub_id = subarray_params["sub_id"]
+        sub_id = subarray_params["sub_id"]
 
         with open(test_data_path + "sys_param_4_boards.json") as f:
             sys_param_str = f.read()
@@ -78,7 +78,7 @@ class TestCbfSubarray:
                 None,
                 1,
             ),
-            # (subarray[sub_id], "state", DevState.ON, DevState.DISABLE, 1),
+            (subarray[sub_id], "state", DevState.ON, DevState.DISABLE, 1),
         ]
 
         for device, name, value, previous, n in expected_events:
@@ -951,9 +951,6 @@ class TestCbfSubarray:
         :param subarray_params: dict containing all test input parameters
         """
         sub_id = subarray_params["sub_id"]
-
-        # trigger stop_communicating by setting the AdminMode to OFFLINE
-        subarray[sub_id].adminMode = AdminMode.OFFLINE
 
         result_code, off_command_id = controller.Off()
         assert result_code == [ResultCode.QUEUED]
