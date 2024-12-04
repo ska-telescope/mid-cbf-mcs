@@ -20,7 +20,6 @@ SimulatedValues = {
     "talon_status_emif_tr_fault": False,
     "talon_status_e100g_0_pll_fault": False,
     "talon_status_e100g_1_pll_fault": False,
-    "talon_status_slim_pll_fault": False,
     "eth100g_0_counters": [0] * 4,
     "eth100g_0_error_counters": [0] * 6,
     "eth100g_0_data_flow_active": False,

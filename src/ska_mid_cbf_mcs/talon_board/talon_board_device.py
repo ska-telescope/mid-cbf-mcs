@@ -92,11 +92,7 @@ class TalonBoard(CbfDevice):
 
         :param value: the vcc ID
         """
-        if self._subarrayID != value:
-            self._subarrayID = value
-            self.push_change_event("subarrayID", value)
-            self.push_archive_event("subarrayID", value)
-            self.logger.info(f"New value for subarrayID: {value}")
+        self._subarrayID = value
 
     @attribute(
         dtype=str,
@@ -148,11 +144,7 @@ class TalonBoard(CbfDevice):
 
         :param value: the VCC ID
         """
-        if self._vccID != value:
-            self._vccID = value
-            self.push_change_event("vccID", value)
-            self.push_archive_event("vccID", value)
-            self.logger.info(f"New value for vccID: {value}")
+        self._vccID = value
 
     @attribute(dtype=str, label="IP", doc="IP Address")
     def ipAddr(self: TalonBoard) -> str:
@@ -187,8 +179,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=int,
-        abs_change=1,
-        archive_abs_change=1,
         label="FPGA bitstream checksum",
         doc="FPGA bitstream checksum",
     )
@@ -311,8 +301,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        abs_change=1.0,
-        archive_abs_change=1.0,
         label="FPGA Die Temperature",
         doc="FPGA Die Temperature",
         format=".3f",
@@ -338,8 +326,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        abs_change=0.05,
-        archive_abs_change=0.05,
         label="FPGA Die 12V sensor",
         doc="Value of the 12V FPGA Die Voltage Sensor",
         unit="V",
@@ -366,8 +352,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        abs_change=0.05,
-        archive_abs_change=0.05,
         label="FPGA Die 2.5V sensor",
         doc="Value of the 2.5V FPGA Die Voltage Sensor",
         unit="V",
@@ -394,10 +378,8 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        abs_change=0.05,
-        archive_abs_change=0.05,
         label="FPGA Die VCC sensor",
-        doc="Value of the 0.8V VCC FPGA Die Voltage Sensor",
+        doc="Value of the VCC FPGA Die Voltage Sensor",
         unit="V",
         format=".3f",
         min_warning=0.77,
@@ -419,10 +401,8 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        abs_change=0.05,
-        archive_abs_change=0.05,
         label="FPGA Die VCCIO_SDM sensor",
-        doc="Value of the 1.8V VCCIO_SDM FPGA Die Voltage Sensor",
+        doc="Value of the VCCIO_SDM FPGA Die Voltage Sensor",
         unit="V",
         format=".3f",
         min_warning=1.71,
@@ -444,10 +424,8 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        abs_change=0.05,
-        archive_abs_change=0.05,
         label="FPGA Die VCCPT sensor",
-        doc="Value of the 1.8V VCCPT FPGA Die Voltage Sensor",
+        doc="Value of the VCCPT FPGA Die Voltage Sensor",
         unit="V",
         format=".3f",
         min_warning=1.71,
@@ -469,10 +447,8 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        abs_change=0.05,
-        archive_abs_change=0.05,
         label="FPGA Die VCCERAM sensor",
-        doc="Value of the 0.9V VCCERAM FPGA Die Voltage Sensor",
+        doc="Value of the VCCERAM FPGA Die Voltage Sensor",
         unit="V",
         format=".3f",
         min_warning=0.87,
@@ -494,10 +470,8 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        abs_change=0.05,
-        archive_abs_change=0.05,
         label="FPGA Die VCCADC sensor",
-        doc="Value of the 1.8V VCCADC FPGA Die Voltage Sensor",
+        doc="Value of the VCCADC FPGA Die Voltage Sensor",
         unit="V",
         format=".3f",
         min_warning=1.71,
@@ -519,8 +493,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=float,
-        abs_change=1.0,
-        archive_abs_change=1.0,
         label="Humidity Sensor Temperature",
         doc="Humidity Sensor Temperature",
         format=".3f",
@@ -537,8 +509,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=1.0,
-        archive_abs_change=1.0,
         max_dim_x=4,
         label="DIMM Memory Module Temperatures",
         doc="DIMM Memory Module Temperatures. Array of size 4. Value set to 0 if not valid.",
@@ -556,8 +526,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=1.0,
-        archive_abs_change=1.0,
         max_dim_x=5,
         label="MBO Tx Temperatures",
         doc="MBO Tx Temperatures. Value set to 0 if not valid.",
@@ -565,24 +533,21 @@ class TalonBoard(CbfDevice):
         max_warning=65.0,
         max_alarm=70.0,
     )
-    def mboTemperatures(self: TalonBoard) -> DevVarFloatArray:
+    def mboTxTemperatures(self: TalonBoard) -> DevVarFloatArray:
         """
-        Read the MBO temperatures of the Talon-DX board. Not all
+        Read the MBO Tx temperatures of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case a 0 will be
         returned for the MBO.
 
-        :return: the MBO temperatures in deg Celsius.
+        :return: the MBO Tx temperatures in deg Celsius.
         """
-        return self.component_manager.mbo_temperatures()
+        return self.component_manager.mbo_tx_temperatures()
 
     @attribute(
         dtype=[float],
-        abs_change=0.05,
-        archive_abs_change=0.05,
         max_dim_x=5,
-        label="MBO Tx VCC 3.3V Voltages",
-        doc="MBO Tx VCC 3.3V Voltages. Value set to 0 if not valid.",
-        unit="V",
+        label="MBO Tx VCC 3.3 Voltages",
+        doc="MBO Tx VCC 3.3 Voltages. Value set to 0 if not valid.",
         format=".3f",
         min_alarm=3.2,
         max_alarm=3.4,
@@ -647,12 +612,9 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=0.05,
-        archive_abs_change=0.05,
         max_dim_x=5,
-        label="MBO Rx VCC 3.3V Voltages",
-        doc="MBO Rx VCC 3.3V Voltages. Value set to 0 if not valid.",
-        unit="V",
+        label="MBO Rx VCC 3.3 Voltages",
+        doc="MBO Rx VCC 3.3 Voltages. Value set to 0 if not valid.",
         format=".3f",
         min_alarm=3.2,
         max_alarm=3.4,
@@ -715,8 +677,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=1,
-        archive_abs_change=1,
         max_dim_x=4,
         label="Fan PWM values",
         doc="Fan PWM values.",
@@ -739,8 +699,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=1,
-        archive_abs_change=1,
         max_dim_x=4,
         label="Fan PWM enable values",
         doc="Fan PWM enable values.",
@@ -755,10 +713,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=1,
-        archive_abs_change=1,
         max_dim_x=4,
-        unit="RPM",
         label="Fan RPM",
         doc="Fan RPM.",
         min_alarm=500,
@@ -801,12 +756,9 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=0.05,
-        archive_abs_change=0.05,
         max_dim_x=4,
         label="LTM Input Voltage",
         doc="LTM Input Voltage. One entry per LTM.",
-        unit="V",
         format=".3f",
         min_alarm=0.50,
     )
@@ -820,12 +772,9 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=0.05,
-        archive_abs_change=0.05,
         max_dim_x=4,
         label="LTM Output Voltage 1",
         doc="LTM Output Voltage 1. One entry per LTM",
-        unit="V",
         format=".3f",
         min_alarm=0.50,
     )
@@ -839,12 +788,9 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=0.05,
-        archive_abs_change=0.05,
         max_dim_x=4,
         label="LTM Output Voltage 2",
         doc="LTM Output Voltage 2. One entry per LTM",
-        unit="V",
         format=".3f",
         min_alarm=0.50,
     )
@@ -858,12 +804,9 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=0.1,
-        archive_abs_change=0.1,
         max_dim_x=4,
         label="LTM Input Current",
         doc="LTM Input Current. One entry per LTM.",
-        unit="A",
         format=".3f",
     )
     def ltmInputCurrent(self: TalonBoard) -> DevVarFloatArray:
@@ -876,12 +819,9 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=0.1,
-        archive_abs_change=0.1,
         max_dim_x=4,
         label="LTM Output Current 1",
         doc="LTM Output Current 1. One entry per LTM",
-        unit="A",
         format=".3f",
     )
     def ltmOutputCurrent1(self: TalonBoard) -> DevVarFloatArray:
@@ -894,12 +834,9 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=0.1,
-        archive_abs_change=0.1,
         max_dim_x=4,
         label="LTM Output Current 2",
         doc="LTM Output Current 2. One entry per LTM",
-        unit="A",
         format=".3f",
     )
     def ltmOutputCurrent2(self: TalonBoard) -> DevVarFloatArray:
@@ -912,8 +849,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=1.0,
-        archive_abs_change=1.0,
         max_dim_x=4,
         label="LTM Temperature 1",
         doc="LTM Temperature 1. One entry per LTM",
@@ -931,8 +866,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[float],
-        abs_change=1.0,
-        archive_abs_change=1.0,
         max_dim_x=4,
         label="LTM Temperature 2",
         doc="LTM Temperature 2. One entry per LTM",
@@ -992,8 +925,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=1,
-        archive_abs_change=1,
         max_dim_x=4,
         label="100g_eth_0 counters",
         doc=(
@@ -1020,8 +951,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=1,
-        archive_abs_change=1,
         max_dim_x=6,
         label="100g_eth_0 error counters",
         doc=(
@@ -1082,8 +1011,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=1,
-        archive_abs_change=1,
         max_dim_x=27,
         label="100g_eth_0 all Tx counters",
         doc="the full list of Tx counters at the 100g ethernet input",
@@ -1126,8 +1053,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=1,
-        archive_abs_change=1,
         max_dim_x=27,
         label="100g_eth_0 all Rx counters",
         doc="the full list of Rx counters at the 100g ethernet input",
@@ -1170,8 +1095,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=1,
-        archive_abs_change=1,
         max_dim_x=4,
         label="100g_eth_1 counters",
         doc=(
@@ -1198,8 +1121,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=1,
-        archive_abs_change=1,
         max_dim_x=6,
         label="100g_eth_1 error counters",
         doc=(
@@ -1255,8 +1176,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=1,
-        archive_abs_change=1,
         max_dim_x=27,
         label="100g_eth_1 all Tx counters",
         doc="the full list of Tx counters at the 100g ethernet output",
@@ -1299,8 +1218,6 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[int],
-        abs_change=1,
-        archive_abs_change=1,
         max_dim_x=27,
         label="100g_eth_1 all Rx counters",
         doc="the full list of Rx counters at the 100g ethernet output",
@@ -1368,8 +1285,6 @@ class TalonBoard(CbfDevice):
             talon_status_address=self.TalonStatusAddress,
             hps_master_address=self.HpsMasterAddress,
             logger=self.logger,
-            attr_change_callback=self.push_change_event,
-            attr_archive_callback=self.push_archive_event,
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
@@ -1403,78 +1318,8 @@ class TalonBoard(CbfDevice):
             self._device._dishID = ""
             self._device._vccID = ""
 
-            change_event_attr_list = [
-                # Local Attr
-                "subarrayID",
-                "dishID",
-                "vccID",
-                "pingResult",
-                # TalonSysID Attr
-                "bitstreamVersion",
-                "bitstreamChecksum",
-                # TalonStatus Attr
-                "iopllLockedFault",
-                "fsIopllLockedFault",
-                "commsIopllLockedFault",
-                "systemClkFault",
-                "emifBlFault",
-                "emifBrFault",
-                "emifTrFault",
-                "ethernet0PllFault",
-                "ethernet1PllFault",
-                "slimPllFault",
-                # Ethernet Client Attr
-                "eth100g0Counters",
-                "eth100g0ErrorCounters",
-                "eth100g0DataFlowActive",
-                "eth100g0HasDataError",
-                "eth100g0AllTxCounters",
-                "eth100g0AllRxCounters",
-                "eth100g1Counters",
-                "eth100g1ErrorCounters",
-                "eth100g1DataFlowActive",
-                "eth100g1HasDataError",
-                "eth100g1AllTxCounters",
-                "eth100g1AllRxCounters",
-                # InfluxDB Attr
-                "fpgaDieTemperature",
-                "fpgaDieVoltage0",
-                "fpgaDieVoltage1",
-                "fpgaDieVoltage2",
-                "fpgaDieVoltage3",
-                "fpgaDieVoltage4",
-                "fpgaDieVoltage5",
-                "fpgaDieVoltage6",
-                "humiditySensorTemperature",
-                "dimmTemperatures",
-                "mboTemperatures",
-                "mboTxVccVoltages",
-                "mboTxFaultStatus",
-                "mboTxLolStatus",
-                "mboTxLosStatus",
-                "mboRxVccVoltages",
-                "mboRxLolStatus",
-                "mboRxLosStatus",
-                "hasFanControl",
-                "fansPwm",
-                "fansPwmEnable",
-                "fansRpm",
-                "fansFault",
-                "ltmInputVoltage",
-                "ltmOutputVoltage1",
-                "ltmOutputVoltage2",
-                "ltmInputCurrent",
-                "ltmOutputCurrent1",
-                "ltmOutputCurrent2",
-                "ltmTemperature1",
-                "ltmTemperature2",
-                "ltmVoltageWarning",
-                "ltmCurrentWarning",
-                "ltmTemperatureWarning",
-            ]
-            for attr in change_event_attr_list:
-                self._device.set_change_event(attr, True)
-                self._device.set_archive_event(attr, True)
+            self._device.set_change_event("dishID", True)
+            self._device.set_archive_event("dishID", True)
 
             return (result_code, msg)
 
