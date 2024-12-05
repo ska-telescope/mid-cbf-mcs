@@ -15,6 +15,10 @@
 
 # FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
 # """
+
+""" Mid.CBF MCS
+
+"""
 from __future__ import annotations
 
 import os

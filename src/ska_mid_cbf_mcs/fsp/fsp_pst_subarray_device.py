@@ -13,7 +13,6 @@
 from __future__ import annotations  # allow forward references in type hints
 
 # Additional import
-# PROTECTED REGION ID(FspPstSubarray.additionnal_import) ENABLED START #
 import os
 
 # PyTango imports
@@ -38,7 +37,6 @@ class FspPstSubarray(FspModeSubarray):
     # Device Properties
     # -----------------
 
-    # To Add in Chart
     HpsFspPstControllerAddress = device_property(dtype="str")
 
     # --------------
@@ -56,6 +54,7 @@ class FspPstSubarray(FspModeSubarray):
 
         return FspPstSubarrayComponentManager(
             hps_fsp_pst_controller_fqdn=self.HpsFspPstControllerAddress,
+            lrc_timeout=int(self.LRCTimeout),
             logger=self.logger,
             attr_change_callback=self.push_change_event,
             attr_archive_callback=self.push_archive_event,

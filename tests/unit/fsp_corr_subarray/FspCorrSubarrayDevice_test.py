@@ -56,11 +56,12 @@ class TestFspCorrSubarray:
         harness.add_device(
             device_name="mid_csp_cbf/fspCorrSubarray/01_01",
             device_class=FspCorrSubarray,
-            HpsFspCorrControllerAddress="mid_csp_cbf/talon_lru/001",
+            HpsFspCorrControllerAddress="talondx-001/fsp-app/fsp-corr-controller",
             DeviceID="1",
             LRCTimeout="15",
         )
         for name, mock in initial_mocks.items():
+            print(name)
             harness.add_mock_device(device_name=name, device_mock=mock)
 
         with harness as test_context:

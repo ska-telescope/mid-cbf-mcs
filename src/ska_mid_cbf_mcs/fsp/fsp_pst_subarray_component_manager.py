@@ -35,7 +35,6 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
         """
         Initialise a new instance.
 
-        # TODO: for Mid.CBF, param hps_fsp_pst_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         :param hps_fsp_pst_controller_fqdn: FQDN of the HPS FSP PST controller device
         """
 
@@ -49,8 +48,7 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
     # Class Helpers
     # -------------
 
-    # TODO: Implement _build_hps_fsp_config
-
+    # TODO: Implement _build_hps_fsp_config when ScanConfiguration 5.0 is ready
     def _build_hps_fsp_config(
         self: FspPstSubarrayComponentManager, configuration: dict
     ) -> str:
@@ -58,7 +56,7 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
         Build the input JSON string for the HPS FSP Corr controller ConfigureScan command
         """
 
-        raise NotImplementedError("_build_hps_fsp_config not yet implemented.")
+        return ""
 
     # -------------
     # Fast Commands
@@ -96,7 +94,8 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         configuration = json.loads(argin)
 
-        # Note: subarray has translated DISH IDs to VCC IDs in the JSON at this point
+        # TODO: Assign newly specified VCCs when 5.0 ScanConfiguration Added In
+        # self._assign_vcc(configuration["corr_vcc_ids"])
 
         # Issue ConfigureScan to HPS FSP PST controller
         if not self.simulation_mode:
