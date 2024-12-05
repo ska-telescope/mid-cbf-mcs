@@ -64,7 +64,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
     def __init__(
         self: CbfComponentManager,
         *args: any,
-        lrc_timeout: int = 60,
+        lrc_timeout: int = 300,
         attr_change_callback: Callable[[str, any], None] | None = None,
         attr_archive_callback: Callable[[str, any], None] | None = None,
         health_state_callback: Callable[[HealthState], None] | None = None,
