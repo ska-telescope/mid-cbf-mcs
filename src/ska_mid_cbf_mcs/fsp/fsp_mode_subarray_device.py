@@ -22,7 +22,7 @@ import os
 
 from ska_control_model import ObsState, ResultCode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from tango.server import attribute, command
+from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.device.base_device import CbfFastCommand
 from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
@@ -41,6 +41,8 @@ class FspModeSubarray(CbfObsDevice):
     # -----------------
     # Device Properties
     # -----------------
+
+    LRCTimeout = device_property(dtype=("str"))
 
     # ----------
     # Attributes

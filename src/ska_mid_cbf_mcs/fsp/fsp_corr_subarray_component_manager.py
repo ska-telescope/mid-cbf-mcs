@@ -171,7 +171,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         self._assign_vcc(configuration["corr_vcc_ids"])
 
         # Issue ConfigureScan to HPS FSP Corr controller
-
         if not self.simulation_mode:
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             self.last_hps_scan_configuration = hps_fsp_configuration

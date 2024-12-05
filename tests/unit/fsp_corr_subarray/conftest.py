@@ -99,5 +99,5 @@ def initial_mocks(
     """
     return {
         "mid_csp_cbf/sub_elt/controller": mock_controller,
-        "mid_csp_cbf/talon_lru/001": mock_hps_fsp_corr_controller,
+        "talondx-001/fsp-app/fsp-corr-controller": mock_hps_fsp_corr_controller,
     }

@@ -31,7 +31,7 @@ def fsp_pst_device_under_test_fixture(
     :param test_context: the context in which the tests run
     :return: the DeviceProxy for the device under test
     """
-    return test_context.get_device("mid_csp_cbf/FspPstSubarray/01_01")
+    return test_context.get_device("mid_csp_cbf/fspPstSubarray/01_01")
 
 
 @pytest.fixture(name="event_tracer", autouse=True)
@@ -52,6 +52,7 @@ def tango_event_tracer(
         "obsState",
         "adminMode",
         "state",
+        "delayModel",
     ]
     for attr in change_event_attr_list:
         tracer.subscribe_event(device_under_test, attr)
@@ -93,11 +94,10 @@ def initial_mocks(
     Return a dictionary of device proxy mocks to pre-register.
 
     :param mock_controller: a mock CbfController.
-    :param mock_vcc: a mock Vcc.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
         "mid_csp_cbf/sub_elt/controller": mock_controller,
-        "mid_csp_cbf/talon_lru/001": mock_hps_fsp_pst_controller,
+        "talondx-001/fsp-app/fsp-pst-controller": mock_hps_fsp_pst_controller,
     }
