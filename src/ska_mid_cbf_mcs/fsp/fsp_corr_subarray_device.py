@@ -20,11 +20,8 @@ from __future__ import annotations
 import os
 
 import tango
-from ska_control_model import ObsState, ResultCode
-from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from tango.server import attribute, command, device_property, run
+from tango.server import attribute, device_property, run
 
-from ska_mid_cbf_mcs.device.base_device import CbfFastCommand
 from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import (
     FspCorrSubarrayComponentManager,
 )
@@ -54,33 +51,6 @@ class FspCorrSubarray(FspModeSubarray):
     # ----------
 
     @attribute(
-        dtype="str",
-        doc="Differential off-boresight beam delay model",
-    )
-    def delayModel(self: FspCorrSubarray) -> str:
-        """
-        Read the delayModel attribute.
-
-        :return: the delayModel attribute.
-        :rtype: string
-        """
-        return self.component_manager.delay_model
-
-    @attribute(
-        dtype=("uint16",),
-        max_dim_x=197,
-        doc="Assigned VCC IDs",
-    )
-    def vccIDs(self: FspCorrSubarray) -> list[int]:
-        """
-        Read the vccIDs attribute; FSP deals with VCC, not DISH (receptor) IDs.
-
-        :return: the list of assigned VCC IDs
-        :rtype: list[int]
-        """
-        return self.component_manager.vcc_ids
-
-    @attribute(
         dtype=tango.DevEnum,
         enum_labels=["1", "2", "3", "4", "5a", "5b"],
         doc="Frequency band; an int in the range [0, 5]",
@@ -107,58 +77,9 @@ class FspCorrSubarray(FspModeSubarray):
         """
         return self.component_manager.frequency_slice_id
 
-    @attribute(
-        dtype="str", doc="The last valid FSP scan configuration sent to HPS."
-    )
-    def lastHpsScanConfiguration(self: FspCorrSubarray) -> str:
-        """
-        Read the last valid FSP scan configuration of the device sent to HPS.
-
-        :return: the current last_hps_scan_configuration value
-        """
-        return self.component_manager.last_hps_scan_configuration
-
     # --------------
     # Initialization
     # --------------
-
-    class InitCommand(FspModeSubarray.InitCommand):
-        """
-        A class for the FspCorrSubarray's init_device() "command".
-        """
-
-        def do(
-            self: FspCorrSubarray.InitCommand,
-            *args: any,
-            **kwargs: any,
-        ) -> DevVarLongStringArrayType:
-            """
-            Stateless hook for device initialisation.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            (result_code, msg) = super().do(*args, **kwargs)
-
-            self._device.set_change_event("delayModel", True)
-            self._device.set_archive_event("delayModel", True)
-
-            return (result_code, msg)
-
-    def init_command_objects(self: FspCorrSubarray) -> None:
-        """
-        Sets up the command objects
-        """
-        super().init_command_objects()
-
-        self.register_command_object(
-            "UpdateDelayModel",
-            self.UpdateDelayModelCommand(
-                component_manager=self.component_manager, logger=self.logger
-            ),
-        )
 
     def create_component_manager(
         self: FspCorrSubarray,
@@ -181,71 +102,6 @@ class FspCorrSubarray(FspModeSubarray):
             component_state_callback=self._component_state_changed,
             admin_mode_callback=self._admin_mode_perform_action,
         )
-
-    # -------------
-    # Fast Commands
-    # -------------
-
-    class UpdateDelayModelCommand(CbfFastCommand):
-        """
-        A class for the Fsp's UpdateDelayModel() command.
-        """
-
-        def is_allowed(self: FspCorrSubarray.UpdateDelayModelCommand) -> bool:
-            """
-            Determine if UpdateDelayModel command is allowed.
-
-            :return: True if command is allowed, otherwise False
-            """
-            if not self.component_manager.is_communicating:
-                return False
-
-            obs_state = self.component_manager.obs_state
-            if obs_state not in [ObsState.READY, ObsState.SCANNING]:
-                self.logger.warning(
-                    f"Ignoring delay model received in {obs_state} (must be READY or SCANNING)."
-                )
-                return False
-
-            return True
-
-        def do(
-            self: FspCorrSubarray.UpdateDelayModelCommand,
-            argin: str,
-        ) -> DevVarLongStringArrayType:
-            """
-            Stateless hook for UpdateDelayModel() command functionality.
-
-            :param argin: the delay model data
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            if self.is_allowed():
-                return self.component_manager.update_delay_model(argin)
-            return (ResultCode.REJECTED, "UpdateDelayModel not allowed")
-
-    @command(
-        dtype_in="str",
-        dtype_out="DevVarLongStringArray",
-        doc_in="Delay Model, per receptor per polarization per timing beam",
-    )
-    def UpdateDelayModel(
-        self: FspCorrSubarray, argin: str
-    ) -> DevVarLongStringArrayType:
-        """
-        Update the FSP's delay model (serialized JSON object)
-
-        :param argin: the delay model data
-        """
-        command_handler = self.get_command_object("UpdateDelayModel")
-        result_code, message = command_handler(argin)
-        return [[result_code], [message]]
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
 
 
 # ----------
