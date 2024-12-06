@@ -61,7 +61,6 @@ class TestFspCorrSubarray:
             LRCTimeout="15",
         )
         for name, mock in initial_mocks.items():
-            print(name)
             harness.add_mock_device(device_name=name, device_mock=mock)
 
         with harness as test_context:
