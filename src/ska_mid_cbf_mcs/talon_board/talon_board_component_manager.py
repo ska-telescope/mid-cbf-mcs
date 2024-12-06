@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta, timezone
-from threading import Event, Thread
+from threading import Event, Lock, Thread
 from typing import Optional
 
 import tango
