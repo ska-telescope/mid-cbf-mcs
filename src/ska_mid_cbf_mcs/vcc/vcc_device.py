@@ -44,6 +44,8 @@ class Vcc(CbfObsDevice):
 
     Band5Address = device_property(dtype="str")
 
+    LRCTimeout = device_property(dtype=("str"))
+
     # ----------
     # Attributes
     # ----------
@@ -124,6 +126,17 @@ class Vcc(CbfObsDevice):
         """
         return self.component_manager.frequency_band
 
+    @attribute(
+        dtype="str", doc="The last valid scan configuration sent to HPS."
+    )
+    def lastHpsScanConfiguration(self: Vcc) -> str:
+        """
+        Read the last valid scan configuration of the device sent to HPS.
+
+        :return: the current last_hps_scan_configuration value
+        """
+        return self.component_manager.last_hps_scan_configuration
+
     # --------------
     # Initialization
     # --------------
@@ -155,6 +168,7 @@ class Vcc(CbfObsDevice):
                 self.Band4Address,
                 self.Band5Address,
             ],
+            lrc_timeout=int(self.LRCTimeout),
             logger=self.logger,
             attr_change_callback=self.push_change_event,
             attr_archive_callback=self.push_archive_event,
@@ -162,6 +176,7 @@ class Vcc(CbfObsDevice):
             communication_state_callback=self._communication_state_changed,
             obs_command_running_callback=self._obs_command_running,
             component_state_callback=self._component_state_changed,
+            admin_mode_callback=self._admin_mode_perform_action,
         )
 
     # --------

@@ -7,6 +7,16 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-2953 increase SV pod storage from 375Mi to 2Gi
+* CIP-2659: CbfController On/Off command partial success
+  * On command succeeds if one or more LRUs are powered on; Off command succeeds if one or more LRUs are powered off
+  * Controller OpState is ON if one or more LRUs are powered on, and only OFF once all LRUs are powered off and Off command is fully successful
+  * wait_for_blocking_results allows partial success of blocking LRCs
+  * Configurable HPS device timeouts in charts: CbfController, FspCorrSubarray, SlimLink, Vcc
+* CIP-2828 Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
+* CIP-2899: Refactored adminMode push event to be changed after communication has been established
+* 19-11-2024: Added attribute change event mocking for unit tests to MockDeviceBuilder, MockCommand
+* CIP-2816: Removed global constants for default max capabilities, throw error when not defined
 
 1.1.0
 **********
@@ -46,7 +56,6 @@ UNRELEASED CHANGES
   * Removes support for configurescan 3.0
   * Added ReadTheDocs table to list differences between Telmodel validation and MCS validation
   * Add 'vcc_id_to_rdt_freq_shifts' to hps_fsp_corr config to support work on CIP-2662
-
 
 1.0.0
 ******

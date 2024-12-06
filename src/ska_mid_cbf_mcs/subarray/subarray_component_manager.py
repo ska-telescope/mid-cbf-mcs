@@ -134,8 +134,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Store maxCapabilities from controller for easy reference
         self._controller_max_capabilities = {}
-        self._count_vcc = 0
-        self._count_fsp = 0
+        self._max_count_vcc = 0
+        self._max_count_fsp = 0
 
         # proxies to subelement devices
         self._all_vcc_proxies = {}
@@ -206,12 +206,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             f"Max capabilities: {self._controller_max_capabilities}"
         )
 
-        self._count_vcc = int(self._controller_max_capabilities["VCC"])
-        self._count_fsp = int(self._controller_max_capabilities["FSP"])
+        self._max_count_vcc = int(self._controller_max_capabilities["VCC"])
+        self._max_count_fsp = int(self._controller_max_capabilities["FSP"])
 
-        self._fqdn_vcc = self._fqdn_vcc_all[: self._count_vcc]
-        self._fqdn_fsp = self._fqdn_fsp_all[: self._count_fsp]
-        self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[: self._count_fsp]
+        self._fqdn_vcc = self._fqdn_vcc_all[: self._max_count_vcc]
+        self._fqdn_fsp = self._fqdn_fsp_all[: self._max_count_fsp]
+        self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[: self._max_count_fsp]
 
         self.logger.debug(f"Active VCC FQDNs: {self._fqdn_vcc}")
         self.logger.debug(f"Active FSP FQDNs: {self._fqdn_fsp}")
@@ -297,13 +297,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
         sys_param = json.loads(sys_param_str)
         self._dish_utils = DISHUtils(sys_param)
-        self.logger.info(
-            "Updated DISH ID to VCC ID and frequency offset k mapping"
-        )
-
         self._sys_param_str = sys_param_str
         self.device_attr_change_callback("sysParam", self._sys_param_str)
         self.device_attr_archive_callback("sysParam", self._sys_param_str)
+        self.logger.info(
+            f"Updated DISH ID to VCC ID and frequency offset k mapping {self._sys_param_str}"
+        )
 
     def update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str
@@ -337,12 +336,20 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param event_data: the received change event data (delay model JSON string)
         """
+        if event_data.attr_value is None:
+            return
         model = event_data.attr_value.value
-
         if not self.is_communicating or model is None or model == "":
             return
 
-        if self.obs_state not in [ObsState.READY, ObsState.SCANNING]:
+        # Subscription starts during the configure scan command. Need to include the
+        # CONFIGURING state or we risk throwing away the first polynomial. Subscription should
+        # also be done after FSPs have been configured so that RDTs are ready to receive them.
+        if self.obs_state not in [
+            ObsState.CONFIGURING,
+            ObsState.READY,
+            ObsState.SCANNING,
+        ]:
             log_msg = f"Ignoring delay model received in {self.obs_state} (must be READY or SCANNING)."
             self.logger.warning(log_msg)
             return
@@ -391,9 +398,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.info(f"Updating delay model; {delay_model_json}")
         # we lock the mutex while forwarding the configuration to fsp_corr devices
         with self._delay_model_lock:
+            # TODO: for AA2+ update _max_count_fsp to take into account the number of FPGAs per FSP-UNIT
             results_fsp = self.issue_group_command(
                 command_name="UpdateDelayModel",
                 proxies=list(self._assigned_fsp_corr_proxies),
+                max_workers=self._max_count_fsp,
                 argin=json.dumps(delay_model_json),
             )
 
@@ -536,7 +545,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             try:
                 vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
-                if 0 >= vcc_id > self._count_vcc:
+                if 0 >= vcc_id > self._max_count_vcc:
                     raise KeyError(
                         f"VCC ID {vcc_id} not in current capabilities."
                     )
@@ -602,7 +611,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # subscribe to LRC results during the VCC scan operation
         for vcc_proxy in vcc_proxies:
-            self.subscribe_command_results(vcc_proxy)
+            self.attr_event_subscribe(
+                proxy=vcc_proxy,
+                attr_name="longRunningCommandResult",
+                callback=self.results_callback,
+            )
 
         self.logger.info(f"Receptors after adding: {self.dish_ids}")
 
@@ -746,7 +759,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # unsubscribe from VCC LRC results
         for vcc_proxy in vcc_proxies:
-            self.unsubscribe_command_results(vcc_proxy)
+            self.unsubscribe_all_events(vcc_proxy)
 
         self.logger.info(f"Receptors after removal: {self.dish_ids}")
 
@@ -949,6 +962,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name=command_name,
             proxies=list(assigned_resources),
+            max_workers=self._max_count_vcc + self._max_count_fsp,
             argin=argin,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
@@ -1017,10 +1031,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if controller_validateSupportedConfiguration is True:
             validator = SubarrayScanConfigurationValidator(
                 scan_configuration=argin,
-                count_fsp=self._count_fsp,
                 dish_ids=list(self.dish_ids),
                 subarray_id=self._subarray_id,
                 logger=self.logger,
+                count_fsp=self._max_count_fsp,
             )
             success, msg = validator.validate_input()
             if success:
@@ -1457,7 +1471,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 case "CORR":
                     # set function mode and add subarray membership
                     fsp_proxy = self._all_fsp_proxies[fsp_id]
-                    self.subscribe_command_results(fsp_proxy)
+                    self.attr_event_subscribe(
+                        proxy=fsp_proxy,
+                        attr_name="longRunningCommandResult",
+                        callback=self.results_callback,
+                    )
                     self._assigned_fsp_proxies.add(fsp_proxy)
                     self._fsp_ids.add(fsp_id)
 
@@ -1511,7 +1529,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.blocking_command_ids = set()
         for fsp_mode_proxy, fsp_config_str in all_fsp_config:
             try:
-                self.subscribe_command_results(fsp_mode_proxy)
+                self.attr_event_subscribe(
+                    proxy=fsp_mode_proxy,
+                    attr_name="longRunningCommandResult",
+                    callback=self.results_callback,
+                )
 
                 self.logger.debug(f"fsp_config: {fsp_config_str}")
                 [[result_code], [command_id]] = fsp_mode_proxy.ConfigureScan(
@@ -1587,9 +1609,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Remove subarray membership from assigned FSP
         self.blocking_command_ids = set()
+        # TODO: for AA2+ update _max_count_fsp to take into account the number of FPGAs per FSP-UNIT
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name="RemoveSubarrayMembership",
             proxies=list(self._assigned_fsp_proxies),
+            max_workers=self._max_count_fsp,
             argin=self._subarray_id,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
@@ -1608,14 +1632,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         for proxy in self._assigned_fsp_corr_proxies:
             try:
-                self.unsubscribe_command_results(proxy)
+                self.unsubscribe_all_events(proxy)
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 return False
 
         for proxy in self._assigned_fsp_proxies:
             try:
-                self.unsubscribe_command_results(proxy)
+                self.unsubscribe_all_events(proxy)
                 # If FSP subarrayMembership is empty, set it OFFLINE
                 if len(proxy.subarrayMembership) == 0:
                     proxy.adminMode = AdminMode.OFFLINE
@@ -1706,9 +1730,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # When configuring from READY, send any function mode subarrays in READY to IDLE
         self.blocking_command_ids = set()
+        # TODO: for AA2+ update _max_count_fsp to take into account the number of FPGAs per FSP-UNIT
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name="GoToIdle",
             proxies=list(self._assigned_fsp_corr_proxies),
+            max_workers=self._max_count_fsp,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
                 self.logger.error("FSP GoToIdle command failed")
@@ -1744,22 +1770,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 result=(
                     ResultCode.FAILED,
                     "Failed to deconfigure subarray",
-                ),
-            )
-            return
-
-        # Configure delayModel subscription point
-        delay_model_success = self._subscribe_tm_event(
-            subscription_point=configuration["delay_model_subscription_point"],
-            callback=self._delay_model_event_callback,
-        )
-        if not delay_model_success:
-            self.logger.error("Failed to subscribe to TM events.")
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    "Failed to subscribe to delayModel attribute",
                 ),
             )
             return
@@ -1828,7 +1838,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             for proxy in (
                 self._assigned_fsp_corr_proxies | self._assigned_fsp_proxies
             ):
-                self.unsubscribe_command_results(proxy)
+                self.unsubscribe_all_events(proxy)
             self._fsp_ids = set()
             self._assigned_fsp_corr_proxies = set()
             self._assigned_fsp_proxies = set()
@@ -1838,6 +1848,22 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 result=(
                     ResultCode.FAILED,
                     "Failed to issue ConfigureScan command to FSP",
+                ),
+            )
+            return
+
+        # Configure delayModel subscription point
+        delay_model_success = self._subscribe_tm_event(
+            subscription_point=configuration["delay_model_subscription_point"],
+            callback=self._delay_model_event_callback,
+        )
+        if not delay_model_success:
+            self.logger.error("Failed to subscribe to TM events.")
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    "Failed to subscribe to delayModel attribute",
                 ),
             )
             return

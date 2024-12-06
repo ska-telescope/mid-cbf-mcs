@@ -13,5 +13,6 @@ Code
   PowerSwitch<PowerSwitch/index>
   Slim<Slim/index>
   TalonDxLogConsumer<TalonDxLogConsumer/index>
+  TalonBoard<TalonBoard/index>
   TalonLRU<TalonLRU/index>
   Vcc<Vcc/index>

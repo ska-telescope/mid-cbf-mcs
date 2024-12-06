@@ -114,7 +114,7 @@ class TestFsp:
                              events from the device under test.
         """
         # Set a given device to AdminMode.ONLINE and DevState.ON
-        device_under_test.simulationMode == SimulationMode.FALSE
+        device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
 
         assert_that(event_tracer).within_timeout(

@@ -18,7 +18,6 @@ from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from ska_tango_base.utils import convert_dict_to_list
 from tango.server import attribute, command, device_property
 
-from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
     ControllerComponentManager,
 )
@@ -254,11 +253,6 @@ class CbfController(CbfDevice):
         :return: dictionary of maximum number of capabilities with capability type as key and max capability instances as value
         """
         capabilities = ["VCC", "FSP", "Subarray"]
-        default_values = {
-            "VCC": const.DEFAULT_COUNT_VCC,
-            "FSP": const.DEFAULT_COUNT_FSP,
-            "Subarray": const.DEFAULT_COUNT_SUBARRAY,
-        }
         max_capabilities = {}
 
         if self.MaxCapabilities:
@@ -273,14 +267,12 @@ class CbfController(CbfDevice):
 
             for capability in capabilities:
                 if capability not in max_capabilities:
-                    self.logger.warning(
-                        f"{capability} capabilities not defined; defaulting to {default_values[capability]}."
+                    raise tango.DevFailed(
+                        f"{capability} capabilities not defined; MaxCapabilities device property must be updated in charts"
                     )
-                    max_capabilities[capability] = default_values[capability]
         else:
-            max_capabilities = default_values
-            self.logger.warning(
-                "MaxCapabilities device property not defined - using default value"
+            raise tango.DevFailed(
+                "MaxCapabilities device property not defined"
             )
 
         return max_capabilities
@@ -302,6 +294,7 @@ class CbfController(CbfDevice):
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
+            admin_mode_callback=self._admin_mode_perform_action,
         )
 
         fqdn_dict = {
@@ -335,6 +328,7 @@ class CbfController(CbfDevice):
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
+            admin_mode_callback=self._admin_mode_perform_action,
         )
 
     # -------------

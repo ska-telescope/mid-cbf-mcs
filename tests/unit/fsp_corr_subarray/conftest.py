@@ -83,8 +83,22 @@ def mock_vcc() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
+def mock_hps_fsp_corr_controller() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.add_command("SetInternalParameters", None)
+    builder.add_command("ConfigureScan", None)
+    builder.add_command("Scan", None)
+    builder.add_command("EndScan", None)
+    builder.add_command("Abort", None)
+    builder.add_command("ObsReset", None)
+    return builder()
+
+
+@pytest.fixture()
 def initial_mocks(
-    mock_controller: unittest.mock.Mock, mock_vcc: unittest.mock.Mock
+    mock_controller: unittest.mock.Mock,
+    mock_vcc: unittest.mock.Mock,
+    mock_hps_fsp_corr_controller: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -97,4 +111,5 @@ def initial_mocks(
     return {
         "mid_csp_cbf/sub_elt/controller": mock_controller,
         "mid_csp_cbf/vcc/001": mock_vcc,
+        "mid_csp_cbf/talon_lru/001": mock_hps_fsp_corr_controller,
     }

@@ -33,7 +33,7 @@ from ska_mid_cbf_mcs.talon_board.talon_board_component_manager import (
 
 __all__ = ["TalonBoard", "main"]
 
-# Global Varibale for polling period of Attributes, in ms
+# Global Variable for polling period of Attributes, in ms
 ATTR_POLLING_PERIOD = 10000
 
 
@@ -311,7 +311,7 @@ class TalonBoard(CbfDevice):
         """
         Read the FPGA die temperature of the Talon-DX board.
 
-        :return: the FPGA die temperature in deg Celcius
+        :return: the FPGA die temperature in deg Celsius
         """
         res = self.component_manager.fpga_die_temperature()
         return res
@@ -503,7 +503,7 @@ class TalonBoard(CbfDevice):
         """
         Read the humidity sensor temperature of the Talon-DX board.
 
-        :return: the humidity sensor temperature in deg Celcius
+        :return: the humidity sensor temperature in deg Celsius
         """
         return self.component_manager.humidity_sensor_temperature()
 
@@ -520,7 +520,7 @@ class TalonBoard(CbfDevice):
         """
         Read the DIMM temperatures of the Talon-DX board.
 
-        :return: the DIMM temperatures in deg Celcius
+        :return: the DIMM temperatures in deg Celsius
         """
         return self.component_manager.dimm_temperatures()
 
@@ -539,7 +539,7 @@ class TalonBoard(CbfDevice):
         MBO i2c addresses can be read, in which case a 0 will be
         returned for the MBO.
 
-        :return: the MBO Tx temperatures in deg Celcius.
+        :return: the MBO Tx temperatures in deg Celsius.
         """
         return self.component_manager.mbo_tx_temperatures()
 
@@ -937,6 +937,16 @@ class TalonBoard(CbfDevice):
         ),
     )
     def eth100g0Counters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns a list of counters at the 100g ethernet input
+        in the following order:
+        [0] cntr_tx_1519tomaxb
+        [1] TxFrameOctetsOK
+        [2] cntr_rx_1519tomaxb
+        [3] RxFrameOctetsOK
+
+        :return: a list of counters at the 100g ethernet input
+        """
         return self.component_manager.eth100g_0_counters()
 
     @attribute(
@@ -955,6 +965,18 @@ class TalonBoard(CbfDevice):
         ),
     )
     def eth100g0ErrorCounters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns a list of error counters at the 100g ethernet input
+        in the following order:
+        [0]: number of transmitted frames less than 64 bytes
+        [1]: number of transmitted oversized frames
+        [2]: number of transmitted CRC errors
+        [3]: number of received frames less than 64 bytes
+        [4]: number of received oversized frames
+        [5]: number of received CRC errors
+
+        :return: a list of error counters at the 100g ethernet input
+        """
         return self.component_manager.eth100g_0_error_counters()
 
     @attribute(
@@ -963,6 +985,12 @@ class TalonBoard(CbfDevice):
         doc="True if there is data flowing at the 100g ethernet input",
     )
     def eth100g0DataFlowActive(self: TalonBoard) -> DevBoolean:
+        """
+        Indicates if there is data flowing at the 100g ethernet input
+
+        :return: a boolean indicating if there is data flowing
+                 at the 100g ethernet input
+        """
         return self.component_manager.eth100g_0_data_flow_active()
 
     @attribute(
@@ -973,6 +1001,12 @@ class TalonBoard(CbfDevice):
         ),
     )
     def eth100g0HasDataError(self: TalonBoard) -> DevBoolean:
+        """
+        Indicates if any error counter is non-zero at the 100g ethernet input
+
+        :return: a boolean indicating if any error counter is non-zero
+                 at the 100g ethernet input
+        """
         return self.component_manager.eth100g_0_has_data_error()
 
     @attribute(
@@ -982,6 +1016,39 @@ class TalonBoard(CbfDevice):
         doc="the full list of Tx counters at the 100g ethernet input",
     )
     def eth100g0AllTxCounters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns the full list of Tx counters at the 100g ethernet input
+        in the following order:
+        [0] fragments
+        [1] jabbers
+        [2] fcs
+        [3] crcerr
+        [4] mcast_data_err
+        [5] bcast_data_err
+        [6] ucast_data_err
+        [7] mcast_ctrl_err
+        [8] bcast_ctrl_err
+        [9] ucast_ctrl_err
+        [10] pause_err
+        [11] 64b
+        [12] 65to127b
+        [13] 128to255b
+        [14] 256to511b
+        [15] 512to1023b
+        [16] 1024to1518b
+        [17] 1519tomaxb
+        [18] oversize
+        [19] mcast_data_ok
+        [20] bcast_data_ok
+        [21] ucast_data_ok
+        [22] mcast_ctrl
+        [23] bcast_ctrl
+        [24] ucast_ctrl
+        [25] pause
+        [26] runt
+
+        :return: the full list of tx counters at the 100g ethernet input
+        """
         return self.component_manager.eth100g_0_all_tx_counters()
 
     @attribute(
@@ -991,6 +1058,39 @@ class TalonBoard(CbfDevice):
         doc="the full list of Rx counters at the 100g ethernet input",
     )
     def eth100g0AllRxCounters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns the full list of Rx counters at the 100g ethernet input
+        in the following order:
+        [0] fragments
+        [1] jabbers
+        [2] fcs
+        [3] crcerr
+        [4] mcast_data_err
+        [5] bcast_data_err
+        [6] ucast_data_err
+        [7] mcast_ctrl_err
+        [8] bcast_ctrl_err
+        [9] ucast_ctrl_err
+        [10] pause_err
+        [11] 64b
+        [12] 65to127b
+        [13] 128to255b
+        [14] 256to511b
+        [15] 512to1023b
+        [16] 1024to1518b
+        [17] 1519tomaxb
+        [18] oversize
+        [19] mcast_data_ok
+        [20] bcast_data_ok
+        [21] ucast_data_ok
+        [22] mcast_ctrl
+        [23] bcast_ctrl
+        [24] ucast_ctrl
+        [25] pause
+        [26] runt
+
+        :return: the full list of rx counters at the 100g ethernet input
+        """
         return self.component_manager.eth100g_0_all_rx_counters()
 
     @attribute(
@@ -1007,6 +1107,16 @@ class TalonBoard(CbfDevice):
         ),
     )
     def eth100g1Counters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns a list of counters at the 100g ethernet output
+        in the following order:
+        [0] cntr_tx_1519tomaxb
+        [1] TxFrameOctetsOK
+        [2] cntr_rx_1519tomaxb
+        [3] RxFrameOctetsOK
+
+        :return: a list of counters at the 100g ethernet output
+        """
         return self.component_manager.eth100g_1_counters()
 
     @attribute(
@@ -1025,6 +1135,18 @@ class TalonBoard(CbfDevice):
         ),
     )
     def eth100g1ErrorCounters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns a list of error counters at the 100g ethernet output
+        in the following order:
+        [0]: number of transmitted frames less than 64 bytes
+        [1]: number of transmitted oversized frames
+        [2]: number of transmitted CRC errors
+        [3]: number of received frames less than 64 bytes
+        [4]: number of received oversized frames
+        [5]: number of received CRC errors
+
+        :return: a list of error counters at the 100g ethernet output
+        """
         return self.component_manager.eth100g_1_error_counters()
 
     @attribute(
@@ -1059,6 +1181,39 @@ class TalonBoard(CbfDevice):
         doc="the full list of Tx counters at the 100g ethernet output",
     )
     def eth100g1AllTxCounters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns the full list of Tx counters at the 100g ethernet output
+        in the following order:
+        [0] fragments
+        [1] jabbers
+        [2] fcs
+        [3] crcerr
+        [4] mcast_data_err
+        [5] bcast_data_err
+        [6] ucast_data_err
+        [7] mcast_ctrl_err
+        [8] bcast_ctrl_err
+        [9] ucast_ctrl_err
+        [10] pause_err
+        [11] 64b
+        [12] 65to127b
+        [13] 128to255b
+        [14] 256to511b
+        [15] 512to1023b
+        [16] 1024to1518b
+        [17] 1519tomaxb
+        [18] oversize
+        [19] mcast_data_ok
+        [20] bcast_data_ok
+        [21] ucast_data_ok
+        [22] mcast_ctrl
+        [23] bcast_ctrl
+        [24] ucast_ctrl
+        [25] pause
+        [26] runt
+
+        :return: the full list of tx counters at the 100g ethernet output
+        """
         return self.component_manager.eth100g_1_all_tx_counters()
 
     @attribute(
@@ -1068,6 +1223,39 @@ class TalonBoard(CbfDevice):
         doc="the full list of Rx counters at the 100g ethernet output",
     )
     def eth100g1AllRxCounters(self: TalonBoard) -> DevVarULongArray:
+        """
+        Returns the full list of Rx counters at the 100g ethernet output
+        in the following order:
+        [0] fragments
+        [1] jabbers
+        [2] fcs
+        [3] crcerr
+        [4] mcast_data_err
+        [5] bcast_data_err
+        [6] ucast_data_err
+        [7] mcast_ctrl_err
+        [8] bcast_ctrl_err
+        [9] ucast_ctrl_err
+        [10] pause_err
+        [11] 64b
+        [12] 65to127b
+        [13] 128to255b
+        [14] 256to511b
+        [15] 512to1023b
+        [16] 1024to1518b
+        [17] 1519tomaxb
+        [18] oversize
+        [19] mcast_data_ok
+        [20] bcast_data_ok
+        [21] ucast_data_ok
+        [22] mcast_ctrl
+        [23] bcast_ctrl
+        [24] ucast_ctrl
+        [25] pause
+        [26] runt
+
+        :return: the full list of rx counters at the 100g ethernet output
+        """
         return self.component_manager.eth100g_1_all_rx_counters()
 
     # --------------
@@ -1097,8 +1285,10 @@ class TalonBoard(CbfDevice):
             talon_status_address=self.TalonStatusAddress,
             hps_master_address=self.HpsMasterAddress,
             logger=self.logger,
+            health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
+            admin_mode_callback=self._admin_mode_perform_action,
         )
 
     # -------------
