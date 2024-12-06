@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+
+1.1.0
+**********
 * CIP-3100 fix sending all subarray vcc shift values in hps fsp config value vcc_id_to_rdt_freq_shifts
 
 1.1.0-rc.2
