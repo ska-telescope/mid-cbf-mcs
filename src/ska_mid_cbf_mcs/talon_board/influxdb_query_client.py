@@ -153,7 +153,7 @@ class InfluxdbQueryClient:
         query = f'from(bucket: "{self._influx_bucket}")\
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /LTMs_[0-9]_LTM_voltage.*?/)\
+        |>filter(fn: (r) => r["_field"] =~ /LTMs_[1]?[0-9]_LTM_voltage.*?/)\
         |>last()'
         return await self._query_common(client, query)
 
@@ -161,7 +161,7 @@ class InfluxdbQueryClient:
         query = f'from(bucket: "{self._influx_bucket}")\
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /LTMs_[0-9]_LTM_current.*?/)\
+        |>filter(fn: (r) => r["_field"] =~ /LTMs_[1]?[0-9]_LTM_current.*?/)\
         |>last()'
         return await self._query_common(client, query)
 
@@ -169,7 +169,7 @@ class InfluxdbQueryClient:
         query = f'from(bucket: "{self._influx_bucket}")\
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /LTMs_[0-9]_LTM_temperature.*?/)\
+        |>filter(fn: (r) => r["_field"] =~ /LTMs_[1]?[0-9]_LTM_temperature.*?/)\
         |>last()'
         return await self._query_common(client, query)
 
