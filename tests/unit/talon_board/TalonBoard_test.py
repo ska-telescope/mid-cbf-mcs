@@ -35,7 +35,6 @@ gc.disable()
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.mark.skip(reason="TODO: fix monkey patch dependencies and re-enable")
 class TestTalonBoard:
     """
     Test class for TalonBoard.
@@ -71,17 +70,6 @@ class TestTalonBoard:
                 request.param["sim_ping_fault"],
             ).ping()
 
-        def mock_run(self, *args: Any, **kwargs: Any) -> bool:
-            """
-            Replace asyncio.run method with a mock method.
-
-            :param url: the URL
-            :param kwargs: other keyword args
-
-            :return: a response
-            """
-            return MockDependency.Asyncio().run
-
         def mock_do_queries(self) -> list[list]:
             """
             Replace requests.request method with a mock method.
@@ -96,10 +84,6 @@ class TestTalonBoard:
         monkeymodule.setattr(
             "ska_mid_cbf_mcs.talon_board.influxdb_query_client.InfluxdbQueryClient.ping",
             mock_ping,
-        )
-        monkeymodule.setattr(
-            "asyncio.run",
-            mock_run,
         )
         monkeymodule.setattr(
             "ska_mid_cbf_mcs.talon_board.influxdb_query_client.InfluxdbQueryClient.do_queries",
@@ -123,7 +107,7 @@ class TestTalonBoard:
         )
 
         for name, mock in initial_mocks.items():
-            harness.add_mock_device(device_name=name, device_mock=mock)
+            harness.add_mock_device(device_name=name, device_mock=mock(name))
 
         with harness as test_context:
             yield test_context
@@ -288,75 +272,222 @@ class TestTalonBoard:
         # Device must be on in order to query InfluxDB
         self.test_Online(device_under_test, event_tracer)
 
-        # Private Attr
+        # Local Attr
         assert device_under_test.subarrayID == ""
         assert device_under_test.dishID == ""
         assert device_under_test.vccID == ""
+        
+        # This will generate change events for the locally defined attr.
         device_under_test.subarrayID = "1"
         device_under_test.dishID = "2"
         device_under_test.vccID = "3"
-        assert device_under_test.subarrayID == "1"
-        assert device_under_test.dishID == "2"
-        assert device_under_test.vccID == "3"
+        
+        # Since the device defaults to simulation mode, finding change events
+        # with the values from the mocks (different from the simulator) will
+        # confirm that change events are being generated properly.
+        attr_values = [
+            # From device props
+            ("subarrayID", "1", None),
+            ("dishID", "2", None),
+            ("vccID", "3", None),
+            # From TalonSysId attr
+            ("bitstreamVersion", "0.2.6", None),
+            ("bitstreamChecksum", 0xBEEFBABE, None),
+            # From TalonStatus attr
+            ("iopllLockedFault", False, None),
+            ("fsIopllLockedFault", False, None),
+            ("commsIopllLockedFault", False, None),
+            ("systemClkFault", False, None),
+            ("emifBlFault", False, None),
+            ("emifBrFault", False, None),
+            ("emifTrFault", False, None),
+            ("ethernet0PllFault", False, None),
+            ("ethernet1PllFault", False, None),
+            ("slimPllFault", False, None),
+            # From Ethernet Client
+            (
+                "eth100g0Counters",
+                None,
+                lambda e: (list(e.attribute_value) == [1] * 4),
+            ),
+            (
+                "eth100g0ErrorCounters",
+                None,
+                lambda e: (list(e.attribute_value) == [1] * 6),
+            ),
+            (
+                "eth100g0AllTxCounters",
+                None,
+                lambda e: (list(e.attribute_value) == [1] * 27),
+            ),
+            (
+                "eth100g0AllRxCounters",
+                None,
+                lambda e: (list(e.attribute_value) == [1] * 27),
+            ),
+            ("eth100g0DataFlowActive", True, None),
+            ("eth100g0HasDataError", True, None),
+            (
+                "eth100g1Counters",
+                None,
+                lambda e: (list(e.attribute_value) == [1] * 4),
+            ),
+            (
+                "eth100g1ErrorCounters",
+                None,
+                lambda e: (list(e.attribute_value) == [1] * 6),
+            ),
+            (
+                "eth100g1AllTxCounters",
+                None,
+                lambda e: (list(e.attribute_value) == [1] * 27),
+            ),
+            (
+                "eth100g1AllRxCounters",
+                None,
+                lambda e: (list(e.attribute_value) == [1] * 27),
+            ),
+            ("eth100g1DataFlowActive", True, None),
+            ("eth100g1HasDataError", True, None),
+            # From InfluxDB
+            ("fpgaDieTemperature", 32.0, None),
+            ("fpgaDieVoltage0", 12.1, None),
+            ("fpgaDieVoltage1", 2.1, None),
+            ("fpgaDieVoltage2", 0.7, None),
+            ("fpgaDieVoltage3", 1.9, None),
+            ("fpgaDieVoltage4", 1.9, None),
+            ("fpgaDieVoltage5", 0.8, None),
+            ("fpgaDieVoltage6", 1.9, None),
+            ("humiditySensorTemperature", 32.0, None),
+            (
+                "dimmTemperatures",
+                None,
+                lambda e: (list(e.attribute_value) == [32.0] * 4),
+            ),
+            (
+                "mboTemperatures",
+                None,
+                lambda e: (list(e.attribute_value) == [32.0] * 5),
+            ),
+            (
+                "mboTxVccVoltages",
+                None,
+                lambda e: (list(e.attribute_value) == [3.1] * 5),
+            ),
+            (
+                "mboTxFaultStatus",
+                None,
+                lambda e: (list(e.attribute_value) == [True] * 5),
+            ),
+            (
+                "mboTxLolStatus",
+                None,
+                lambda e: (list(e.attribute_value) == [True] * 5),
+            ),
+            (
+                "mboTxLosStatus",
+                None,
+                lambda e: (list(e.attribute_value) == [True] * 5),
+            ),
+            (
+                "mboRxVccVoltages",
+                None,
+                lambda e: (list(e.attribute_value) == [3.1] * 5),
+            ),
+            (
+                "mboRxLolStatus",
+                None,
+                lambda e: (list(e.attribute_value) == [True] * 5),
+            ),
+            (
+                "mboRxLosStatus",
+                None,
+                lambda e: (list(e.attribute_value) == [True] * 5),
+            ),
+            ("hasFanControl", False, None),
+            (
+                "fansPwm",
+                None,
+                lambda e: (list(e.attribute_value) == [255] * 4),
+            ),
+            (
+                "fansPwmEnable",
+                None,
+                lambda e: (list(e.attribute_value) == [0] * 4),
+            ),
+            (
+                "fansRpm",
+                None,
+                lambda e: (list(e.attribute_value) == [0] * 4),
+            ),
+            (
+                "fansFault",
+                None,
+                lambda e: (list(e.attribute_value) == [True] * 4),
+            ),
+            (
+                "ltmInputVoltage",
+                None,
+                lambda e: (list(e.attribute_value) == [11.0] * 4),
+            ),
+            (
+                "ltmOutputVoltage1",
+                None,
+                lambda e: (list(e.attribute_value) == [1.5] * 4),
+            ),
+            (
+                "ltmOutputVoltage2",
+                None,
+                lambda e: (list(e.attribute_value) == [1.5] * 4),
+            ),
+            (
+                "ltmInputCurrent",
+                None,
+                lambda e: (list(e.attribute_value) == [1.0] * 4),
+            ),
+            (
+                "ltmOutputCurrent1",
+                None,
+                lambda e: (list(e.attribute_value) == [1.0] * 4),
+            ),
+            (
+                "ltmOutputCurrent2",
+                None,
+                lambda e: (list(e.attribute_value) == [1.0] * 4),
+            ),
+            (
+                "ltmTemperature1",
+                None,
+                lambda e: (list(e.attribute_value) == [32.0] * 4),
+            ),
+            (
+                "ltmTemperature2",
+                None,
+                lambda e: (list(e.attribute_value) == [32.0] * 4),
+            ),
+            (
+                "ltmVoltageWarning",
+                None,
+                lambda e: (list(e.attribute_value) == [True] * 4),
+            ),
+            (
+                "ltmCurrentWarning",
+                None,
+                lambda e: (list(e.attribute_value) == [True] * 4),
+            ),
+            (
+                "ltmTemperatureWarning",
+                None,
+                lambda e: (list(e.attribute_value) == [True] * 4),
+            ),
+        ]
 
-        # TalonStatus Attr
-        # This values comes from charts
-        assert device_under_test.ipAddr == "192.168.8.1"
-        # These values are read from mocked device attr
-        assert device_under_test.bitstreamVersion == "0.2.6"
-        assert device_under_test.bitstreamChecksum == 0xBEEFBABE
-
-        # TalonStatus Attr
-        assert device_under_test.iopllLockedFault is False
-        assert device_under_test.fsIopllLockedFault is False
-        assert device_under_test.commsIopllLockedFault is False
-        assert device_under_test.systemClkFault is False
-        assert device_under_test.emifBlFault is False
-        assert device_under_test.emifBrFault is False
-        assert device_under_test.emifTrFault is False
-        assert device_under_test.ethernet0PllFault is False
-        assert device_under_test.ethernet1PllFault is False
-        assert device_under_test.slimPllFault is False
-
-        # All these values are read from InfluxDB
-        assert device_under_test.fpgaDieTemperature == 32.0
-        assert device_under_test.humiditySensorTemperature == 32.0
-        assert all(temp == 32.0 for temp in device_under_test.dimmTemperatures)
-
-        assert all(
-            temp == 32.0 for temp in device_under_test.mboTxTemperatures
-        )
-        assert all(v == 3.3 for v in device_under_test.mboTxVccVoltages)
-        # Not currently queried.
-        # assert all(not fault for fault in device_under_test.mboTxFaultStatus)
-        # assert all(not status for status in device_under_test.mboTxLolStatus)
-        # assert all(not status for status in device_under_test.mboTxLosStatus)
-
-        assert all(v == 3.3 for v in device_under_test.mboRxVccVoltages)
-        # Not currently queried.
-        # assert all(not status for status in device_under_test.mboRxLolStatus)
-        # assert all(not status for status in device_under_test.mboRxLosStatus)
-
-        assert all(pwm == 255 for pwm in device_under_test.fansPwm)
-        # Not currently queried.
-        # assert all(not enabled for enabled in device_under_test.fansPwmEnable)
-        assert all(not fault for fault in device_under_test.fansFault)
-
-        assert all(v == 12.0 for v in device_under_test.ltmInputVoltage)
-        assert all(v == 1.5 for v in device_under_test.ltmOutputVoltage1)
-        assert all(v == 1.5 for v in device_under_test.ltmOutputVoltage2)
-
-        assert all(i == 1.0 for i in device_under_test.ltmInputCurrent)
-        assert all(i == 1.0 for i in device_under_test.ltmOutputCurrent1)
-        assert all(i == 1.0 for i in device_under_test.ltmOutputCurrent2)
-
-        assert all(temp == 32.0 for temp in device_under_test.ltmTemperature1)
-        assert all(temp == 32.0 for temp in device_under_test.ltmTemperature2)
-
-        assert all(not warn for warn in device_under_test.ltmVoltageWarning)
-
-        assert all(not warn for warn in device_under_test.ltmCurrentWarning)
-
-        assert all(
-            not warn for warn in device_under_test.ltmTemperatureWarning
-        )
+        for name, value, custom in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                custom_matcher=custom,
+            )
