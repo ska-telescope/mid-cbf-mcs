@@ -48,8 +48,6 @@ class FspCorrSubarray(FspModeSubarray):
 
     HpsFspCorrControllerAddress = device_property(dtype="str")
 
-    LRCTimeout = device_property(dtype=("str"))
-
     # ----------
     # Attributes
     # ----------
