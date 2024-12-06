@@ -13,7 +13,6 @@ import unittest
 from typing import Generator
 
 import pytest
-import tango
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.integration import TangoEventTracer
@@ -61,19 +60,6 @@ def tango_event_tracer(
 
 
 @pytest.fixture()
-def mock_controller() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.ON)
-    builder.add_attribute("receptorToVcc", ["1:1", "36:2", "63:3", "100:4"])
-    builder.add_attribute("maxCapabilities", ["VCC:4", "FSP:4", "Subarray:1"])
-    builder.add_property(
-        "MaxCapabilities",
-        {"MaxCapabilities": ["VCC:4", "FSP:4", "Subarray:1"]},
-    )
-    return builder()
-
-
-@pytest.fixture()
 def mock_hps_fsp_corr_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.add_command("SetInternalParameters", None)
@@ -87,17 +73,15 @@ def mock_hps_fsp_corr_controller() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
-    mock_controller: unittest.mock.Mock,
     mock_hps_fsp_corr_controller: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_controller: a mock CbfController.
+    :param mock_hps_fsp_corr_controller: a mock FspCorrController.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/sub_elt/controller": mock_controller,
         "talondx-001/fsp-app/fsp-corr-controller": mock_hps_fsp_corr_controller,
     }
