@@ -318,6 +318,13 @@ class TalonDxComponentManager(CbfComponentManager):
                     dest=dest_dir,
                 )
 
+                fpga_json_name = talon_cfg["fpga_json_name"]
+                self._secure_copy(
+                    ssh_client=ssh_client,
+                    src=f"{src_dir}/fpga-talon/bin/{fpga_json_name}",
+                    dest=dest_dir,
+                )
+
         except NoValidConnectionsError as e:
             self.logger.error(
                 f"NoValidConnectionsError while connecting to {target}: {e}"
