@@ -465,6 +465,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._last_check = datetime.now(timezone.utc) - timedelta(hours=1)
         self._telemetry_lock = Lock()
         self._init_telemetry()
+        
         self._proxies = dict()
         self._talon_sysid_events = {}
         self._talon_status_events = {}
@@ -1149,8 +1150,26 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._query_if_needed()
         field = "temperature-sensors_fpga-die-temp"
         with self._telemetry_lock:
-            t, val = self._telemetry[field]
-        self._validate_time(field, t)
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                try:
+                    self._validate_time(field, t)
+                except tango.DevFailed:
+                    val = (
+                        None,
+                        tango.TimeVal.totime(tango.TimeVal.now()),
+                        tango.AttrQuality.ATTR_INVALID,
+                    )
+                
+            else:
+                # John doesn't want anything logged in the failure case since these are read in a polling loop.
+
+                # Suggested return from Thomas
+                val = (
+                    None,
+                    tango.TimeVal.totime(tango.TimeVal.now()),
+                    tango.AttrQuality.ATTR_INVALID,
+                )
         return val
 
     def fpga_die_voltage_0(self) -> float:
@@ -1517,7 +1536,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("ltm_input_voltage")
         self._query_if_needed()
         res = []
-        for i in range(0, 4):
+        for i in range(0, 12):
             field = f"LTMs_{i}_LTM_voltage-input"
             if field in self._telemetry:
                 with self._telemetry_lock:
@@ -1537,7 +1556,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("ltm_output_voltage_1")
         self._query_if_needed()
         res = []
-        for i in range(0, 4):
+        for i in range(0, 12):
             field = f"LTMs_{i}_LTM_voltage-output-1"
             if field in self._telemetry:
                 with self._telemetry_lock:
@@ -1557,7 +1576,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("ltm_output_voltage_2")
         self._query_if_needed()
         res = []
-        for i in range(0, 4):
+        for i in range(0, 12):
             field = f"LTMs_{i}_LTM_voltage-output-2"
             if field in self._telemetry:
                 with self._telemetry_lock:
@@ -1577,7 +1596,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("ltm_input_current")
         self._query_if_needed()
         res = []
-        for i in range(0, 4):
+        for i in range(0, 12):
             field = f"LTMs_{i}_LTM_current-input"
             if field in self._telemetry:
                 with self._telemetry_lock:
@@ -1597,7 +1616,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("ltm_output_current_1")
         self._query_if_needed()
         res = []
-        for i in range(0, 4):
+        for i in range(0, 12):
             field = f"LTMs_{i}_LTM_current-output-1"
             if field in self._telemetry:
                 with self._telemetry_lock:
@@ -1617,7 +1636,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("ltm_output_current_2")
         self._query_if_needed()
         res = []
-        for i in range(0, 4):
+        for i in range(0, 12):
             field = f"LTMs_{i}_LTM_current-output-2"
             if field in self._telemetry:
                 with self._telemetry_lock:
@@ -1637,7 +1656,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("ltm_temperature_1")
         self._query_if_needed()
         res = []
-        for i in range(0, 4):
+        for i in range(0, 12):
             field = f"LTMs_{i}_LTM_temperature-1"
             if field in self._telemetry:
                 with self._telemetry_lock:
@@ -1657,7 +1676,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("ltm_temperature_2")
         self._query_if_needed()
         res = []
-        for i in range(0, 4):
+        for i in range(0, 12):
             field = f"LTMs_{i}_LTM_temperature-2"
             if field in self._telemetry:
                 with self._telemetry_lock:
@@ -1677,7 +1696,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("ltm_voltage_warning")
         self._query_if_needed()
         res = []
-        for i in range(0, 4):
+        for i in range(0, 12):
             flag = False
             # Set to true for the LTM if any of the voltage alarm fields is set to 1
             fields = [
@@ -1701,7 +1720,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("ltm_current_warning")
         self._query_if_needed()
         res = []
-        for i in range(0, 4):
+        for i in range(0, 12):
             flag = False
             # Set to true for the LTM if any of the voltage alarm fields is set to 1
             fields = [
@@ -1725,7 +1744,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             return SimulatedValues.get("ltm_temperature_warning")
         self._query_if_needed()
         res = []
-        for i in range(0, 4):
+        for i in range(0, 12):
             flag = False
             # Set to true for the LTM if any of the voltage alarm fields is set to 1
             fields = [
