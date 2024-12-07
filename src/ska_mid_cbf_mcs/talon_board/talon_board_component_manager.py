@@ -465,7 +465,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._last_check = datetime.now(timezone.utc) - timedelta(hours=1)
         self._telemetry_lock = Lock()
         self._init_telemetry()
-        
+
         self._proxies = dict()
         self._talon_sysid_events = {}
         self._talon_status_events = {}
@@ -1160,7 +1160,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                         tango.TimeVal.totime(tango.TimeVal.now()),
                         tango.AttrQuality.ATTR_INVALID,
                     )
-                
+
             else:
                 # John doesn't want anything logged in the failure case since these are read in a polling loop.
 
