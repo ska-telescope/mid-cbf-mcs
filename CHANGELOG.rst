@@ -23,6 +23,7 @@ UNRELEASED CHANGES
 * CIP-2899: Refactored adminMode push event to be changed after communication has been established
 * CIP-3100: fix sending all subarray vcc shift values in hps fsp config value vcc_id_to_rdt_freq_shifts
 * 19-11-2024: Added attribute change event mocking for unit tests to MockDeviceBuilder, MockCommand
+* CIP-2816: Removed global constants for default max capabilities, throw error when not defined
 
 1.1.0-rc.2
 **********
