@@ -268,7 +268,6 @@ class TestTalonBoard:
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
                              events from the device under test.
         """
-        device_under_test.simulationMode = SimulationMode.FALSE
         # Device must be on in order to query InfluxDB
         self.test_Online(device_under_test, event_tracer)
 
@@ -352,12 +351,12 @@ class TestTalonBoard:
             # From InfluxDB
             ("fpgaDieTemperature", 32.0, None),
             ("fpgaDieVoltage0", 12.1, None),
-            ("fpgaDieVoltage1", 2.1, None),
-            ("fpgaDieVoltage2", 0.7, None),
-            ("fpgaDieVoltage3", 1.9, None),
-            ("fpgaDieVoltage4", 1.9, None),
-            ("fpgaDieVoltage5", 0.8, None),
-            ("fpgaDieVoltage6", 1.9, None),
+            ("fpgaDieVoltage1", 2.45, None),
+            ("fpgaDieVoltage2", 0.79, None),
+            ("fpgaDieVoltage3", 1.79, None),
+            ("fpgaDieVoltage4", 1.79, None),
+            ("fpgaDieVoltage5", 0.89, None),
+            ("fpgaDieVoltage6", 1.79, None),
             ("humiditySensorTemperature", 32.0, None),
             (
                 "dimmTemperatures",
@@ -372,7 +371,7 @@ class TestTalonBoard:
             (
                 "mboTxVccVoltages",
                 None,
-                lambda e: (list(e.attribute_value) == [3.1] * 5),
+                lambda e: (list(e.attribute_value) == [3.35] * 5),
             ),
             (
                 "mboTxFaultStatus",
@@ -392,7 +391,7 @@ class TestTalonBoard:
             (
                 "mboRxVccVoltages",
                 None,
-                lambda e: (list(e.attribute_value) == [3.1] * 5),
+                lambda e: (list(e.attribute_value) == [3.35] * 5),
             ),
             (
                 "mboRxLolStatus",
@@ -404,7 +403,9 @@ class TestTalonBoard:
                 None,
                 lambda e: (list(e.attribute_value) == [True] * 5),
             ),
-            ("hasFanControl", False, None),
+            # hasFanControl attr skipped because since it is used to evaluate
+            # other read_attrs, it must remain True or the lambda will throw
+            # a TypeError since None is not itterable.
             (
                 "fansPwm",
                 None,
@@ -418,7 +419,7 @@ class TestTalonBoard:
             (
                 "fansRpm",
                 None,
-                lambda e: (list(e.attribute_value) == [0] * 4),
+                lambda e: (list(e.attribute_value) == [600] * 4),
             ),
             (
                 "fansFault",
@@ -428,57 +429,57 @@ class TestTalonBoard:
             (
                 "ltmInputVoltage",
                 None,
-                lambda e: (list(e.attribute_value) == [11.0] * 4),
+                lambda e: (list(e.attribute_value) == [11.0] * 12),
             ),
             (
                 "ltmOutputVoltage1",
                 None,
-                lambda e: (list(e.attribute_value) == [1.5] * 4),
+                lambda e: (list(e.attribute_value) == [1.5] * 12),
             ),
             (
                 "ltmOutputVoltage2",
                 None,
-                lambda e: (list(e.attribute_value) == [1.5] * 4),
+                lambda e: (list(e.attribute_value) == [1.5] * 12),
             ),
             (
                 "ltmInputCurrent",
                 None,
-                lambda e: (list(e.attribute_value) == [1.0] * 4),
+                lambda e: (list(e.attribute_value) == [1.0] * 12),
             ),
             (
                 "ltmOutputCurrent1",
                 None,
-                lambda e: (list(e.attribute_value) == [1.0] * 4),
+                lambda e: (list(e.attribute_value) == [1.0] * 12),
             ),
             (
                 "ltmOutputCurrent2",
                 None,
-                lambda e: (list(e.attribute_value) == [1.0] * 4),
+                lambda e: (list(e.attribute_value) == [1.0] * 12),
             ),
             (
                 "ltmTemperature1",
                 None,
-                lambda e: (list(e.attribute_value) == [32.0] * 4),
+                lambda e: (list(e.attribute_value) == [32.0] * 12),
             ),
             (
                 "ltmTemperature2",
                 None,
-                lambda e: (list(e.attribute_value) == [32.0] * 4),
+                lambda e: (list(e.attribute_value) == [32.0] * 12),
             ),
             (
                 "ltmVoltageWarning",
                 None,
-                lambda e: (list(e.attribute_value) == [True] * 4),
+                lambda e: (list(e.attribute_value) == [True] * 12),
             ),
             (
                 "ltmCurrentWarning",
                 None,
-                lambda e: (list(e.attribute_value) == [True] * 4),
+                lambda e: (list(e.attribute_value) == [True] * 12),
             ),
             (
                 "ltmTemperatureWarning",
                 None,
-                lambda e: (list(e.attribute_value) == [True] * 4),
+                lambda e: (list(e.attribute_value) == [True] * 12),
             ),
         ]
 

@@ -259,6 +259,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_voltage-input": (None, None),
             "LTMs_8_LTM_voltage-input": (None, None),
             "LTMs_9_LTM_voltage-input": (None, None),
+            "LTMs_10_LTM_voltage-input": (None, None),
+            "LTMs_11_LTM_voltage-input": (None, None),
             "LTMs_0_LTM_voltage-input-crit-alarm": (None, None),
             "LTMs_1_LTM_voltage-input-crit-alarm": (None, None),
             "LTMs_2_LTM_voltage-input-crit-alarm": (None, None),
@@ -269,6 +271,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_voltage-input-crit-alarm": (None, None),
             "LTMs_8_LTM_voltage-input-crit-alarm": (None, None),
             "LTMs_9_LTM_voltage-input-crit-alarm": (None, None),
+            "LTMs_10_LTM_voltage-input-crit-alarm": (None, None),
+            "LTMs_11_LTM_voltage-input-crit-alarm": (None, None),
             "LTMs_0_LTM_voltage-output-1": (None, None),
             "LTMs_1_LTM_voltage-output-1": (None, None),
             "LTMs_2_LTM_voltage-output-1": (None, None),
@@ -279,6 +283,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_voltage-output-1": (None, None),
             "LTMs_8_LTM_voltage-output-1": (None, None),
             "LTMs_9_LTM_voltage-output-1": (None, None),
+            "LTMs_10_LTM_voltage-output-1": (None, None),
+            "LTMs_11_LTM_voltage-output-1": (None, None),
             "LTMs_0_LTM_voltage-output-2": (None, None),
             "LTMs_1_LTM_voltage-output-2": (None, None),
             "LTMs_2_LTM_voltage-output-2": (None, None),
@@ -289,6 +295,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_voltage-output-2": (None, None),
             "LTMs_8_LTM_voltage-output-2": (None, None),
             "LTMs_9_LTM_voltage-output-2": (None, None),
+            "LTMs_10_LTM_voltage-output-2": (None, None),
+            "LTMs_11_LTM_voltage-output-2": (None, None),
             "LTMs_0_LTM_voltage-output-max-alarm-1": (None, None),
             "LTMs_1_LTM_voltage-output-max-alarm-1": (None, None),
             "LTMs_2_LTM_voltage-output-max-alarm-1": (None, None),
@@ -299,6 +307,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_voltage-output-max-alarm-1": (None, None),
             "LTMs_8_LTM_voltage-output-max-alarm-1": (None, None),
             "LTMs_9_LTM_voltage-output-max-alarm-1": (None, None),
+            "LTMs_10_LTM_voltage-output-max-alarm-1": (None, None),
+            "LTMs_11_LTM_voltage-output-max-alarm-1": (None, None),
             "LTMs_0_LTM_voltage-output-max-alarm-2": (None, None),
             "LTMs_1_LTM_voltage-output-max-alarm-2": (None, None),
             "LTMs_2_LTM_voltage-output-max-alarm-2": (None, None),
@@ -309,6 +319,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_voltage-output-max-alarm-2": (None, None),
             "LTMs_8_LTM_voltage-output-max-alarm-2": (None, None),
             "LTMs_9_LTM_voltage-output-max-alarm-2": (None, None),
+            "LTMs_10_LTM_voltage-output-max-alarm-2": (None, None),
+            "LTMs_11_LTM_voltage-output-max-alarm-2": (None, None),
             "LTMs_0_LTM_current-input": (None, None),
             "LTMs_1_LTM_current-input": (None, None),
             "LTMs_2_LTM_current-input": (None, None),
@@ -319,6 +331,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_current-input": (None, None),
             "LTMs_8_LTM_current-input": (None, None),
             "LTMs_9_LTM_current-input": (None, None),
+            "LTMs_10_LTM_current-input": (None, None),
+            "LTMs_11_LTM_current-input": (None, None),
             "LTMs_0_LTM_current-input-max-alarm": (None, None),
             "LTMs_1_LTM_current-input-max-alarm": (None, None),
             "LTMs_2_LTM_current-input-max-alarm": (None, None),
@@ -329,6 +343,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_current-input-max-alarm": (None, None),
             "LTMs_8_LTM_current-input-max-alarm": (None, None),
             "LTMs_9_LTM_current-input-max-alarm": (None, None),
+            "LTMs_10_LTM_current-input-max-alarm": (None, None),
+            "LTMs_11_LTM_current-input-max-alarm": (None, None),
             "LTMs_0_LTM_current-output-1": (None, None),
             "LTMs_1_LTM_current-output-1": (None, None),
             "LTMs_2_LTM_current-output-1": (None, None),
@@ -339,6 +355,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_current-output-1": (None, None),
             "LTMs_8_LTM_current-output-1": (None, None),
             "LTMs_9_LTM_current-output-1": (None, None),
+            "LTMs_10_LTM_current-output-1": (None, None),
+            "LTMs_11_LTM_current-output-1": (None, None),
             "LTMs_0_LTM_current-output-2": (None, None),
             "LTMs_1_LTM_current-output-2": (None, None),
             "LTMs_2_LTM_current-output-2": (None, None),
@@ -349,6 +367,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_current-output-2": (None, None),
             "LTMs_8_LTM_current-output-2": (None, None),
             "LTMs_9_LTM_current-output-2": (None, None),
+            "LTMs_10_LTM_current-output-2": (None, None),
+            "LTMs_11_LTM_current-output-2": (None, None),
             "LTMs_0_LTM_current-output-max-alarm-1": (None, None),
             "LTMs_1_LTM_current-output-max-alarm-1": (None, None),
             "LTMs_2_LTM_current-output-max-alarm-1": (None, None),
@@ -359,6 +379,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_current-output-max-alarm-1": (None, None),
             "LTMs_8_LTM_current-output-max-alarm-1": (None, None),
             "LTMs_9_LTM_current-output-max-alarm-1": (None, None),
+            "LTMs_10_LTM_current-output-max-alarm-1": (None, None),
+            "LTMs_11_LTM_current-output-max-alarm-1": (None, None),
             "LTMs_0_LTM_current-output-max-alarm-2": (None, None),
             "LTMs_1_LTM_current-output-max-alarm-2": (None, None),
             "LTMs_2_LTM_current-output-max-alarm-2": (None, None),
@@ -369,6 +391,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_current-output-max-alarm-2": (None, None),
             "LTMs_8_LTM_current-output-max-alarm-2": (None, None),
             "LTMs_9_LTM_current-output-max-alarm-2": (None, None),
+            "LTMs_10_LTM_current-output-max-alarm-2": (None, None),
+            "LTMs_11_LTM_current-output-max-alarm-2": (None, None),
             "LTMs_0_LTM_temperature-1": (None, None),
             "LTMs_1_LTM_temperature-1": (None, None),
             "LTMs_2_LTM_temperature-1": (None, None),
@@ -379,6 +403,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_temperature-1": (None, None),
             "LTMs_8_LTM_temperature-1": (None, None),
             "LTMs_9_LTM_temperature-1": (None, None),
+            "LTMs_10_LTM_temperature-1": (None, None),
+            "LTMs_11_LTM_temperature-1": (None, None),
             "LTMs_0_LTM_temperature-2": (None, None),
             "LTMs_1_LTM_temperature-2": (None, None),
             "LTMs_2_LTM_temperature-2": (None, None),
@@ -389,6 +415,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_temperature-2": (None, None),
             "LTMs_8_LTM_temperature-2": (None, None),
             "LTMs_9_LTM_temperature-2": (None, None),
+            "LTMs_10_LTM_temperature-2": (None, None),
+            "LTMs_11_LTM_temperature-2": (None, None),
             "LTMs_0_LTM_temperature-max-alarm-1": (None, None),
             "LTMs_1_LTM_temperature-max-alarm-1": (None, None),
             "LTMs_2_LTM_temperature-max-alarm-1": (None, None),
@@ -399,6 +427,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_temperature-max-alarm-1": (None, None),
             "LTMs_8_LTM_temperature-max-alarm-1": (None, None),
             "LTMs_9_LTM_temperature-max-alarm-1": (None, None),
+            "LTMs_10_LTM_temperature-max-alarm-1": (None, None),
+            "LTMs_11_LTM_temperature-max-alarm-1": (None, None),
             "LTMs_0_LTM_temperature-max-alarm-2": (None, None),
             "LTMs_1_LTM_temperature-max-alarm-2": (None, None),
             "LTMs_2_LTM_temperature-max-alarm-2": (None, None),
@@ -409,6 +439,8 @@ class TalonBoardComponentManager(CbfComponentManager):
             "LTMs_7_LTM_temperature-max-alarm-2": (None, None),
             "LTMs_8_LTM_temperature-max-alarm-2": (None, None),
             "LTMs_9_LTM_temperature-max-alarm-2": (None, None),
+            "LTMs_10_LTM_temperature-max-alarm-2": (None, None),
+            "LTMs_11_LTM_temperature-max-alarm-2": (None, None),
         }
 
     def __init__(
@@ -1103,13 +1135,13 @@ class TalonBoardComponentManager(CbfComponentManager):
             try:
                 res = asyncio.run(self._db_client.do_queries())
                 self._last_check = datetime.now(timezone.utc)
-                self.logger.info(f"INFLUX RES @ {self._last_check}: {res}")
+                # self.logger.info(f"INFLUX RES @ {self._last_check}: {res}")
                 for result in res:
                     for r in result:
                         with self._telemetry_lock:
                             # each result is a tuple of (field, time, value)
                             self._telemetry[r[0]] = (r[1], r[2])
-                self.logger.info(f"TELEMETRY: {self._telemetry}")
+                # self.logger.info(f"TELEMETRY: {self._telemetry}")
             except (
                 asyncio.exceptions.TimeoutError,
                 asyncio.exceptions.CancelledError,
@@ -1130,9 +1162,9 @@ class TalonBoardComponentManager(CbfComponentManager):
         :param t: The timestamp reported from the latest query of the field
         """
         td = datetime.now(timezone.utc) - t
-        self.logger.info(
-            f"VALIDATE TIME: NOW={datetime.now(timezone.utc)}, t={t}, td={td}"
-        )
+        # self.logger.info(
+        #     f"VALIDATE TIME: NOW={datetime.now(timezone.utc)}, t={t}, td={td}"
+        # )
         if td.total_seconds() > 240:
             msg = f"Time of record {field} is too old. Currently not able to monitor device."
             self.logger.error(msg)
@@ -1155,6 +1187,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 try:
                     self._validate_time(field, t)
                 except tango.DevFailed:
+                    self.logger.error(f"{field} timestamp is too old.")
                     val = (
                         None,
                         tango.TimeVal.totime(tango.TimeVal.now()),
@@ -1163,7 +1196,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
             else:
                 # John doesn't want anything logged in the failure case since these are read in a polling loop.
-
+                self.logger.error(f"{field} not found in telemetry keys.")
                 # Suggested return from Thomas
                 val = (
                     None,

@@ -803,9 +803,9 @@ class TalonBoard(CbfDevice):
         dtype=[float],
         abs_change=0.05,
         archive_abs_change=0.05,
-        max_dim_x=4,
+        max_dim_x=12,
         label="LTM Input Voltage",
-        doc="LTM Input Voltage. One entry per LTM.",
+        doc="LTM 12V Input Voltage. One entry per LTM.",
         unit="V",
         format=".3f",
         min_alarm=0.50,
@@ -822,7 +822,7 @@ class TalonBoard(CbfDevice):
         dtype=[float],
         abs_change=0.05,
         archive_abs_change=0.05,
-        max_dim_x=4,
+        max_dim_x=12,
         label="LTM Output Voltage 1",
         doc="LTM Output Voltage 1. One entry per LTM",
         unit="V",
@@ -841,7 +841,7 @@ class TalonBoard(CbfDevice):
         dtype=[float],
         abs_change=0.05,
         archive_abs_change=0.05,
-        max_dim_x=4,
+        max_dim_x=12,
         label="LTM Output Voltage 2",
         doc="LTM Output Voltage 2. One entry per LTM",
         unit="V",
@@ -860,11 +860,12 @@ class TalonBoard(CbfDevice):
         dtype=[float],
         abs_change=0.1,
         archive_abs_change=0.1,
-        max_dim_x=4,
+        max_dim_x=12,
         label="LTM Input Current",
         doc="LTM Input Current. One entry per LTM.",
         unit="A",
         format=".3f",
+        min_alarm=0.50,
     )
     def ltmInputCurrent(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -878,11 +879,12 @@ class TalonBoard(CbfDevice):
         dtype=[float],
         abs_change=0.1,
         archive_abs_change=0.1,
-        max_dim_x=4,
+        max_dim_x=12,
         label="LTM Output Current 1",
         doc="LTM Output Current 1. One entry per LTM",
         unit="A",
         format=".3f",
+        min_alarm=0.50,
     )
     def ltmOutputCurrent1(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -896,11 +898,12 @@ class TalonBoard(CbfDevice):
         dtype=[float],
         abs_change=0.1,
         archive_abs_change=0.1,
-        max_dim_x=4,
+        max_dim_x=12,
         label="LTM Output Current 2",
         doc="LTM Output Current 2. One entry per LTM",
         unit="A",
         format=".3f",
+        min_alarm=0.50,
     )
     def ltmOutputCurrent2(self: TalonBoard) -> DevVarFloatArray:
         """
@@ -914,7 +917,7 @@ class TalonBoard(CbfDevice):
         dtype=[float],
         abs_change=1.0,
         archive_abs_change=1.0,
-        max_dim_x=4,
+        max_dim_x=12,
         label="LTM Temperature 1",
         doc="LTM Temperature 1. One entry per LTM",
         format=".3f",
@@ -933,7 +936,7 @@ class TalonBoard(CbfDevice):
         dtype=[float],
         abs_change=1.0,
         archive_abs_change=1.0,
-        max_dim_x=4,
+        max_dim_x=12,
         label="LTM Temperature 2",
         doc="LTM Temperature 2. One entry per LTM",
         format=".3f",
@@ -950,7 +953,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[bool],
-        max_dim_x=4,
+        max_dim_x=12,
         label="LTM Voltage Warning",
         doc="True if any input or output voltage warnings is set. One entry per LTM",
     )
@@ -964,7 +967,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[bool],
-        max_dim_x=4,
+        max_dim_x=12,
         label="LTM Current Warning",
         doc="True if any input or output current warnings is set. One entry per LTM",
     )
@@ -978,7 +981,7 @@ class TalonBoard(CbfDevice):
 
     @attribute(
         dtype=[bool],
-        max_dim_x=4,
+        max_dim_x=12,
         label="LTM Temperature Warning",
         doc="True if any temperature warnings is set. One entry per LTM",
     )
