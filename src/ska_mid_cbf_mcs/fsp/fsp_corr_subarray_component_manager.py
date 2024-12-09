@@ -198,7 +198,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
             hps_fsp_configuration["fine_channelizer"]["gain"]
         ):
             gain = gain * gain_corrections[gain_index % 16384]
-            # gain = gain * gain_corrections[0]
             hps_fsp_configuration["fine_channelizer"]["gain"][
                 gain_index
             ] = gain
