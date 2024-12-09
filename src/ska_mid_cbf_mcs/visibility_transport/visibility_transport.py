@@ -8,7 +8,6 @@ supporting up to 8 boards.
 import ctypes
 import logging
 
-import tango
 from ska_tango_testing import context
 from tango import DevFailed, Except
 
@@ -106,7 +105,6 @@ class VisibilityTransport:
 
     def configure(
         self,
-        scan_id: int,
         subarray_id: int,
         fsp_config: list,
         vis_slim_yaml: str,
@@ -119,7 +117,6 @@ class VisibilityTransport:
         - write the channel offsets of each FSP to host lut s2
         - configure all the SPEAD descriptor devices
 
-        :param scan_id: the scan ID
         :param subarray_id: the subarray ID
         :param fsp_config: FSP part of the scan configuration json object
         :param vis_slim_yaml: the visibility mesh config yaml
@@ -150,28 +147,9 @@ class VisibilityTransport:
             sub_id = subarray_id - 1
             n_vcc = len(fsp_config[0]["corr_vcc_ids"])
             n_baselines = n_vcc * (n_vcc + 1) // 2
-            spead_channel_offset = fsp_config[0]["spead_channel_offset"]
-
-            for attr_name, attr_value in [
-                ("scan_id_high", scan_id >> 32),
-                ("scan_id_low", scan_id & 0xFFFFFFFF),
-                ("baseline_count", n_baselines),
-                ("baseline_id", 0),
-                ("channel_count", 20),
-                ("channel_id", spead_channel_offset),
-                ("visibility_count", 20 * n_baselines),
-            ]:
-                # Write only the values for this subarray (indexed at sub_id)
-                read_attr = self._dp_spead_desc.read_attribute(
-                    attr_name,
-                    tango.ExtractAs.List,
-                )
-                list_attr = list(read_attr.value)
-                list_attr[sub_id] = attr_value
-                self._dp_spead_desc.write_attribute(attr_name, list_attr)
-
-            self._dp_spead_desc.Configure(sub_id)
-            self._dp_spead_desc.CreateDescriptor(sub_id)
+            self._dp_spead_desc.baseline_count = [n_baselines]
+            self._dp_spead_desc.channel_count = [20]
+            self._dp_spead_desc.command_inout("CreateDescriptor", sub_id)
 
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
