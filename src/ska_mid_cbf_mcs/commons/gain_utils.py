@@ -60,8 +60,11 @@ class GAINUtils:
 
         if vcc_frequency_slice is None:
             return {chan: 1.0 for chan in range(16384)}
-
+        logger.info(f"Here is the frequency band build attribute: {freq_band}")
         _freq_band_dict = freq_band_dict()
+        logger.info(
+            f"Here is the frequency band gain attribute: {_freq_band_dict[freq_band]}"
+        )
         input_sample_rate = (
             _freq_band_dict[freq_band]["base_dish_sample_rate_MHz"] * 1000000
         )

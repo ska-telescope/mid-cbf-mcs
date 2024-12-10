@@ -189,7 +189,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         # TODO: Assume gain is an array, check with JSON Validator, consider lowering the size of the array for testing, also print on HPS side and validate
         # For now, we will reinitialize gain as a large (32k) sized array in the component manager
         hps_fsp_configuration["fine_channelizer"]["gain"] = [1] * (16384)
-
         gain_corrections = GAINUtils.get_vcc_ripple_correction(
             hps_fsp_configuration["configure_scan"]["frequency_band"],
             self.logger,
@@ -298,6 +297,9 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
         self.frequency_band = freq_band_dict()[
             configuration["frequency_band"]
         ]["band_index"]
+        self.logger.info(
+            f"Here is the frequency band class attribute: {self.frequency_band}"
+        )
         self.frequency_slice_id = int(configuration["frequency_slice_id"])
 
         # Assign newly specified VCCs
