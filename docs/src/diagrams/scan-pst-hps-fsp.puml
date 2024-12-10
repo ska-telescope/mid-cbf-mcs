@@ -20,17 +20,9 @@ end box
 box "HPS"
 participant "FSP\nPST" as hpsfsppst
 participant "Sync\nBuffer" as buffer
-participant "PST\nPacketizer" as packetizer
-participant "Resampler\nDelay Tracker" as rdt
 end box
 
 fsppst     -> hpsfsppst   : Scan()
 hpsfsppst  -> buffer      : ready_scan()
-hpsfsppst  -> packetizer  : write meta_first_channel_frequency
-hpsfsppst  -> packetizer  : write meta_beam_number
-hpsfsppst  -> packetizer  : write meta_scan_id
-hpsfsppst  -> packetizer  : write meta_magic_word
-hpsfsppst  -> packetizer  : write meta_first_channel_number
-hpsfsppst  -> rdt         : stop()
 
 @enduml
