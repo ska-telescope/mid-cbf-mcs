@@ -134,8 +134,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Store maxCapabilities from controller for easy reference
         self._controller_max_capabilities = {}
-        self._count_vcc = 0
-        self._count_fsp = 0
+        self._max_count_vcc = 0
+        self._max_count_fsp = 0
 
         # proxies to subelement devices
         self._all_vcc_proxies = {}
@@ -206,12 +206,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             f"Max capabilities: {self._controller_max_capabilities}"
         )
 
-        self._count_vcc = int(self._controller_max_capabilities["VCC"])
-        self._count_fsp = int(self._controller_max_capabilities["FSP"])
+        self._max_count_vcc = int(self._controller_max_capabilities["VCC"])
+        self._max_count_fsp = int(self._controller_max_capabilities["FSP"])
 
-        self._fqdn_vcc = self._fqdn_vcc_all[: self._count_vcc]
-        self._fqdn_fsp = self._fqdn_fsp_all[: self._count_fsp]
-        self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[: self._count_fsp]
+        self._fqdn_vcc = self._fqdn_vcc_all[: self._max_count_vcc]
+        self._fqdn_fsp = self._fqdn_fsp_all[: self._max_count_fsp]
+        self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[: self._max_count_fsp]
 
         self.logger.debug(f"Active VCC FQDNs: {self._fqdn_vcc}")
         self.logger.debug(f"Active FSP FQDNs: {self._fqdn_fsp}")
@@ -398,9 +398,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self.logger.info(f"Updating delay model; {delay_model_json}")
         # we lock the mutex while forwarding the configuration to fsp_corr devices
         with self._delay_model_lock:
+            # TODO: for AA2+ update _max_count_fsp to take into account the number of FPGAs per FSP-UNIT
             results_fsp = self.issue_group_command(
                 command_name="UpdateDelayModel",
                 proxies=list(self._assigned_fsp_corr_proxies),
+                max_workers=self._max_count_fsp,
                 argin=json.dumps(delay_model_json),
             )
 
@@ -543,7 +545,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             try:
                 vcc_id = self._dish_utils.dish_id_to_vcc_id[dish_id]
-                if 0 >= vcc_id > self._count_vcc:
+                if 0 >= vcc_id > self._max_count_vcc:
                     raise KeyError(
                         f"VCC ID {vcc_id} not in current capabilities."
                     )
@@ -960,6 +962,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name=command_name,
             proxies=list(assigned_resources),
+            max_workers=self._max_count_vcc + self._max_count_fsp,
             argin=argin,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
@@ -1028,10 +1031,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if controller_validateSupportedConfiguration is True:
             validator = SubarrayScanConfigurationValidator(
                 scan_configuration=argin,
-                count_fsp=self._count_fsp,
                 dish_ids=list(self.dish_ids),
                 subarray_id=self._subarray_id,
                 logger=self.logger,
+                count_fsp=self._max_count_fsp,
             )
             success, msg = validator.validate_input()
             if success:
@@ -1608,9 +1611,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # Remove subarray membership from assigned FSP
         self.blocking_command_ids = set()
+        # TODO: for AA2+ update _max_count_fsp to take into account the number of FPGAs per FSP-UNIT
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name="RemoveSubarrayMembership",
             proxies=list(self._assigned_fsp_proxies),
+            max_workers=self._max_count_fsp,
             argin=self._subarray_id,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
@@ -1727,9 +1732,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # When configuring from READY, send any function mode subarrays in READY to IDLE
         self.blocking_command_ids = set()
+        # TODO: for AA2+ update _max_count_fsp to take into account the number of FPGAs per FSP-UNIT
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name="GoToIdle",
             proxies=list(self._assigned_fsp_corr_proxies),
+            max_workers=self._max_count_fsp,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
                 self.logger.error("FSP GoToIdle command failed")
