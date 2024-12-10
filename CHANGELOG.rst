@@ -25,9 +25,7 @@ UNRELEASED CHANGES
 * 19-11-2024: Added attribute change event mocking for unit tests to MockDeviceBuilder, MockCommand
 * CIP-2816: Removed global constants for default max capabilities, throw error when not defined
 * CIP-3048: 
-  * moved all SPEAD descriptor config out of the HPS FSP app and into VisibilityTransport
   * renamed "channel_offset" param to more explicit "spead_channel_offset", and forced uint32 underflow before writing to SPEAD descriptor; previously we were relying on the Tango attribute write value in the FSP Corr app to underflow
-  * in subarray, moved vis transport config from end of ConfigureScan to end of Scan, after FSP Scan is issued
   * added double scan with same config integration test
   * fixed controller On/Off command always calling every SLIM regardless of previous partial success
 * CIP-2809: replaced all custom assertions with ska-tango-testing assertions, deleted custom assertions
