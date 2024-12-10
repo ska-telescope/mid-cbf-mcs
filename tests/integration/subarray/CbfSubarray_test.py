@@ -1912,13 +1912,18 @@ class TestCbfSubarray:
         # ---------------------
 
         # Prepare test data
+        # Using secondary Scan JSON
         with open(test_data_path + alt_params["scan_file"]) as f:
             alt_scan = json.load(f)
 
         # Issue Scan command
-        [[result_code], [command_id]] = subarray[sub_id].Scan(
+        [[result_code], [scan_command_id]] = subarray[sub_id].Scan(
             json.dumps(alt_scan)
         )
+        assert result_code == ResultCode.QUEUED
+
+        # Issue EndScan command
+        [[result_code], [end_scan_command_id]] = subarray[sub_id].EndScan()
         assert result_code == ResultCode.QUEUED
 
         # -------------------
@@ -1928,41 +1933,61 @@ class TestCbfSubarray:
         # --- VCC checks --- #
 
         for vcc_id in subarray_params["vcc_ids"]:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=vcc[vcc_id],
-                attribute_name="obsState",
-                attribute_value=ObsState.SCANNING,
-                previous_value=ObsState.READY,
-                min_n_events=2,
-            )
+            expected_events = [
+                ("obsState", ObsState.SCANNING, ObsState.READY, 2),
+                ("obsState", ObsState.READY, ObsState.SCANNING, 2),
+            ]
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=vcc[vcc_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
 
         # --- FSP checks --- #
 
         for fsp_id in subarray_params["fsp_modes"].keys():
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=fsp_corr[fsp_id],
-                attribute_name="obsState",
-                attribute_value=ObsState.SCANNING,
-                previous_value=ObsState.READY,
-                min_n_events=2,
-            )
+            expected_events = [
+                ("obsState", ObsState.SCANNING, ObsState.READY, 2),
+                ("obsState", ObsState.READY, ObsState.SCANNING, 2),
+            ]
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=fsp_corr[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
 
         # --- Subarray checks --- #
 
         expected_events = [
-            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
+            ("obsState", ObsState.SCANNING, ObsState.READY, 2),
             (
                 "longRunningCommandResult",
                 (
-                    f"{command_id}",
+                    f"{scan_command_id}",
                     f'[{ResultCode.OK.value}, "Scan completed OK"]',
                 ),
                 None,
-                1,
+                2,
+            ),
+            ("obsState", ObsState.READY, ObsState.SCANNING, 2),
+            (
+                "longRunningCommandResult",
+                (
+                    f"{end_scan_command_id}",
+                    f'[{ResultCode.OK.value}, "EndScan completed OK"]',
+                ),
+                None,
+                2,
             ),
         ]
         for name, value, previous, n in expected_events:
@@ -1977,13 +2002,6 @@ class TestCbfSubarray:
             )
 
         # --- Cleanup --- #
-        self.test_EndScan(
-            event_tracer,
-            fsp_corr,
-            subarray,
-            subarray_params,
-            vcc,
-        )
         self.test_GoToIdle(
             event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
         )
