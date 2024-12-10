@@ -112,7 +112,7 @@ When the Subarray calls **ConfigureBand**, the jsonstr argument contains:
 - "dish_sample_rate"
 - "samples_per_frame"
 
-When the Subarray calls **ConfigureScan**, the jsonstr argument contains:
+When the Subarray calls **ConfigureScan** for corr, the jsonstr argument contains:
 
 - "config_id"
 - "frequency_band"
@@ -128,10 +128,20 @@ correlation scan.
 .. uml:: ../../diagrams/configure-scan-hps-fsp.puml
 
 The sequence diagram below shows details of calls to configure a FSP for a 
-PST scan.
+PST Configure Scan.
 
 .. figure:: ../../diagrams/configure-scan-pst-fsp-hps.png
-    :align: center
+    :align: center  
+
+When the Subarray calls **ConfigureScan** for pst, the jsonstr argument contains:
+
+- "config_id"
+- "subarray_id"
+- "frequency_band"
+- "fsp_id"
+- "function_mode"
+- "frequency_band_offset_stream1"
+- "frequency_band_offset_stream2"
 
 The sequence diagram below shows details of calls a FSP for a 
 PST scan.
