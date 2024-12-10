@@ -1185,7 +1185,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 if field in self._telemetry:
                     t, val = self._telemetry[field]
                     # FIXME: Temp to make each query invalid
-                    t = (datetime.now(timezone.utc) - timedelta(hours=1))
+                    t = datetime.now(timezone.utc) - timedelta(hours=1)
                     # FIXME: Temp to make each query invalid
                     self._validate_time(field, t)
                 else:
