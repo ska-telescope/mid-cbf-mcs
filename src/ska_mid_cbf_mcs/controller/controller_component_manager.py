@@ -1311,8 +1311,10 @@ class ControllerComponentManager(CbfComponentManager):
         (result_code, message) = (ResultCode.OK, [])
 
         # reset subarray observing state to EMPTY
-        for subarray in [self._proxies[fqdn] for fqdn in self._subarray_fqdn]:
-            (subarray_empty, log_msg) = self._subarray_to_empty(subarray)
+        for fqdn in self._subarray_fqdn:
+            (subarray_empty, log_msg) = self._subarray_to_empty(
+                self._proxies[fqdn]
+            )
             if not subarray_empty:
                 self.logger.error(log_msg)
                 message.append(log_msg)
