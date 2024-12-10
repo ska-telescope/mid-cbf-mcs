@@ -62,9 +62,9 @@ class GAINUtils:
             return {chan: 1.0 for chan in range(16384)}
 
         _freq_band_dict = freq_band_dict()
-        input_sample_rate = _freq_band_dict[freq_band][
-            "base_dish_sample_rate_MHz"
-        ] * 1000000
+        input_sample_rate = (
+            _freq_band_dict[freq_band]["base_dish_sample_rate_MHz"] * 1000000
+        )
         # TODO: Check some of the frame sizes says FIXME on them
         input_frame_size = _freq_band_dict[freq_band]["num_samples_per_frame"]
 
