@@ -1148,7 +1148,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 Exception,
             ) as e:
                 msg = f"Failed to query Influxdb of {self._db_client._hostname}: {e}"  # avoid repeated error logs
-                self.logger.error(msg)
+                # self.logger.error(msg)
                 tango.Except.throw_exception(
                     "Query_Influxdb_Error", msg, "query_if_needed()"
                 )
@@ -1167,7 +1167,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         # )
         if td.total_seconds() > 240:
             msg = f"Time of record {field} is too old. Currently not able to monitor device."
-            self.logger.error(msg)
             tango.Except.throw_exception(
                 "No new record available", msg, "validate_time()"
             )
@@ -1179,30 +1178,28 @@ class TalonBoardComponentManager(CbfComponentManager):
     def fpga_die_temperature(self) -> float:
         if self.simulation_mode:
             return SimulatedValues.get("fpga_die_temperature")
-        self._query_if_needed()
-        field = "temperature-sensors_fpga-die-temp"
-        with self._telemetry_lock:
-            if field in self._telemetry:
-                t, val = self._telemetry[field]
-                try:
+        try:
+            self._query_if_needed()
+            field = "temperature-sensors_fpga-die-temp"
+            with self._telemetry_lock:
+                if field in self._telemetry:
+                    t, val = self._telemetry[field]
+                    # FIXME: Temp to make each query invalid
+                    t = (datetime.now(timezone.utc) - timedelta(hours=1))
+                    # FIXME: Temp to make each query invalid
                     self._validate_time(field, t)
-                except tango.DevFailed:
-                    self.logger.error(f"{field} timestamp is too old.")
+                else:
                     val = (
                         None,
                         tango.TimeVal.totime(tango.TimeVal.now()),
                         tango.AttrQuality.ATTR_INVALID,
                     )
-
-            else:
-                # John doesn't want anything logged in the failure case since these are read in a polling loop.
-                self.logger.error(f"{field} not found in telemetry keys.")
-                # Suggested return from Thomas
-                val = (
-                    None,
-                    tango.TimeVal.totime(tango.TimeVal.now()),
-                    tango.AttrQuality.ATTR_INVALID,
-                )
+        except tango.DevFailed:
+            val = (
+                None,
+                tango.TimeVal.totime(tango.TimeVal.now()),
+                tango.AttrQuality.ATTR_INVALID,
+            )
         return val
 
     def fpga_die_voltage_0(self) -> float:
