@@ -1970,6 +1970,7 @@ class TestCbfSubarray:
 
         expected_events = [
             ("obsState", ObsState.SCANNING, ObsState.READY, 2),
+            ("obsState", ObsState.READY, ObsState.SCANNING, 2),
             (
                 "longRunningCommandResult",
                 (
@@ -1977,9 +1978,8 @@ class TestCbfSubarray:
                     f'[{ResultCode.OK.value}, "Scan completed OK"]',
                 ),
                 None,
-                2,
+                1,
             ),
-            ("obsState", ObsState.READY, ObsState.SCANNING, 2),
             (
                 "longRunningCommandResult",
                 (
@@ -1987,7 +1987,7 @@ class TestCbfSubarray:
                     f'[{ResultCode.OK.value}, "EndScan completed OK"]',
                 ),
                 None,
-                2,
+                1,
             ),
         ]
         for name, value, previous, n in expected_events:
