@@ -37,11 +37,13 @@ class VisibilityTransport:
 
         self._host_lut_channel_offsets = []
         self._fsp_config = None
+        self._fsp_ids = []
 
     def _get_vis_output_map(self, vis_slim_yaml: str) -> dict:
         """
         Determine which board does each FSP output route to.
 
+        :param vis_slim_yaml: the visibility mesh config yaml
         :return: a dict with fsp_id as key. The value is the TalonDX board
                  ("talondx-00x") that will output visibilities.
         :raise TangoException: if configuration is not valid
@@ -174,6 +176,12 @@ class VisibilityTransport:
         self._fsp_config = fsp_config
 
     def _ip_to_int(self, inet: str) -> int:
+        """
+        Convert IP adress in a string to integer expected by HPS visibility transport devices.
+
+        :param inet: IP address-formatted string
+        :return: IP address converted to integer, to pass to HPS devices
+        """
         return sum(
             [
                 int(v) << (i * 8)
@@ -192,6 +200,9 @@ class VisibilityTransport:
 
         Need to match the two by channel_id to get a list of [[ip_addr, port]]
 
+        :param subarray_id: integer subarray ID
+        :param fsp_config: list of FSP scan configurations
+        :param offset_param: "spead_channel_offset" or "host_lut_channel_offset"
         :return: a list of [subarray, channel_id, ip_addr, port] as 1D array
         """
         out = []
@@ -273,7 +284,7 @@ class VisibilityTransport:
                 dp.command_inout("Program")
         except DevFailed as df:
             self.logger.error(
-                f"Failed to configure visibility transport devices: {df}"
+                f"Failed to enable visibility transport output: {df}"
             )
 
     def disable_output(self):
@@ -292,5 +303,5 @@ class VisibilityTransport:
             self._dp_spead_desc.command_inout("EndScan")
         except DevFailed as df:
             self.logger.error(
-                f"Failed to configure visibility transport devices: {df}"
+                f"Failed to disable visibility transport output: {df}"
             )
