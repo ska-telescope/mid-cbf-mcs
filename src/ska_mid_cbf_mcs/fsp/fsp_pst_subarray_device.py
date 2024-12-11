@@ -16,7 +16,7 @@ from __future__ import annotations  # allow forward references in type hints
 import os
 
 # PyTango imports
-from tango.server import device_property, run
+from tango.server import attribute, device_property, run
 
 from ska_mid_cbf_mcs.fsp.fsp_mode_subarray_device import FspModeSubarray
 from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
@@ -39,6 +39,26 @@ class FspPstSubarray(FspModeSubarray):
 
     HpsFspPstControllerAddress = device_property(dtype="str")
 
+    # ----------
+    # Attributes
+    # ----------
+
+    @attribute(
+        dtype=("uint16",),
+        max_dim_x=16,
+        label="TimingBeamID",
+        doc="Identifiers of timing beams assigned to FSP PST Subarray",
+    )
+    def timingBeamID(self: FspPstSubarray) -> list[int]:
+        """
+        Read the list of Timing Beam IDs assigned to the FSP PST Subarray.
+
+        :return: the timingBeamID attribute. List of ints
+        :rtype: List[int]
+        """
+
+        return self.component_manager.timing_beam_id
+
     # --------------
     # Initialization
     # --------------
@@ -53,7 +73,7 @@ class FspPstSubarray(FspModeSubarray):
         """
 
         return FspPstSubarrayComponentManager(
-            hps_fsp_pst_controller_fqdn=self.HpsFspPstControllerAddress,
+            hps_fsp_mode_controller_fqdn=self.HpsFspPstControllerAddress,
             lrc_timeout=int(self.LRCTimeout),
             logger=self.logger,
             attr_change_callback=self.push_change_event,

@@ -29,7 +29,6 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
     def __init__(
         self: FspPstSubarrayComponentManager,
         *args: Any,
-        hps_fsp_pst_controller_fqdn: str,
         **kwargs: Any,
     ) -> None:
         """
@@ -39,10 +38,11 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
         """
 
         super().__init__(
-            hps_fsp_mode_controller_fqdn=hps_fsp_pst_controller_fqdn,
             *args,
             **kwargs,
         )
+
+        self._timing_beam_id = []
 
     # -------------
     # Class Helpers
@@ -102,9 +102,6 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
-                self._proxy_hps_fsp_mode_controller.set_timeout_millis(
-                    self._lrc_timeout * 1000
-                )
                 self._proxy_hps_fsp_mode_controller.ConfigureScan(
                     configuration
                 )

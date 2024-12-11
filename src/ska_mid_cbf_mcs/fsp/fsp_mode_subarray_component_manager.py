@@ -40,14 +40,13 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
 
         :param hps_fsp_mode_controller_fqdn: FQDN of the HPS FSP controller device for a given FSP Mode
 
-        TODO: for Mid.CBF, param hps_fsp_corr_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
+        TODO: for Mid.CBF, param hps_fsp_hsp_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         :param hps_fsp_corr_controller_fqdn: FQDN of the HPS FSP Correlator controller device
         """
         super().__init__(*args, **kwargs)
 
-        self._hps_fsp_mode_controller_fqdn = hps_fsp_mode_controller_fqdn
         self._proxy_hps_fsp_mode_controller = None
-
+        self._hps_fsp_mode_controller_fqdn = hps_fsp_mode_controller_fqdn
         self.delay_model = ""
         self.vcc_ids = []
         self.scan_id = 0
