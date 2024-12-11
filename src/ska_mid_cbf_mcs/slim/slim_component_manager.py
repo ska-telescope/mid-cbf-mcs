@@ -511,8 +511,15 @@ class SlimComponentManager(CbfComponentManager):
             for idx, _ in enumerate(self._active_links):
                 # Poll link health every 20 seconds, and also verify now.
                 try:
-                    self._dp_links[idx].VerifyConnection()
+                    (result, msg) = self._dp_links[idx].VerifyConnection()
                     self._dp_links[idx].poll_command("VerifyConnection", 20000)
+                    if result != ResultCode.OK:
+                        self.logger.error(msg)
+                        self._update_communication_state(
+                        CommunicationStatus.NOT_ESTABLISHED
+                        )
+                        return ResultCode.FAILED, msg
+
                 except tango.DevFailed as df:
                     message = f"Failed to initialize SLIM links: {df}"
                     self.logger.error(message)
