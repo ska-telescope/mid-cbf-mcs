@@ -1356,9 +1356,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         )
 
         # Parameter named "subarray_vcc_ids" used by HPS contains all the VCCs
-        # assigned to the subarray
+        # assigned to the subarray. This needs to be sorted by receptor ID first
+        # to ensure the baselines in visibilities come out in the expected order.
         fsp_config["subarray_vcc_ids"] = []
-        for dish in self.dish_ids:
+        dish_ids_sorted = sorted(self.dish_ids)
+        for dish in dish_ids_sorted:
             fsp_config["subarray_vcc_ids"].append(
                 self._dish_utils.dish_id_to_vcc_id[dish]
             )
@@ -1490,7 +1492,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                             "subarray_vcc_ids"
                         ].copy()
                     else:
-                        for dish in fsp_config["receptors"]:
+                        for dish in sorted(fsp_config["receptors"]):
                             fsp_config["corr_vcc_ids"].append(
                                 self._dish_utils.dish_id_to_vcc_id[dish]
                             )
