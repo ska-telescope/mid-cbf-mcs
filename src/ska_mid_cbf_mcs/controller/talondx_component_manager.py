@@ -629,7 +629,7 @@ class TalonDxComponentManager(CbfComponentManager):
         # HPS master shutdown with code 3 to gracefully shut down linux host (HPS)
         hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
         hps_master = self.proxies[hps_master_fqdn]
-        hps_master.set_timeout_millis(const.DEFAULT_TIMEOUT * 1000)
+        hps_master.set_timeout_millis(self._lrc_timeout * 1000)
         try:
             hps_master.shutdown(3)
         except tango.DevFailed:

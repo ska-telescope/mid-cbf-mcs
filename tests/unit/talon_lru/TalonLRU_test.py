@@ -60,7 +60,7 @@ class TestTalonLRU:
             PDU1PowerOutlet="AA41",
             PDU2="002",
             PDU2PowerOutlet="AA41",
-            PDUCommandTimeout="20",
+            LRCTimeout="20",
         )
         for name, mock in initial_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock)
