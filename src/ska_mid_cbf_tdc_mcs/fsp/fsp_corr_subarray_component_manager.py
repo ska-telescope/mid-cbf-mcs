@@ -33,7 +33,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
 
     def __init__(
         self: FspCorrSubarrayComponentManager,
-        hps_fsp_corr_controller_fqdn: str,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -43,7 +42,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         :param hps_fsp_corr_controller_fqdn: FQDN of the HPS FSP Correlator controller device
         """
         super().__init__(
-            hps_fsp_mode_controller_fqdn=hps_fsp_corr_controller_fqdn,
             *args,
             **kwargs,
         )
