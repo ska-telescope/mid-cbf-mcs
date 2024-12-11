@@ -50,7 +50,7 @@ class TalonLRU(CbfDevice):
 
     PDU2PowerOutlet = device_property(dtype="str")
 
-    PDUCommandTimeout = device_property(dtype="str")
+    LRCTimeout = device_property(dtype=("str"))
 
     # ----------
     # Attributes
@@ -72,7 +72,7 @@ class TalonLRU(CbfDevice):
             talons=[self.TalonDxBoard1, self.TalonDxBoard2],
             pdus=[self.PDU1, self.PDU2],
             pdu_outlets=[self.PDU1PowerOutlet, self.PDU2PowerOutlet],
-            pdu_cmd_timeout=int(self.PDUCommandTimeout),
+            lrc_timeout=int(self.LRCTimeout),
             logger=self.logger,
             health_state_callback=self._update_health_state,
             communication_state_callback=self._communication_state_changed,

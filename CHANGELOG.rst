@@ -18,6 +18,7 @@ UNRELEASED CHANGES
 * 19-11-2024: Added attribute change event mocking for unit tests to MockDeviceBuilder, MockCommand
 * CIP-2816: Removed global constants for default max capabilities, throw error when not defined
 * SKB-668: Sort VCC IDs by their associated receptor IDs when passing to FSPs
+* SKB-669: Added configurable timeout to values for TalonLRU's PowerSwitch proxies
 
 1.1.0
 **********
