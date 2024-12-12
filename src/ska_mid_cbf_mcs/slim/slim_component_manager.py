@@ -52,6 +52,8 @@ class SlimComponentManager(CbfComponentManager):
         self.mesh_configured = False
         self._config_str = ""
 
+        self._slim_config = None
+
         # A list of [tx_fqdn, rx_fqdn] for active links.
         self._active_links = []
 
@@ -568,9 +570,8 @@ class SlimComponentManager(CbfComponentManager):
         self._config_str = config_str
 
         try:
-            self._active_links = SlimConfig(
-                self._config_str, self.logger
-            ).active_links()
+            self._slim_config = SlimConfig(self._config_str, self.logger)
+            self._active_links = self._slim_config.active_links()
 
             self.logger.debug(
                 f"Configuring {len(self._dp_links)} links with simulationMode = {self.simulation_mode}"
@@ -605,6 +606,14 @@ class SlimComponentManager(CbfComponentManager):
                     ),
                 )
                 return
+
+            # Need to disable the loopback on unused rx devices in the
+            # visibilities mesh, in order to prevent visibilities
+            unused_vis_rx = self._slim_config.get_unused_vis_rx()
+            for rx in unused_vis_rx:
+                dp = context.DeviceProxy(device_name=rx)
+                dp.initialize_connection(False)
+
         except AttributeError as ae:
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED

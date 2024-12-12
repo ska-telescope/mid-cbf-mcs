@@ -26,6 +26,24 @@ class SlimConfig:
         """
         return self._active_links
 
+    def get_unused_vis_rx(self) -> set[str]:
+        """
+        Determine the SLIM Rx devices that are not on the
+        receiving end of any link in the visibilities mesh.
+
+        :return: a set of Rx FQDN on vis mesh that are not receiving data
+        """
+        # get the full list of rx with a corresponding tx that is in use,
+        # then remove the ones that are receiving data.
+        rxs = set()
+        for lnk in self._active_links:
+            if "vis-tx" in lnk[0]:
+                rxs.add(lnk[0].replace("vis-tx", "vis-rx"))
+        for lnk in self._active_links:
+            if lnk[1] in rxs:
+                rxs.remove(lnk[1])
+        return rxs
+
     def _parse_link(self, link: str):
         """
         Each link is in the format of "tx_fqdn -> rx_fqdn". If the
