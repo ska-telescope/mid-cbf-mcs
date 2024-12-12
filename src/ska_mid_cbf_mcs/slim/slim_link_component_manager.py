@@ -621,6 +621,13 @@ class SlimLinkComponentManager(CbfComponentManager):
             (result, msg) = self.clear_counters()
             if result != ResultCode.OK:
                 self.logger.error(msg)
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        f"{msg}",
+                    ),
+                )
                 return
 
         task_callback(

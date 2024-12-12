@@ -272,7 +272,16 @@ class VccComponentManager(CbfObsComponentManager):
             self._vcc_controller_simulator.ConfigureBand(frequency_band)
         else:
             try:
-                self._vcc_controller_proxy.ConfigureBand(frequency_band)
+                # TODO: Handle here, look into vcc app
+                (result, msg) = self._vcc_controller_proxy.ConfigureBand(
+                    frequency_band
+                )
+                if result != ResultCode.OK:
+                    self.logger.error(msg)
+                    return (
+                        ResultCode.FAILED,
+                        "Failed to issue ConfigureBand command to HPS VCC controller.",
+                    )
 
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")

@@ -223,6 +223,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
 
         if not self.simulation_mode:
             try:
+                # TODO: Update these calls to fsp app with handling, look into fsp app for returns
                 (
                     result,
                     msg,
@@ -231,9 +232,6 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
                 )
                 if result != ResultCode.OK:
                     self.logger.error(msg)
-                    self._update_communication_state(
-                        communication_state=CommunicationStatus.NOT_ESTABLISHED
-                    )
                     return (
                         ResultCode.FAILED,
                         "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
