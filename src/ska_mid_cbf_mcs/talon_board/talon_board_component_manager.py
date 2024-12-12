@@ -1161,7 +1161,13 @@ class TalonBoardComponentManager(CbfComponentManager):
         :param field: The field for which its value is being validated
         :param t: The timestamp reported from the latest query of the field
         """
-        td = datetime.now(timezone.utc) - t
+        try:
+            td = datetime.now(timezone.utc) - t
+        except TypeError:
+            msg = f"Time of record {field} is None. This typically means the field was not returned from the latest query."
+            tango.Except.throw_exception(
+                "No new record available", msg, "validate_time()"
+            )
         # self.logger.info(
         #     f"VALIDATE TIME: NOW={datetime.now(timezone.utc)}, t={t}, td={td}"
         # )
