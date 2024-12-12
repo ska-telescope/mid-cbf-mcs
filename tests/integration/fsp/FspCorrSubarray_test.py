@@ -233,7 +233,7 @@ class TestFspCorrSubarray:
             configuration["integration_factor"]
         )
         assert device_under_test.fspChannelOffset == int(
-            configuration["channel_offset"]
+            configuration["spead_channel_offset"]
         )
         vis_destination_addr = json.loads(
             device_under_test.visDestinationAddress
