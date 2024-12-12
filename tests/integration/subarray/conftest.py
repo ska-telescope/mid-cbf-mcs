@@ -43,6 +43,7 @@ DEFAULT_COUNT_SUBARRAY = 1
             },  # must be FSP IDs and FspMode values in ConfigureScan JSON
             "alt_params": {
                 "configure_scan_file": "ConfigureScan_basic_CORR_alt.json",
+                "scan_file": "Scan2_basic.json",
                 "dish_ids": ["SKA001"],
                 "vcc_ids": [
                     1

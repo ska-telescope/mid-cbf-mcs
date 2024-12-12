@@ -363,7 +363,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         try:
             delay_model_json = json.loads(model)
 
-            self.logger.info(
+            self.logger.debug(
                 f"Attempting to validate the following delay model JSON against the telescope model: {delay_model_json}"
             )
             telmodel_validate(
@@ -371,7 +371,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 config=delay_model_json,
                 strictness=1,
             )
-            self.logger.info("Delay model is valid!")
+            self.logger.debug("Delay model is valid!")
         except json.JSONDecodeError as je:
             self.logger.error(
                 f"Delay model object is not a valid JSON object; {je}"
@@ -395,7 +395,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 dish_id
             ]
 
-        self.logger.info(f"Updating delay model; {delay_model_json}")
+        self.logger.debug(f"Updating delay model; {delay_model_json}")
         # we lock the mutex while forwarding the configuration to fsp_corr devices
         with self._delay_model_lock:
             # TODO: for AA2+ update _max_count_fsp to take into account the number of FPGAs per FSP-UNIT
@@ -1351,21 +1351,16 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             "frequency_band_offset_stream2"
         ] = self._frequency_band_offset_stream2
 
-        # channel_offset is optional
-        if "channel_offset" not in fsp_config:
-            self.logger.warning(
-                "channel_offset not defined in configuration. Assigning default of 0."
-            )
-            fsp_config["channel_offset"] = 0
-
         fsp_config["fs_sample_rates"] = self._calculate_fs_sample_rates(
             common_configuration["frequency_band"]
         )
 
         # Parameter named "subarray_vcc_ids" used by HPS contains all the VCCs
-        # assigned to the subarray
+        # assigned to the subarray. This needs to be sorted by receptor ID first
+        # to ensure the baselines in visibilities come out in the expected order.
         fsp_config["subarray_vcc_ids"] = []
-        for dish in self.dish_ids:
+        dish_ids_sorted = sorted(self.dish_ids)
+        for dish in dish_ids_sorted:
             fsp_config["subarray_vcc_ids"].append(
                 self._dish_utils.dish_id_to_vcc_id[dish]
             )
@@ -1428,14 +1423,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
     def _fsp_configure_scan(
         self: CbfSubarrayComponentManager,
         common_configuration: dict[any],
-        configuration: dict[any],
         fsp_configurations: list[dict[any]],
     ) -> bool:
         """
         Issue FSP function mode subarray ConfigureScan command
 
         :param common_configuration: common Mid.CSP scan configuration dict
-        :param configuration: Mid.CBF scan configuration dict
         :param fsp_configuration: FSP scan configuration dict
 
         :return: True if successfully configured all FSP devices, otherwise False
@@ -1486,7 +1479,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                             "subarray_vcc_ids"
                         ].copy()
                     else:
-                        for dish in fsp_config["receptors"]:
+                        for dish in sorted(fsp_config["receptors"]):
                             fsp_config["corr_vcc_ids"].append(
                                 self._dish_utils.dish_id_to_vcc_id[dish]
                             )
@@ -1817,7 +1810,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         fsp_configure_scan_success = self._fsp_configure_scan(
             common_configuration=common_configuration,
-            configuration=configuration,
             fsp_configurations=fsp_configs,
         )
         if not fsp_configure_scan_success:
@@ -1863,7 +1855,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.info("Configuring visibility transport")
             vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
             self._vis_transport.configure(
-                self._subarray_id,
+                subarray_id=self._subarray_id,
                 fsp_config=self._vis_fsp_config,
                 vis_slim_yaml=vis_slim_yaml,
             )
@@ -1932,8 +1924,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        # issue Scan to assigned resources
-        scan_id = scan["scan_id"]
+        scan_id = int(scan["scan_id"])
+
+        # Issue Scan command to assigned resources
         scan_status = self._issue_lrc_all_assigned_resources(
             command_name="Scan",
             argin=scan_id,
@@ -1958,6 +1951,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        # Enable visibility transport output
         if not self.simulation_mode:
             self.logger.info("Visibility transport enable output")
             self._vis_transport.enable_output(self._subarray_id)

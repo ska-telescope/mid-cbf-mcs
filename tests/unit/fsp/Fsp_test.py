@@ -110,7 +110,7 @@ class TestFsp:
         Helper function to start up and turn on the DUT.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         """
         # Set a given device to AdminMode.ONLINE and DevState.ON
@@ -146,7 +146,7 @@ class TestFsp:
         Test the SetFunctionMode() command's happy path.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param function_mode: the function mode to be set
         """
@@ -177,12 +177,12 @@ class TestFsp:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.parametrize("function_mode", [FspModes.VLBI])
@@ -196,7 +196,7 @@ class TestFsp:
         Test the SetFunctionMode() with un-implemented function modes.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param function_mode: the function mode to be set
         """
@@ -213,7 +213,7 @@ class TestFsp:
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
-        ).cbf_has_change_event_occurred(
+        ).has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="longRunningCommandResult",
             attribute_value=(
@@ -233,7 +233,7 @@ class TestFsp:
         Test the SetFunctionMode() command before the DUT has been turned ON.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param function_mode: the function mode to be set
         """
@@ -247,7 +247,7 @@ class TestFsp:
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
-        ).cbf_has_change_event_occurred(
+        ).has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="longRunningCommandResult",
             attribute_value=(
@@ -267,7 +267,7 @@ class TestFsp:
         Test the SetFunctionMode() command when the DUT's functionMode has already been set.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param function_mode: the function mode to be set
         """
@@ -288,7 +288,7 @@ class TestFsp:
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
-        ).cbf_has_change_event_occurred(
+        ).has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="longRunningCommandResult",
             attribute_value=(
@@ -316,7 +316,7 @@ class TestFsp:
         Test the AddSubarrayMembership() command's happy path.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param sub_ids: list of subarray IDs to add
         """
@@ -392,7 +392,7 @@ class TestFsp:
         Test the AddSubarrayMembership() command before the functionMode has been set.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         """
 
@@ -409,7 +409,7 @@ class TestFsp:
 
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name="longRunningCommandResult",
                 attribute_value=(
@@ -426,10 +426,10 @@ class TestFsp:
         sub_ids: list[int],
     ) -> None:
         """
-        Test the RemoveSubarryMembership() command's happy path.
+        Test the RemoveSubarrayMembership() command's happy path.
 
         :param device_under_test: DeviceProxy to the device under test.
-        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+        :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param sub_ids: list of subarray IDs to remove
         """
