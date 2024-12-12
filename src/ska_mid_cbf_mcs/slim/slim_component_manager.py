@@ -516,7 +516,7 @@ class SlimComponentManager(CbfComponentManager):
                     if result != ResultCode.OK:
                         self.logger.error(msg)
                         self._update_communication_state(
-                        CommunicationStatus.NOT_ESTABLISHED
+                            CommunicationStatus.NOT_ESTABLISHED
                         )
                         return ResultCode.FAILED, msg
 

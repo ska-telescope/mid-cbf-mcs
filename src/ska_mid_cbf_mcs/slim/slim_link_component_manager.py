@@ -623,7 +623,6 @@ class SlimLinkComponentManager(CbfComponentManager):
                 self.logger.error(msg)
                 return
 
-
         task_callback(
             status=TaskStatus.COMPLETED,
             result=(
