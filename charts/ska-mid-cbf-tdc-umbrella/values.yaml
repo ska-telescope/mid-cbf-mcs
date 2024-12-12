@@ -7,7 +7,7 @@ global:
   environment_variables: []
   operator: true
   labels:
-    app: ska-mid-cbf-mcs
+    app: ska-mid-cbf-tdc-mcs
   sub-system:
     ska-tango-base:
       enabled: false

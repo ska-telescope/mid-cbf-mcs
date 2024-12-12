@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "ska-mid-cbf-mcs"
+name = "ska-mid-cbf-tdc-mcs"
 version = "1.1.0"
 description = ""
 authors = ["Mariana Paulo <mariana.paulo@criticalsoftware.com>"]

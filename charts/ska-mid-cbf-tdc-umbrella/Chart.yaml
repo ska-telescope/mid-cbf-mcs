@@ -1,5 +1,5 @@
 apiVersion: v2
-name: ska-mid-cbf-umbrella
+name: ska-mid-cbf-tdc-umbrella
 description: An umbrella Helm chart for deploying the whole Mid_CBF prototype.
 appVersion: 1.1.0
 version: 1.1.0
@@ -11,12 +11,12 @@ dependencies:
 - name: ska-tango-base
   version: 0.4.13
   repository: https://artefact.skao.int/repository/helm-internal
-- name: ska-mid-cbf-mcs
+- name: ska-mid-cbf-tdc-mcs
   version: 1.1.0
-  repository: "file://../ska-mid-cbf-mcs"
-- name: ska-mid-cbf-tmleafnode
+  repository: "file://../ska-mid-cbf-tdc-mcs"
+- name: ska-mid-cbf-tdc-tmleafnode
   version: 1.1.0
-  repository: "file://../ska-mid-cbf-tmleafnode"
+  repository: "file://../ska-mid-cbf-tdc-tmleafnode"
 - name: ska-mid-cbf-engineering-console
   version: 1.0.0
   repository: https://artefact.skao.int/repository/helm-internal
