@@ -59,11 +59,11 @@ deviceServers:
   vcc:
     enabled: true
     file: "data/vcc.yaml"
-  
+
   fsp:
     enabled: true
     file: "data/fsp.yaml"
-  
+
   powerswitch:
     file: "data/powerswitch.yaml"
 
