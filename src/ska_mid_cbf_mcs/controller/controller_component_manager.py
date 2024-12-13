@@ -381,8 +381,8 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
         if fqdn in used_fqdns:
-            # TODO: Untangle adminMode innit. For now, skip setting VCC online as should be handled by subarray.
-            if fqdn in self._vcc_fqdn:
+            # TODO: Untangle adminMode init. For now, skip setting FSP/VCC online as should be handled by subarray.
+            if fqdn in self._fsp_fqdn | self._vcc_fqdn:
                 return True
             return self._set_proxy_online(fqdn)
         else:
@@ -418,6 +418,10 @@ class ControllerComponentManager(CbfComponentManager):
             if not self._init_device_proxy(fqdn=fqdn, subscribe_results=True):
                 init_success = False
 
+        for fqdn in self._fsp_fqdns_all:
+            if not self._init_device_proxy(fqdn=fqdn, subscribe_results=True):
+                init_success = False
+
         for fqdn in self._vcc_fqdns_all:
             if not self._init_device_proxy(fqdn=fqdn):
                 init_success = False
@@ -431,6 +435,49 @@ class ControllerComponentManager(CbfComponentManager):
                 init_success = False
 
         return init_success
+
+    def _init_fsp(self: ControllerComponentManager) -> bool:
+        """
+        Set FSP function mode based on talondx_config JSON
+
+        :return: True if the FSP function mode is successfully set, False otherwise.
+        """
+        self.blocking_command_ids = set()
+        for config_command in self.talondx_config_json["config_commands"]:
+            fsp_mode = config_command["fpga_bitstream_fsp_mode"].upper()
+            self.logger.info(f"Setting FSP function mode to {fsp_mode}")
+
+            target = config_command["target"]
+            fsp_fqdn = f"mid_csp_cbf/fsp/{int(target):02d}"
+            if fsp_fqdn not in self._fsp_fqdn:
+                self.logger.error(
+                    f"FSP target {target} was requested but is not part of CBF capabilities"
+                )
+                return False
+
+            fsp_proxy = self._proxies[fsp_fqdn]
+
+            try:
+                [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
+                    fsp_mode
+                )
+                if result_code == ResultCode.REJECTED:
+                    raise tango.DevFailed("SetFunctionMode command rejected")
+            except tango.DevFailed as df:
+                self.logger.error(f"Error in assigning FSP Mode: {df}")
+                return False
+
+            self.blocking_command_ids.add(command_id)
+
+        lrc_status = self.wait_for_blocking_results()
+        if lrc_status != TaskStatus.COMPLETED:
+            self.logger.error(
+                "All Fsp.SetFunctionMode() LRC calls failed/timed out. Check Fsp logs."
+            )
+            return False
+
+        self.logger.info("Successfully set all FSP function modes")
+        return True
 
     def _start_communicating(
         self: ControllerComponentManager, *args, **kwargs
@@ -494,6 +541,13 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.info(
             f"event_ids after subscribing = {len(self.event_ids)}"
         )
+
+        # Set FSP function mode
+        if not self._init_fsp():
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return
 
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
@@ -922,52 +976,6 @@ class ControllerComponentManager(CbfComponentManager):
         else:
             self.logger.info("Some/all Slim devices successfully configured.")
 
-    def _init_fsp(self: ControllerComponentManager) -> bool:
-        """
-        Set FSP function mode
-
-        :return: True if the FSP function mode is successfully set, False otherwise.
-        """
-        try:
-            fsp_mode = self.talondx_config_json["config_commands"][0][
-                "fpga_bitstream_fsp_mode"
-            ].upper()
-            self.logger.info(f"Setting FSP function mode to {fsp_mode}")
-
-            for fqdn in self._fsp_fqdns_all:
-                if not self._init_device_proxy(
-                    fqdn=fqdn, subscribe_results=True
-                ):
-                    message = "Failed to _init_device_proxy for FSP."
-                    self.logger.error(message)
-                    return (False, message)
-
-            for fsp in self._fsp_fqdn:
-                fsp_proxy = self._proxies[fsp]
-
-                # Set functionMode of FSP
-                [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
-                    fsp_mode
-                )
-
-                if result_code == ResultCode.REJECTED:
-                    message = f"{fsp_proxy.dev_name()} SetFunctionMode command rejected"
-                    self.logger.error(message)
-                    return (False, message)
-
-                self.blocking_command_ids.add(command_id)
-                # Subarray controls FSP afterwords
-                fsp_proxy.adminMode = AdminMode.OFFLINE
-
-            self.wait_for_blocking_results()
-
-        except tango.DevFailed as df:
-            message = f"Error in assigning FSP Mode: {df}"
-            self.logger.error(message)
-            return (False, message)
-
-        return (True, "Completed _assign_fsp completed OK")
-
     def is_on_allowed(self: ControllerComponentManager) -> bool:
         """
         Check if the On command is allowed.
@@ -1056,18 +1064,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Configure SLIM Mesh devices
         self._configure_slim_devices(task_abort_event)
-
-        # Send SetFunctionMode to FSP
-        assign_fsp_status, msg = self._init_fsp()
-        if not assign_fsp_status:
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            task_callback(
-                result=(ResultCode.FAILED, msg),
-                status=TaskStatus.FAILED,
-            )
-            return
 
         task_callback(
             result=(ResultCode.OK, "On completed OK"),

@@ -1401,6 +1401,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     )
                     return False
 
+            fsp_proxy.simulationMode = self.simulation_mode
             fsp_proxy.adminMode = AdminMode.ONLINE
 
             # Add subarray membership, which powers on this FSP's function mode devices

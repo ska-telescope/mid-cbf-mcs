@@ -24,6 +24,7 @@ from ska_mid_cbf_mcs.commons.global_enum import const
 
 DEFAULT_COUNT_SUBARRAY = 1
 DEFAULT_COUNT_VCC = 4
+DEFAULT_COUNT_FSP = 4
 
 
 @pytest.fixture(
@@ -96,6 +97,19 @@ def subarray_proxies() -> list[context.DeviceProxy]:
     return [
         context.DeviceProxy(device_name=f"mid_csp_cbf/sub_elt/subarray_{i:02}")
         for i in range(1, DEFAULT_COUNT_SUBARRAY + 1)
+    ]
+
+
+@pytest.fixture(name="fsp", scope="module", autouse=True)
+def fsp_proxies() -> list[context.DeviceProxy]:
+    """
+    Fixture that returns a list of proxies to FSP devices.
+
+    :return: list of DeviceProxy to Fsp devices
+    """
+    return [
+        context.DeviceProxy(device_name=f"mid_csp_cbf/fsp/{fsp_id:02}")
+        for fsp_id in range(1, DEFAULT_COUNT_FSP + 1)
     ]
 
 
@@ -209,6 +223,7 @@ def slim_link_vis_proxies() -> list[context.DeviceProxy]:
 @pytest.fixture(name="event_tracer", scope="function", autouse=True)
 def tango_event_tracer(
     controller: context.DeviceProxy,
+    fsp: list[context.DeviceProxy],
     power_switch: list[context.DeviceProxy],
     slim_fs: context.DeviceProxy,
     slim_vis: context.DeviceProxy,
@@ -236,6 +251,11 @@ def tango_event_tracer(
         tracer.subscribe_event(proxy, "state")
         tracer.subscribe_event(proxy, "obsState")
         tracer.subscribe_event(proxy, "sysParam")
+
+    for proxy in fsp:
+        tracer.subscribe_event(proxy, "adminMode")
+        tracer.subscribe_event(proxy, "state")
+        tracer.subscribe_event(proxy, "functionMode")
 
     for proxy in vcc + talon_board:
         tracer.subscribe_event(proxy, "adminMode")

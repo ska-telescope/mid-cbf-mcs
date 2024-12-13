@@ -108,6 +108,9 @@ class FspComponentManager(CbfComponentManager):
                 self._proxy_hps_fsp_controller = context.DeviceProxy(
                     device_name=self._hps_fsp_controller_fqdn
                 )
+                self._proxy_hps_fsp_controller.SetFunctionMode(
+                    self.function_mode
+                )
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failure in connection to HPS FSP controller; {df}"
@@ -139,7 +142,10 @@ class FspComponentManager(CbfComponentManager):
         :return: True if the SetFunctionMode command is allowed, False otherwise
         """
         self.logger.debug("Checking if SetFunctionMode is allowed")
-        if not self.is_communicating:
+        if self.is_communicating:
+            self.logger.warning(
+                "SetFunctionMode command can only be issued when FSP is in AdminMode.OFFLINE/DevState.DISABLED"
+            )
             return False
         if len(self.subarray_membership) != 0:
             self.logger.warning(
@@ -166,35 +172,6 @@ class FspComponentManager(CbfComponentManager):
                 f"{function_mode} not a valid FSP function mode."
             )
             return False
-        return True
-
-    def _set_hps_fsp_function_mode(
-        self: FspComponentManager, function_mode: int
-    ) -> bool:
-        """
-        Set the HPS FSP application function mode.
-
-        :param function_mode: function mode int
-        :return: True if successfully set FSP function mode, otherwise False
-        """
-        if not self.simulation_mode:
-            try:
-                self._proxy_hps_fsp_controller.SetFunctionMode(function_mode)
-            except tango.DevFailed as df:
-                self.logger.error(
-                    f"Failed to issue SetFunctionMode command to HPS FSP controller; {df}"
-                )
-                self._update_communication_state(
-                    communication_state=CommunicationStatus.NOT_ESTABLISHED
-                )
-                return False
-
-        self.function_mode = function_mode
-        self.device_attr_change_callback("functionMode", self.function_mode)
-        self.device_attr_archive_callback("functionMode", self.function_mode)
-        self.logger.info(
-            f"FSP set to function mode {FspModes(function_mode).name}"
-        )
         return True
 
     def _set_function_mode(
@@ -228,18 +205,13 @@ class FspComponentManager(CbfComponentManager):
             )
             return
 
-        function_mode_success = self._set_hps_fsp_function_mode(
-            FspModes[argin].value
+        function_mode = FspModes[argin].value
+        self.function_mode = function_mode
+        self.device_attr_change_callback("functionMode", self.function_mode)
+        self.device_attr_archive_callback("functionMode", self.function_mode)
+        self.logger.info(
+            f"FSP set to function mode {FspModes(function_mode).name}"
         )
-        if not function_mode_success:
-            task_callback(
-                result=(
-                    ResultCode.FAILED,
-                    f"Failed to set FSP function mode to {argin}",
-                ),
-                status=TaskStatus.FAILED,
-            )
-            return
 
         task_callback(
             result=(

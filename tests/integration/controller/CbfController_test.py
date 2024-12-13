@@ -24,6 +24,7 @@ from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 from ... import test_utils
 
@@ -46,6 +47,7 @@ class TestCbfController:
     def test_Online(
         self: TestCbfController,
         controller: context.DeviceProxy,
+        fsp: list[context.DeviceProxy],
         talon_lru: list[context.DeviceProxy],
         power_switch: list[context.DeviceProxy],
         slim_fs: context.DeviceProxy,
@@ -60,6 +62,7 @@ class TestCbfController:
         can start communicating.
 
         :param controller: The controller device proxy
+        :param fsp: The list of FSP device proxies
         :param talon_lru: The list of talon_lru device proxies
         :param power_switch: The list of power_switch device proxies
         :param slim_fs: The slim_fs device proxy
@@ -106,6 +109,20 @@ class TestCbfController:
                     previous_value=previous,
                     min_n_events=n,
                 )
+
+        # Validate FSP function mode
+        for device in fsp:
+            # CIP-2550: in SimulationMode.TRUE, controller is hard-coded to only
+            # set CORR function mode
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device,
+                attribute_name="functionMode",
+                attribute_value=FspModes.CORR.value,
+                previous_value=FspModes.IDLE.value,
+                min_n_events=1,
+            )
 
     @pytest.mark.dependency(
         depends=["CbfController_Online"],
