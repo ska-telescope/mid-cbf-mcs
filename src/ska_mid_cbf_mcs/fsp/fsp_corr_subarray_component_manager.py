@@ -223,19 +223,7 @@ class FspCorrSubarrayComponentManager(CbfObsComponentManager):
 
         if not self.simulation_mode:
             try:
-                # TODO: Update these calls to fsp app with handling, look into fsp app for returns
-                (
-                    result,
-                    msg,
-                ) = self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
-                    model
-                )
-                if result != ResultCode.OK:
-                    self.logger.error(msg)
-                    return (
-                        ResultCode.FAILED,
-                        "Failed to issue UpdateDelayModels command to HPS FSP Corr controller",
-                    )
+                self._proxy_hps_fsp_corr_controller.UpdateDelayModels(model)
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 self._update_communication_state(

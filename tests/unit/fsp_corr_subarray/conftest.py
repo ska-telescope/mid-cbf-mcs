@@ -14,7 +14,6 @@ from typing import Generator
 
 import pytest
 import tango
-from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.integration import TangoEventTracer
@@ -86,14 +85,13 @@ def mock_vcc() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_hps_fsp_corr_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    # TODO: Update this with an appropriate string from fsp app return
-    builder.add_command("SetInternalParameters", (ResultCode.OK, "Nice"))
-    builder.add_command("ConfigureScan", (ResultCode.OK, "Nice"))
-    builder.add_command("Scan", (ResultCode.OK, "Nice"))
-    builder.add_command("EndScan", (ResultCode.OK, "Nice"))
-    builder.add_command("Abort", (ResultCode.OK, "Nice"))
-    builder.add_command("ObsReset", (ResultCode.OK, "Nice"))
-    builder.add_command("UpdateDelayModels", (ResultCode.OK, "Nice"))
+    builder.add_command("SetInternalParameters", None)
+    builder.add_command("ConfigureScan", None)
+    builder.add_command("Scan", None)
+    builder.add_command("EndScan", None)
+    builder.add_command("Abort", None)
+    builder.add_command("ObsReset", None)
+    builder.add_command("UpdateDelayModels", None)
     return builder()
 
 

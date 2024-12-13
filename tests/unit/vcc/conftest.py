@@ -14,7 +14,6 @@ from typing import Generator
 
 import pytest
 import tango
-from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.integration import TangoEventTracer
@@ -67,8 +66,7 @@ def mock_vcc_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.INIT)
     builder.add_command("InitCommonParameters", None)
-    # TODO: Update this with an appropriate string from fsp app return
-    builder.add_command("ConfigureBand", (ResultCode.OK, "Nice"))
+    builder.add_command("ConfigureBand", None)
     builder.add_command("Unconfigure", None)
     return builder()
 
