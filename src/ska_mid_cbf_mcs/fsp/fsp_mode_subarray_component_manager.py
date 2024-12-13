@@ -14,7 +14,7 @@ from threading import Event
 from typing import Any, Callable, Optional
 
 import tango
-from ska_control_model import PowerState, TaskStatus
+from ska_control_model import HealthState, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
@@ -91,6 +91,18 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
     # -------------
     # Class Helpers
     # -------------
+    
+    def health_state(self: FspModeSubarrayComponentManager) -> HealthState:
+        """
+        Reads the HPS function mode controller device's healthState and updates accordingly.
+
+        :return: The current healthState of the FSP.
+        :rtype: tango.HealthState
+        """
+        healthState = self._proxy_hps_fsp_mode_controller.healthState
+        self.update_device_health_state(healthState)
+        
+        return healthState
 
     # TODO: See if _build_hps_fsp_config can be abstracted out when we implement it
     # for PST
