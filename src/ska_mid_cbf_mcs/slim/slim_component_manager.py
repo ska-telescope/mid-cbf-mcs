@@ -15,6 +15,7 @@ from __future__ import annotations
 import threading
 from typing import Callable, Optional
 
+import backoff
 import tango
 from beautifultable import BeautifulTable
 from ska_control_model import AdminMode, HealthState, PowerState, TaskStatus
@@ -607,11 +608,27 @@ class SlimComponentManager(CbfComponentManager):
                 )
                 return
 
+            # SLIM Rx devices can be slow to come up. Allow a few retries
+            # before giving up.
+            @backoff.on_exception(
+                backoff.constant,
+                (Exception, tango.DevFailed),
+                max_tries=6,
+                interval=1.5,
+                jitter=None,
+            )
+            def ping_slim_rx(dp: context.DeviceProxy) -> None:
+                dp.ping()
+
             # Need to disable the loopback on unused rx devices in the
             # visibilities mesh, in order to prevent visibilities
             unused_vis_rx = self._slim_config.get_unused_vis_rx()
+            self.logger.debug(
+                f"Disabling loopback on unused SLIM Rx devices: {unused_vis_rx}"
+            )
             for rx in unused_vis_rx:
                 dp = context.DeviceProxy(device_name=rx)
+                ping_slim_rx(dp)  # wait for successful ping or timeout
                 dp.initialize_connection(False)
 
         except AttributeError as ae:
