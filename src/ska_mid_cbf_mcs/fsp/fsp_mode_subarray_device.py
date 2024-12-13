@@ -32,7 +32,8 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 __all__ = ["FspModeSubarray", "main"]
 
 # Global Variable for polling period of Attributes, in ms
-ATTR_POLLING_PERIOD = 10000     # 10s
+ATTR_POLLING_PERIOD = 10000  # 10s
+
 
 class FspModeSubarray(CbfObsDevice):
     """
@@ -87,7 +88,7 @@ class FspModeSubarray(CbfObsDevice):
         :rtype: string
         """
         return self.component_manager.delay_model
-    
+
     @attribute(
         dtype=HealthState,
         doc="HealthState of the FSP Function Mode Subarray device",
@@ -101,7 +102,6 @@ class FspModeSubarray(CbfObsDevice):
         :rtype: string
         """
         return self.component_manager.health_state()
-
 
     # --------------
     # Initialization

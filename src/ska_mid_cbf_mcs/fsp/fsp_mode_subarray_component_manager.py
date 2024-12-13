@@ -91,7 +91,7 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
     # -------------
     # Class Helpers
     # -------------
-    
+
     def health_state(self: FspModeSubarrayComponentManager) -> HealthState:
         """
         Reads the HPS function mode controller device's healthState and updates accordingly.
@@ -101,7 +101,7 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         """
         healthState = self._proxy_hps_fsp_mode_controller.healthState
         self.update_device_health_state(healthState)
-        
+
         return healthState
 
     # TODO: See if _build_hps_fsp_config can be abstracted out when we implement it
