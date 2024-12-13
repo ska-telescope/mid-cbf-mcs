@@ -1,6 +1,6 @@
 # Mid.CBF MCS
 
-Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-mcs)
+Code repository: [ska-mid-cbf-tdc-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-tdc-mcs)
 
 # Table Of Contents
 * [Cloning the Repository](#cloning-the-repository)
@@ -10,7 +10,7 @@ Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-
 
 Clone the repository with the following command in the directory of your choice:
 ```
-git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git
+git clone https://gitlab.com/ska-telescope/ska-mid-cbf-tdc-mcs.git
 ```
 Navigate to the newly cloned directory and initialize and update the git submodules:
 ```
@@ -21,5 +21,5 @@ git submodule update
 # Running the Mid CBF MCS
 
 Follow the MCS ReadTheDocs guide to deploy the MCS:
-[ReadTheDocs](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/guide/developer/getting_started/index.html)
+[ReadTheDocs](https://developer.skao.int/projects/ska-mid-cbf-tdc-mcs/en/latest/guide/developer/getting_started/index.html)
 

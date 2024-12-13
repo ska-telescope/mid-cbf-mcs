@@ -6,7 +6,7 @@
 
 """
 A module defining a list of fixture functions that are shared across all the
-ska-mid-cbf-mcs tests.
+ska-mid-cbf-tdc-mcs tests.
 """
 
 from __future__ import absolute_import, annotations

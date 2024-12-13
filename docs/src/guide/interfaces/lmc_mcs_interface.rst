@@ -21,7 +21,7 @@ For full details of MCS Subarray see :ref:`CbfSubarray`.
 .. uml:: ../../diagrams/mid-cbf-scan-ops.puml
 
 ..
-    Go to ska-mid-cbf-mcs/docs/src/ska-mcs-sphinx/ska-tables.py to find code that generates the below tables
+    Go to ska-mid-cbf-tdc-mcs/docs/src/ska-mcs-sphinx/ska-tables.py to find code that generates the below tables
 ..
 
 

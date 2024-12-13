@@ -1,4 +1,4 @@
-ska-mid-cbf-mcs:
+ska-mid-cbf-tdc-mcs:
   vis_slim:    
     links_to_vis1:
       - talondx-001/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx0 [x]

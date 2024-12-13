@@ -28,7 +28,7 @@ MID CBF MCS Documentation
 .. API =============================================================
 .. toctree::
    :maxdepth: 2
-   :caption: ska-mid-cbf-mcs API
+   :caption: ska-mid-cbf-tdc-mcs API
 
    api/index
 
