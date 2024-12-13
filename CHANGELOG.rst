@@ -24,6 +24,7 @@ UNRELEASED CHANGES
 * CIP-2809: replaced all custom assertions with ska-tango-testing assertions, deleted custom assertions
 * SKB-668: Sort VCC IDs by their associated receptor IDs when passing to FSPs
 * SKB-669: Added configurable timeout to values for TalonLRU's PowerSwitch proxies
+* CIP-2790: Added error handling for CbfFastCommands processed within MCS
 
 1.1.0
 **********
