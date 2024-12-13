@@ -19,10 +19,15 @@ end box
 
 box "HPS"
 participant "FSP\nPST" as hpsfsppst
+participant "Packet Stream\nRepair" as psr
 participant "Sync\nBuffer" as buffer
 end box
 
 fsppst     -> hpsfsppst   : Scan()
+hpsfsppst  -> psr         : Clear packet_error
+hpsfsppst  -> psr         : Clear packet_loss
+hpsfsppst  -> psr         : Clear packet_link_failure
+hpsfsppst  -> buffer      : reset_sync_buffer()
 hpsfsppst  -> buffer      : ready_scan()
 
 @enduml

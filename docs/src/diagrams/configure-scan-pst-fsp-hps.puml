@@ -20,7 +20,6 @@ end box
 box "HPS"
 participant "FSP\nPST" as hpsfsppst
 participant "PST 4K\nChannelizer" as channelizer
-participant "Sync\nBuffer" as buffer
 participant "Packet Stream\nRepair" as psr
 participant "Resampler\nDelay Tracker" as rdt
 participant "Beam\nSummer" as summer
@@ -36,7 +35,6 @@ hpsfsppst  -> rdt         : set input sample rate
 hpsfsppst  -> rdt         : set frequency shifts
 hpsfsppst  -> rdt         : start
 hpsfsppst  -> channelizer : write gain([..])
-hpsfsppst  -> buffer      : reset_sync_buffer()
 hpsfsppst  -> summer      : write enable([..])
 hpsfsppst  -> packetizer  : reset_packetizer
 hpsfsppst  -> packetizer  : write attributes
