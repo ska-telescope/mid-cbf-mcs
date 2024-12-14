@@ -623,9 +623,10 @@ class SlimComponentManager(CbfComponentManager):
             # Need to disable the loopback on unused rx devices in the
             # visibilities mesh, in order to prevent visibilities
             unused_vis_rx = self._slim_config.get_unused_vis_rx()
-            self.logger.info(
-                f"Disabling loopback on unused SLIM Rx devices: {unused_vis_rx}"
-            )
+            if len(unused_vis_rx) > 0:
+                self.logger.info(
+                    f"Disabling loopback on unused SLIM Rx devices: {unused_vis_rx}"
+                )
             for rx in unused_vis_rx:
                 dp = context.DeviceProxy(device_name=rx)
                 ping_slim_rx(dp)  # wait for successful ping or timeout
