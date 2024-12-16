@@ -351,7 +351,7 @@ class MockDeviceBuilder:
             def callback_with_sleep():
                 time.sleep(sleep_time_s)
                 callback(mock_event_data)
-                
+
             # Invoke callback asynchronously
             Thread(target=callback_with_sleep).start()
 

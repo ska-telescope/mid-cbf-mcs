@@ -276,12 +276,12 @@ class TestTalonBoard:
         assert device_under_test.subarrayID == ""
         assert device_under_test.dishID == ""
         assert device_under_test.vccID == ""
-        
+
         # This will generate change events for the locally defined attr.
         device_under_test.subarrayID = "1"
         device_under_test.dishID = "2"
         device_under_test.vccID = "3"
-        
+
         # Since the device defaults to simulation mode, finding change events
         # with the values from the mocks (different from the simulator) will
         # confirm that change events are being generated properly.
