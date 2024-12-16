@@ -57,7 +57,7 @@ class GAINUtils:
         # fs_transport_cfg:
         # switch_map:
         # 0 : 5
-        vcc_frequency_slice = 0
+        # vcc_frequency_slice = 0
 
         if vcc_frequency_slice is None:
             return {chan: 1.0 for chan in range(16384)}
