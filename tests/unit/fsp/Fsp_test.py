@@ -22,8 +22,8 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
-from ska_mid_cbf_mcs.fsp.fsp_device import Fsp
+from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes, const
+from ska_mid_cbf_tdc_mcs.fsp.fsp_device import Fsp
 
 from ... import test_utils
 

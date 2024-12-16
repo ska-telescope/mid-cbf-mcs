@@ -2,7 +2,7 @@
 TalonLRU
 ==================
 
-.. automodule:: ska_mid_cbf_mcs.talon_lru
+.. automodule:: ska_mid_cbf_tdc_mcs.talon_lru
 
 
 .. toctree::

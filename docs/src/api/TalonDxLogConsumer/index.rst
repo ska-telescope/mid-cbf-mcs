@@ -2,7 +2,7 @@
 TalonDxLogConsumer 
 ==================
 
-.. automodule:: ska_mid_cbf_mcs.talondx_log_consumer
+.. automodule:: ska_mid_cbf_tdc_mcs.talondx_log_consumer
 
 
 .. toctree::

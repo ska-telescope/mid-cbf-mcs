@@ -23,11 +23,11 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
+from ska_mid_cbf_tdc_mcs.power_switch.power_switch_component_manager import (
     get_power_switch_driver,
 )
-from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
-from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
+from ska_mid_cbf_tdc_mcs.power_switch.power_switch_device import PowerSwitch
+from ska_mid_cbf_tdc_mcs.testing.mock.mock_dependency import MockDependency
 
 from ... import test_utils
 

@@ -24,7 +24,7 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevFailed, DevState
 
-from ska_mid_cbf_mcs.slim.slim_device import Slim
+from ska_mid_cbf_tdc_mcs.slim.slim_device import Slim
 
 from ... import test_utils
 

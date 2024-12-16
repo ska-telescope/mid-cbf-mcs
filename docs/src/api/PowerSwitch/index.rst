@@ -2,7 +2,7 @@
 PowerSwitch 
 ==================
 
-.. automodule:: ska_mid_cbf_mcs.power_switch
+.. automodule:: ska_mid_cbf_tdc_mcs.power_switch
 
 
 .. toctree::
