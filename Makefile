@@ -1,28 +1,28 @@
 #
-# Project makefile for ska-mid-cbf-mcs project. 
-PROJECT = ska-mid-cbf-mcs
+# Project makefile for ska-mid-cbf-tdc-mcs project. 
+PROJECT = ska-mid-cbf-tdc-mcs
 
 KUBE_NAMESPACE ?= ska-mid-cbf## KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to using Helm
-SDP_KUBE_NAMESPACE ?= ska-mid-cbf-sdp##namespace to be used
+SDP_KUBE_NAMESPACE ?= ska-mid-cbf-tdc-sdp##namespace to be used
 DASHBOARD ?= webjive-dash.dump
 CLUSTER_DOMAIN ?= cluster.local
 
 HELM_RELEASE ?= test##H ELM_RELEASE is the release that all Kubernetes resources will be labelled with
 
-HELM_CHART ?= ska-mid-cbf-umbrella## HELM_CHART the chart name
+HELM_CHART ?= ska-mid-cbf-tdc-umbrella## HELM_CHART the chart name
 K8S_CHART ?= $(HELM_CHART)
 TANGO_DATABASE = tango-databaseds-$(HELM_RELEASE)
 TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
 
 # Python variables
-PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs KUBE_NAMESPACE=$(KUBE_NAMESPACE) HELM_RELEASE=$(RELEASE_NAME) TANGO_HOST=$(TANGO_HOST)
+PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_tdc_mcs KUBE_NAMESPACE=$(KUBE_NAMESPACE) HELM_RELEASE=$(RELEASE_NAME) TANGO_HOST=$(TANGO_HOST)
 
 # CIP-2859
 # Ignoring 501 which checks line length. There are over 500 failures for this in the code due to commenting. 
 # Also ignoring 503 because operators can either be before or after line break(504). 
 # We are choosing a standard to have it before the line break.
 PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,W503
-K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
+K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-tdc-umbrella
 
 # unit and integration test targets
 PYTHON_TEST_FILE = ./tests/unit/
@@ -32,7 +32,7 @@ K8S_TEST_FILE = ./tests/integration/controller ./tests/integration/subarray
 PYTHON_VARS_AFTER_PYTEST = --forked
 K8S_VARS_AFTER_PYTEST = -s
 
-CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-mcs
+CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-tdc-mcs
 
 CI_PROJECT_DIR ?= .
 
@@ -60,17 +60,17 @@ ITANGO_ENABLED ?= true## ITango enabled in ska-tango-base
 TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 
 ifneq ($(strip $(CI_JOB_ID)),)
-K8S_TEST_IMAGE_TO_TEST = $(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs/ska-mid-cbf-mcs:$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
-K8S_TEST_TANGO_IMAGE_PARAMS = --set ska-mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs \
-	--set ska-mid-cbf-mcs.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs \
-	--set ska-mid-cbf-mcs.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA) \
-	--set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
+K8S_TEST_IMAGE_TO_TEST = $(CI_REGISTRY)/ska-telescope/ska-mid-cbf-tdc-mcs/ska-mid-cbf-tdc-mcs:$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
+K8S_TEST_TANGO_IMAGE_PARAMS = --set ska-mid-cbf-tdc-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-tdc-mcs \
+	--set ska-mid-cbf-tdc-mcs.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-tdc-mcs \
+	--set ska-mid-cbf-tdc-mcs.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA) \
+	--set ska-mid-cbf-tdc-tmleafnode.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
 else
 PYTHON_RUNNER = python3 -m
-K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:$(VERSION)
-K8S_TEST_TANGO_IMAGE_PARAMS = --set ska-mid-cbf-mcs.midcbf.image.tag=$(VERSION) \
-	--set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(VERSION) \
-	--set ska-mid-cbf-mcs.hostInfo.hostIP="$(HOST_IP)"
+K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-tdc-mcs:$(VERSION)
+K8S_TEST_TANGO_IMAGE_PARAMS = --set ska-mid-cbf-tdc-mcs.midcbf.image.tag=$(VERSION) \
+	--set ska-mid-cbf-tdc-tmleafnode.midcbf.image.tag=$(VERSION) \
+	--set ska-mid-cbf-tdc-mcs.hostInfo.hostIP="$(HOST_IP)"
 endif
 
 TARANTA_PARAMS = --set ska-taranta.enabled=$(TARANTA) \
@@ -91,7 +91,7 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 	--set global.cluster_domain=$(CLUSTER_DOMAIN) \
 	--set global.operator=$(SKA_TANGO_OPERATOR) \
 	--set ska-tango-base.itango.enabled=$(ITANGO_ENABLED) \
-	--set ska-mid-cbf-mcs.hostInfo.clusterDomain=$(CLUSTER_DOMAIN) \
+	--set ska-mid-cbf-tdc-mcs.hostInfo.clusterDomain=$(CLUSTER_DOMAIN) \
 	${K8S_TEST_TANGO_IMAGE_PARAMS} \
 	${TARANTA_PARAMS}
 

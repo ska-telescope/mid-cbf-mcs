@@ -38,7 +38,7 @@ def setup(app):
 
 # -- Project information -----------------------------------------------------
 
-project = 'ska-mid-cbf-mcs Software'
+project = 'ska-mid-cbf-tdc-mcs Software'
 copyright = '2020, NRC - SKA Organization'
 author = 'Taylor Huang'
 
