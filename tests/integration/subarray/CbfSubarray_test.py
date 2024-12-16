@@ -92,7 +92,6 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-        # Controller doesn't reset FSP to IDLE so we don't check prev value
         for fsp_id in fsp:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
@@ -100,6 +99,7 @@ class TestCbfSubarray:
                 device_name=fsp[fsp_id],
                 attribute_name="functionMode",
                 attribute_value=FspModes.CORR.value,
+                previous_value=FspModes.IDLE.value,
                 min_n_events=1,
             )
 
@@ -937,6 +937,7 @@ class TestCbfSubarray:
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
         controller: context.DeviceProxy,
+        fsp: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
     ) -> None:
@@ -947,6 +948,8 @@ class TestCbfSubarray:
         Turn off controller.
 
         :param event_tracer: TangoEventTracer
+        :param controller: proxy to controller devices
+        :param fsp: dict of DeviceProxy to Fsp devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         """
@@ -984,6 +987,17 @@ class TestCbfSubarray:
                 attribute_value=value,
                 previous_value=previous,
                 min_n_events=n,
+            )
+
+        for fsp_id in fsp:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=fsp[fsp_id],
+                attribute_name="functionMode",
+                attribute_value=FspModes.IDLE.value,
+                previous_value=FspModes.CORR.value,
+                min_n_events=1,
             )
 
     @pytest.mark.dependency(
@@ -1333,7 +1347,9 @@ class TestCbfSubarray:
         self.test_RemoveAllReceptors(
             event_tracer, subarray, subarray_params, vcc
         )
-        self.test_Offline(event_tracer, controller, subarray, subarray_params)
+        self.test_Offline(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Abort_1"],
@@ -1690,7 +1706,9 @@ class TestCbfSubarray:
 
         # --- Cleanup --- #
 
-        self.test_Offline(event_tracer, controller, subarray, subarray_params)
+        self.test_Offline(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Offline_1"],
@@ -1899,7 +1917,9 @@ class TestCbfSubarray:
         self.test_RemoveAllReceptors(
             event_tracer, subarray, subarray_params, vcc
         )
-        self.test_Offline(event_tracer, controller, subarray, subarray_params)
+        self.test_Offline(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Reconfigure_1"],
@@ -2062,4 +2082,6 @@ class TestCbfSubarray:
         self.test_RemoveAllReceptors(
             event_tracer, subarray, subarray_params, vcc
         )
-        self.test_Offline(event_tracer, controller, subarray, subarray_params)
+        self.test_Offline(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )

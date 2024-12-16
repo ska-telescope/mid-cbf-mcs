@@ -436,15 +436,21 @@ class ControllerComponentManager(CbfComponentManager):
 
         return init_success
 
-    def _init_fsp(self: ControllerComponentManager) -> bool:
+    def _set_fsp_function_mode(
+        self: ControllerComponentManager, to_idle: bool = False
+    ) -> bool:
         """
         Set FSP function mode based on talondx_config JSON
 
+        :param to_idle: set to True if return FSPs to IDLE mode; defaults to False
         :return: True if the FSP function mode is successfully set, False otherwise.
         """
         self.blocking_command_ids = set()
         for config_command in self.talondx_config_json["config_commands"]:
-            fsp_mode = config_command["fpga_bitstream_fsp_mode"].upper()
+            if to_idle:
+                fsp_mode = "IDLE"
+            else:
+                fsp_mode = config_command["fpga_bitstream_fsp_mode"].upper()
             self.logger.info(f"Setting FSP function mode to {fsp_mode}")
 
             target = config_command["target"]
@@ -543,7 +549,7 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
         # Set FSP function mode
-        if not self._init_fsp():
+        if not self._set_fsp_function_mode():
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -562,12 +568,25 @@ class ControllerComponentManager(CbfComponentManager):
             "Entering ControllerComponentManager._stop_communicating"
         )
 
+        # Set FSPs to IDLE
+        if not self._set_fsp_function_mode(to_idle=True):
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return
+
         for fqdn, proxy in self._proxies.items():
             try:
-                if fqdn in self._subarray_fqdn | self._talon_lru_fqdn | {
-                    self._fs_slim_fqdn,
-                    self._vis_slim_fqdn,
-                }:
+                if (
+                    fqdn
+                    in self._subarray_fqdn
+                    | self._fsp_fqdn
+                    | self._talon_lru_fqdn
+                    | {
+                        self._fs_slim_fqdn,
+                        self._vis_slim_fqdn,
+                    }
+                ):
                     self.unsubscribe_all_events(proxy)
 
                 self.logger.info(f"Setting {fqdn} to AdminMode.OFFLINE")

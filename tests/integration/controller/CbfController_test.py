@@ -561,6 +561,7 @@ class TestCbfController:
     def test_Offline(
         self: TestCbfController,
         controller: context.DeviceProxy,
+        fsp: list[context.DeviceProxy],
         talon_lru: list[context.DeviceProxy],
         power_switch: list[context.DeviceProxy],
         slim_fs: context.DeviceProxy,
@@ -575,6 +576,7 @@ class TestCbfController:
         Set the AdminMode to OFFLINE and expect the controller and its subelements to transition to the DISABLE state.
 
         :param controller: The controller device proxy
+        :param fsp: The list of FSP device proxies
         :param talon_lru: The list of talon_lru device proxies
         :param power_switch: The list of power_switch device proxies
         :param slim_fs: The slim_fs device proxy
@@ -585,6 +587,20 @@ class TestCbfController:
         """
         # Trigger stop_communicating by setting the AdminMode to OFFLINE
         controller.adminMode = AdminMode.OFFLINE
+
+        # Validate FSP function mode
+        for device in fsp:
+            # CIP-2550: in SimulationMode.TRUE, controller is hard-coded to only
+            # set CORR function mode
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device,
+                attribute_name="functionMode",
+                attribute_value=FspModes.IDLE.value,
+                previous_value=FspModes.CORR.value,
+                min_n_events=1,
+            )
 
         expected_events = [
             ("state", DevState.DISABLE, DevState.ON, 1),
