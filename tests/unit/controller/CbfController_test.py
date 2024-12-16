@@ -101,7 +101,7 @@ class TestCbfController:
             FsSLIMConfigPath="mnt/slim/fs/slim_config.yaml",
             VisSLIMConfigPath="mnt/slim/vis/slim_config.yaml",
             LRCTimeout="30",
-            MaxCapabilities=["VCC:8", "FSP:4", "Subarray:1"],
+            MaxCapabilities=["VCC:8", "FSP:8", "Subarray:1"],
         )
 
         for name, mock in initial_mocks.items():
