@@ -28,8 +28,20 @@ class SlimConfig:
 
     def get_unused_vis_rx(self) -> set[str]:
         """
-        Determine the SLIM Rx devices that are not on the
-        receiving end of any link in the visibilities mesh.
+        Determine the SLIM Rx devices that would receive data if loopback
+        is enabled, but are not on the receiving end of any link in the
+        visibilities mesh. We will need to disable loopback on these Rx
+        to prevent visibilities being sent out of other FSP boards's 100g
+        ethernet.
+
+        For example, in the 2 FSP setup below, we need to disable loopback
+        on talondx-002/slim-tx-rx/vis-rx0 because it will otherwise receive
+        data from talondx-002/slim-tx-rx/vis-tx0, and send data out of talon
+        002's 100g eth1.
+
+        links_to_vis1:
+            - talondx-001/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx0
+            - talondx-002/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx1
 
         :return: a set of Rx FQDN on vis mesh that are not receiving data
         """
