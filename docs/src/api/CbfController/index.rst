@@ -2,7 +2,7 @@
 CbfController 
 ==================
 
-.. automodule:: ska_mid_cbf_mcs.controller
+.. automodule:: ska_mid_cbf_tdc_mcs.controller
 
 
 .. toctree::

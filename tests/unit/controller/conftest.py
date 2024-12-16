@@ -22,7 +22,7 @@ from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.integration import TangoEventTracer
 
-from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
+from ska_mid_cbf_tdc_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 
 @pytest.fixture(name="device_under_test")

@@ -2,7 +2,7 @@
 CbfSubarray
 ==================
 
-.. automodule:: ska_mid_cbf_mcs.subarray
+.. automodule:: ska_mid_cbf_tdc_mcs.subarray
 
 
 .. toctree::
