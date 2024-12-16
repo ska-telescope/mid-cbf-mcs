@@ -180,7 +180,7 @@ For a new release (i.e. prior to merging a branch into main) update the
 following files by incrementing version/release/tag number fields to conform to 
 the semantic versioning convention:
 * `.release`: `release=` and `tag=`
-* `src/ska_mid_cbf_mcs/release.py`: `version = `
+* `src/ska_mid_cbf_tdc_mcs/release.py`: `version = `
 * `charts/ska-mid-cbf/Chart.yaml`: `version:` and `appVersion:`
 * `charts/ska-mid-cbf/values.yaml`: `midcbf:image:tag:`
 * `charts/ska-mid-cbf-tdc-tmleafnode/Chart.yaml`: `version:` and `appVersion:`

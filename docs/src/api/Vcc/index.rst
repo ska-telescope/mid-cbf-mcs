@@ -2,7 +2,7 @@
 Vcc 
 ==================
 
-.. automodule:: ska_mid_cbf_mcs.vcc
+.. automodule:: ska_mid_cbf_tdc_mcs.vcc
 
 
 .. toctree::

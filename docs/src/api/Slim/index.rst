@@ -2,7 +2,7 @@
 Slim 
 ==================
 
-.. automodule:: ska_mid_cbf_mcs.slim
+.. automodule:: ska_mid_cbf_tdc_mcs.slim
 
 
 .. toctree::
