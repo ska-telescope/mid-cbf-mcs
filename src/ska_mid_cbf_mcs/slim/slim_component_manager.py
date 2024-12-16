@@ -627,10 +627,10 @@ class SlimComponentManager(CbfComponentManager):
                 self.logger.info(
                     f"Disabling loopback on unused SLIM Rx devices: {unused_vis_rx}"
                 )
-            for rx in unused_vis_rx:
-                dp = context.DeviceProxy(device_name=rx)
-                ping_slim_rx(dp)  # wait for successful ping or timeout
-                dp.loopback_enable = False
+                for rx in unused_vis_rx:
+                    dp = context.DeviceProxy(device_name=rx)
+                    ping_slim_rx(dp)  # wait for successful ping or timeout
+                    dp.loopback_enable = False
 
         except AttributeError as ae:
             self._update_communication_state(
