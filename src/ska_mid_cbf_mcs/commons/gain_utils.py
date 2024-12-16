@@ -36,6 +36,7 @@ class GAINUtils:
     def get_vcc_ripple_correction(
         freq_band: str,
         logger: logging.Logger,
+        vcc_frequency_slice=None,
     ) -> dict:
         """
         Applies VCC Gain ripple correction to a dictionary of gains
@@ -98,9 +99,11 @@ class GAINUtils:
             fir_proto, a=1, worN=2 * numpy.pi * normalized_frequency
         )
         # The Gain Correction Factors
-        vcc_gain_corrections = numpy.clip(
-            0.99 / abs(H), 0, 1
-        )  # NOTE: The 0.99 factor avoids the saturation of gain correction factors
+        # TODO: This is different than Will's version he sent in Slack
+        vcc_gain_corrections = numpy.clip(1.0 / abs(H), 0, 4.005)
+        # vcc_gain_corrections = numpy.clip(
+        #     0.99 / abs(H), 0, 1
+        # )  # NOTE: The 0.99 factor avoids the saturation of gain correction factors
         # Initiating the Gain Correction Dictionary
         # chan = (np.arange(0,16383, dtype=int) + 8192) % 16384
 
