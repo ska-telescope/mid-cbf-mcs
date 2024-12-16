@@ -142,7 +142,7 @@ class FspComponentManager(CbfComponentManager):
         :return: True if the SetFunctionMode command is allowed, False otherwise
         """
         self.logger.debug("Checking if SetFunctionMode is allowed")
-        if self.is_communicating:
+        if self.communication_state == CommunicationStatus.ESTABLISHED:
             self.logger.warning(
                 "SetFunctionMode command can only be issued when FSP is in AdminMode.OFFLINE/DevState.DISABLED"
             )
