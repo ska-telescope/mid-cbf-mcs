@@ -113,7 +113,7 @@ class TestCbfController:
         )
 
         for name, mock in initial_mocks.items():
-            harness.add_mock_device(device_name=name, device_mock=mock)
+            harness.add_mock_device(device_name=name, device_mock=mock(name))
 
         with harness as test_context:
             yield test_context
@@ -305,7 +305,6 @@ class TestCbfController:
             ),
         )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     def test_Commands_all(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
@@ -319,7 +318,24 @@ class TestCbfController:
                              events from the device under test.
         """
         # Establish communication
-        self.test_Online(device_under_test, event_tracer)
+        # TODO: mock talon configuration to test with sim mode FALSE
+        # device_under_test.simulationMode = SimulationMode.FALSE
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
 
         with open(json_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
@@ -348,6 +364,8 @@ class TestCbfController:
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                     ),
+                    None,
+                    1,
                 )
             )
 

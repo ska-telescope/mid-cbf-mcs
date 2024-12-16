@@ -453,11 +453,11 @@ class ControllerComponentManager(CbfComponentManager):
                 fsp_mode = config_command["fpga_bitstream_fsp_mode"].upper()
             self.logger.info(f"Setting FSP function mode to {fsp_mode}")
 
-            target = config_command["target"]
-            fsp_fqdn = f"mid_csp_cbf/fsp/{int(target):02d}"
+            target = int(config_command["target"])
+            fsp_fqdn = f"mid_csp_cbf/fsp/{target:02d}"
             if fsp_fqdn not in self._fsp_fqdn:
                 self.logger.error(
-                    f"FSP target {target} was requested but is not part of CBF capabilities"
+                    f"{fsp_fqdn} was requested but is not part of CBF capabilities; available FSPs: {self._fsp_fqdn}"
                 )
                 return False
 
@@ -491,7 +491,7 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Thread for start_communicating operation.
         """
-        self.logger.debug(
+        self.logger.info(
             "Entering ControllerComponentManager._start_communicating"
         )
 
@@ -507,6 +507,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
 
         # Read the talondx config JSON
+        self.logger.debug(f"Controller simulationMode: {self.simulation_mode}")
         if not self.simulation_mode:
             try:
                 with open(
@@ -529,9 +530,10 @@ class ControllerComponentManager(CbfComponentManager):
                         "target": f"{t+1:03d}",
                         "fpga_bitstream_fsp_mode": "corr",
                     }
-                    for t in range(len(self._talon_board_fqdns_all))
+                    for t in range(self._count_fsp)
                 ]
             }
+        self.logger.debug(f"Talon-DX config JSON: {self.talondx_config_json}")
 
         # Set the used FQDNs by talondx config
         self._set_used_fqdns()
