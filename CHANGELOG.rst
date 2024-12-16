@@ -24,6 +24,7 @@ UNRELEASED CHANGES
 * CIP-2809: replaced all custom assertions with ska-tango-testing assertions, deleted custom assertions
 * SKB-668: Sort VCC IDs by their associated receptor IDs when passing to FSPs
 * SKB-669: Added configurable timeout to values for TalonLRU's PowerSwitch proxies
+* CIP-3159: disable loopback on unused visibility SLIM rx devices to prevent unexpected visibility outputs from other FSPs
 
 1.1.0
 **********

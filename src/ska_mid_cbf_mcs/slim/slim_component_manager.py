@@ -15,6 +15,7 @@ from __future__ import annotations
 import threading
 from typing import Callable, Optional
 
+import backoff
 import tango
 from beautifultable import BeautifulTable
 from ska_control_model import AdminMode, HealthState, PowerState, TaskStatus
@@ -51,6 +52,8 @@ class SlimComponentManager(CbfComponentManager):
 
         self.mesh_configured = False
         self._config_str = ""
+
+        self._slim_config = None
 
         # A list of [tx_fqdn, rx_fqdn] for active links.
         self._active_links = []
@@ -568,9 +571,8 @@ class SlimComponentManager(CbfComponentManager):
         self._config_str = config_str
 
         try:
-            self._active_links = SlimConfig(
-                self._config_str, self.logger
-            ).active_links()
+            self._slim_config = SlimConfig(self._config_str, self.logger)
+            self._active_links = self._slim_config.active_links()
 
             self.logger.debug(
                 f"Configuring {len(self._dp_links)} links with simulationMode = {self.simulation_mode}"
@@ -605,6 +607,31 @@ class SlimComponentManager(CbfComponentManager):
                     ),
                 )
                 return
+
+            # SLIM Rx devices can be slow to come up. Allow a few retries
+            # before giving up.
+            @backoff.on_exception(
+                backoff.constant,
+                (Exception, tango.DevFailed),
+                max_tries=6,
+                interval=1.5,
+                jitter=None,
+            )
+            def ping_slim_rx(dp: context.DeviceProxy) -> None:
+                dp.ping()
+
+            # Need to disable the loopback on unused rx devices in the
+            # visibilities mesh, in order to prevent visibilities
+            unused_vis_rx = self._slim_config.get_unused_vis_rx()
+            if len(unused_vis_rx) > 0:
+                self.logger.info(
+                    f"Disabling loopback on unused SLIM Rx devices: {unused_vis_rx}"
+                )
+                for rx in unused_vis_rx:
+                    dp = context.DeviceProxy(device_name=rx)
+                    ping_slim_rx(dp)  # wait for successful ping or timeout
+                    dp.loopback_enable = False
+
         except AttributeError as ae:
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
