@@ -8,13 +8,13 @@
 import sys
 from typing import Optional
 
-name = "ska_mid_cbf_mcs"
-version = "1.1.0-rc.2"
+name = "ska_mid_cbf_tdc_mcs"
+version = "1.1.0"
 version_info = version.split(".")
 description = "A set of Mid MCS tango devices for the SKA Telescope."
 author = "Team CIPA"
 author_email = "taylor.huang@mda.space"
-url = "https://gitlab.com/ska-telescope/ska-mid-cbf-mcs"
+url = "https://gitlab.com/ska-telescope/ska-mid-cbf-tdc-mcs"
 license = "BSD-3-Clause"  # noqa: A001
 copyright = ""  # noqa: A001
 

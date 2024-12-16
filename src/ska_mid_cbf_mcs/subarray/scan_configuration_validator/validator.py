@@ -42,7 +42,7 @@ class SubarrayScanConfigurationValidator:
         dish_ids: list[str],
         subarray_id: int,
         logger: logging.Logger,
-        count_fsp: int = const.DEFAULT_COUNT_FSP,
+        count_fsp: int,
     ) -> None:
         """
         Constructor for SubarrayScanConfigurationValidator

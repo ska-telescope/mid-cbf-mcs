@@ -3,7 +3,7 @@ image: $SKA_K8S_TOOLS_BUILD_DEPLOY
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   MINIKUBE: "false"
-  SHARED_K8S_CHART: "ska-mid-cbf-mcs"
+  SHARED_K8S_CHART: "ska-mid-cbf-tdc-mcs"
   SERVICE_ACCOUNT: "ci-svc-$CI_PROJECT_NAME-$CI_JOB_ID"
   K8S_TIMEOUT: 500s
   KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
