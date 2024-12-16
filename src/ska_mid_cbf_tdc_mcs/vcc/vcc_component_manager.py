@@ -31,7 +31,9 @@ from ska_mid_cbf_tdc_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
 from ska_mid_cbf_tdc_mcs.vcc.vcc_band_simulator import VccBandSimulator
-from ska_mid_cbf_tdc_mcs.vcc.vcc_controller_simulator import VccControllerSimulator
+from ska_mid_cbf_tdc_mcs.vcc.vcc_controller_simulator import (
+    VccControllerSimulator,
+)
 
 __all__ = ["VccComponentManager"]
 
