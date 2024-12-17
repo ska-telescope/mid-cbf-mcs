@@ -16,7 +16,13 @@ import pytest
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 
-from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
+
+# TODO: Update constants for AA2+
+
+DEFAULT_COUNT_VCC = 4
+DEFAULT_COUNT_FSP = 4
+DEFAULT_COUNT_SUBARRAY = 1
 
 
 @pytest.fixture(
@@ -37,6 +43,7 @@ from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
             },  # must be FSP IDs and FspMode values in ConfigureScan JSON
             "alt_params": {
                 "configure_scan_file": "ConfigureScan_basic_CORR_alt.json",
+                "scan_file": "Scan2_basic.json",
                 "dish_ids": ["SKA001"],
                 "vcc_ids": [
                     1
@@ -108,7 +115,7 @@ def subarray_proxies() -> list[context.DeviceProxy]:
         sub_id: context.DeviceProxy(
             device_name=f"mid_csp_cbf/sub_elt/subarray_{sub_id:02}"
         )
-        for sub_id in range(1, const.DEFAULT_COUNT_SUBARRAY + 1)
+        for sub_id in range(1, DEFAULT_COUNT_SUBARRAY + 1)
     }
 
 
@@ -134,7 +141,7 @@ def fsp_corr_proxies() -> dict[int, context.DeviceProxy]:
         fsp_id: context.DeviceProxy(
             device_name=f"mid_csp_cbf/fspCorrSubarray/{fsp_id:02}_01"
         )
-        for fsp_id in range(1, const.DEFAULT_COUNT_FSP + 1)
+        for fsp_id in range(1, DEFAULT_COUNT_FSP + 1)
     }
 
 
@@ -147,7 +154,7 @@ def fsp_proxies() -> dict[int, context.DeviceProxy]:
     """
     return {
         fsp_id: context.DeviceProxy(device_name=f"mid_csp_cbf/fsp/{fsp_id:02}")
-        for fsp_id in range(1, const.DEFAULT_COUNT_FSP + 1)
+        for fsp_id in range(1, DEFAULT_COUNT_FSP + 1)
     }
 
 
@@ -160,7 +167,7 @@ def vcc_proxies() -> dict[int, context.DeviceProxy]:
     """
     return {
         vcc_id: context.DeviceProxy(device_name=f"mid_csp_cbf/vcc/{vcc_id:03}")
-        for vcc_id in range(1, const.DEFAULT_COUNT_VCC + 1)
+        for vcc_id in range(1, DEFAULT_COUNT_VCC + 1)
     }
 
 

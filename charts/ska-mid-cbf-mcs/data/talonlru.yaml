@@ -44,9 +44,9 @@ server:
           - name: "PDU2PowerOutlet"
             values:
             - "AA41"
-          - name: "PDUCommandTimeout"
+          - name: "LRCTimeout"
             values:
-            - "20"
+            - "{{ .Values.lruTimeout }}"
       - name: "mid_csp_cbf/talon_lru/002"
         properties:
           - name: "TalonDxBoard1"
@@ -67,9 +67,9 @@ server:
           - name: "PDU2PowerOutlet"
             values:
             - "AA42"
-          - name: "PDUCommandTimeout"
+          - name: "LRCTimeout"
             values:
-            - "20"
+            - "{{ .Values.lruTimeout }}"
       - name: "mid_csp_cbf/talon_lru/003"
         properties:
           - name: "TalonDxBoard1"
@@ -90,9 +90,9 @@ server:
           - name: "PDU2PowerOutlet"
             values:
             - "2"
-          - name: "PDUCommandTimeout"
+          - name: "LRCTimeout"
             values:
-            - "20"
+            - "{{ .Values.lruTimeout }}"
       - name: "mid_csp_cbf/talon_lru/004"
         properties:
           - name: "TalonDxBoard1"
@@ -113,9 +113,9 @@ server:
           - name: "PDU2PowerOutlet"
             values:
             - "3"
-          - name: "PDUCommandTimeout"
+          - name: "LRCTimeout"
             values:
-            - "20"
+            - "{{ .Values.lruTimeout }}"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

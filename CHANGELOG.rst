@@ -8,12 +8,6 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 UNRELEASED CHANGES
 ******************
 * CIP-2953 increase SV pod storage from 375Mi to 2Gi
-* CIP-3028 Updated hw config after systems room re-organization.
-* CIP-3034 Removed parallelization for LRU On and Off command queuing to work better with the ST PDU that is now in use.
-* CIP-2549 Controller sets unused subdevices to AdminMode.NOT_FITTED
-* CIP-2965 talondx-config generates in the beginning of integration test
-* SKB-499 added attribute pingResult to talon board devices. Added missing warning/alarm values.
-* CIP-2664 Added PST-BF back to FSP as a valid function mode; FspPstSubarray still remains to be added back in a separate story.
 * CIP-2659: CbfController On/Off command partial success
   * On command succeeds if one or more LRUs are powered on; Off command succeeds if one or more LRUs are powered off
   * Controller OpState is ON if one or more LRUs are powered on, and only OFF once all LRUs are powered off and Off command is fully successful
@@ -21,14 +15,32 @@ UNRELEASED CHANGES
   * Configurable HPS device timeouts in charts: CbfController, FspCorrSubarray, SlimLink, Vcc
 * CIP-2828 Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
 * CIP-2899: Refactored adminMode push event to be changed after communication has been established
-* CIP-3100: fix sending all subarray vcc shift values in hps fsp config value vcc_id_to_rdt_freq_shifts
 * 19-11-2024: Added attribute change event mocking for unit tests to MockDeviceBuilder, MockCommand
+* CIP-2816: Removed global constants for default max capabilities, throw error when not defined
+* CIP-3048: 
+  * renamed "channel_offset" param to more explicit "spead_channel_offset", and forced uint32 underflow before writing to SPEAD descriptor; previously we were relying on the Tango attribute write value in the FSP Corr app to underflow
+  * added double scan with same config integration test
+  * fixed controller On/Off command always calling every SLIM regardless of previous partial success
+* CIP-2809: replaced all custom assertions with ska-tango-testing assertions, deleted custom assertions
+* SKB-668: Sort VCC IDs by their associated receptor IDs when passing to FSPs
+* SKB-669: Added configurable timeout to values for TalonLRU's PowerSwitch proxies
+* CIP-3159: disable loopback on unused visibility SLIM rx devices to prevent unexpected visibility outputs from other FSPs
+
+1.1.0
+**********
+* CIP-3100 fix sending all subarray vcc shift values in hps fsp config value vcc_id_to_rdt_freq_shifts
 
 1.1.0-rc.2
 **********
 * CIP-3035: fix errors when sending channel_offset to Host-LUT and SPEAD
   * fix sending proper channel offset values to SPEAD and Host-LUT
   * fix splitting up output_port, output_host, and output_link_map in fsp configs
+* CIP-3028 Updated hw config after systems room re-organization.
+* CIP-3034 Removed parallelization for LRU On and Off command queuing to work better with the ST PDU that is now in use.
+* CIP-2549 Controller sets unused subdevices to AdminMode.NOT_FITTED
+* CIP-2965 talondx-config generates in the beginning of integration test
+* SKB-499 added attribute pingResult to talon board devices. Added missing warning/alarm values.
+* CIP-2664 Added PST-BF back to FSP as a valid function mode; FspPstSubarray still remains to be added back in a separate story.
 * CIP-3065: fix setting receptors in fsp config
 * CIP-2240: ExpectedDishID field is added to the ConfigureScan
 * CIP-3068: fix validation output_host
