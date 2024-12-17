@@ -72,7 +72,9 @@ class TestCbfController:
         :param controller_params: Input parameters for running different instances of the suite.
         """
         # Generate config JSON with deployer for controller use
-        deployer.targetTalons = [1, 2, 3, 4, 5, 6, 7, 8]
+        deployer.targetTalons = list(
+            range(1, controller_params["num_board"] + 1)
+        )
         deployer.generate_config_jsons()
 
         # Trigger start_communicating by setting the AdminMode to ONLINE
