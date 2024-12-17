@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import os
 
-from ska_control_model import ObsState, ResultCode
+from ska_control_model import HealthState, ObsState, ResultCode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from tango.server import attribute, command, device_property
 
@@ -30,6 +30,9 @@ from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 __all__ = ["FspModeSubarray", "main"]
+
+# Global Variable for polling period of Attributes, in ms
+ATTR_POLLING_PERIOD = 10000  # 10s
 
 
 class FspModeSubarray(CbfObsDevice):
@@ -85,6 +88,20 @@ class FspModeSubarray(CbfObsDevice):
         :rtype: string
         """
         return self.component_manager.delay_model
+
+    @attribute(
+        dtype=HealthState,
+        doc="HealthState of the FSP Function Mode Subarray device",
+        polling_period=ATTR_POLLING_PERIOD,
+    )
+    def healthState(self: FspModeSubarray) -> str:
+        """
+        Read the healthState attribute.
+
+        :return: the healthState attribute.
+        :rtype: string
+        """
+        return self.component_manager.health_state()
 
     # --------------
     # Initialization
