@@ -507,32 +507,18 @@ class ControllerComponentManager(CbfComponentManager):
         self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
 
         # Read the talondx config JSON
-        self.logger.debug(f"Controller simulationMode: {self.simulation_mode}")
-        if not self.simulation_mode:
-            try:
-                with open(
-                    f"{self._talondx_config_path}/talondx-config.json"
-                ) as f:
-                    self.talondx_config_json = json.load(f)
-            except FileNotFoundError as e:
-                self.logger.error(
-                    f"Failed to read talondx-config file at {self._talondx_config_path}: {e}"
-                )
-                return
-            except json.JSONDecodeError as e:
-                self.logger.error(f"Failed to decode talondx-config JSON: {e}")
-                return
-        else:
-            # TODO: Controller hard coded to only be in CORR while in simulation mode. Should use other modes too.
-            self.talondx_config_json = {
-                "config_commands": [
-                    {
-                        "target": f"{t+1:03d}",
-                        "fpga_bitstream_fsp_mode": "corr",
-                    }
-                    for t in range(self._count_fsp)
-                ]
-            }
+        try:
+            with open(f"{self._talondx_config_path}/talondx-config.json") as f:
+                self.talondx_config_json = json.load(f)
+        except FileNotFoundError as e:
+            self.logger.error(
+                f"Failed to read talondx-config file at {self._talondx_config_path}: {e}"
+            )
+            return
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Failed to decode talondx-config JSON: {e}")
+            return
+
         self.logger.debug(f"Talon-DX config JSON: {self.talondx_config_json}")
 
         # Set the used FQDNs by talondx config
