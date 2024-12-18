@@ -26,12 +26,10 @@ import os
 import tango
 from tango.server import attribute, device_property, run
 
-from ska_mid_cbf_tdc_mcs.device.base_device import CbfFastCommand
-from ska_mid_cbf_tdc_mcs.device.obs_device import CbfObsDevice
 from ska_mid_cbf_tdc_mcs.fsp.fsp_corr_subarray_component_manager import (
     FspCorrSubarrayComponentManager,
 )
-from ska_mid_cbf_mcs.fsp.fsp_mode_subarray_device import FspModeSubarray
+from ska_mid_cbf_tdc_mcs.fsp.fsp_mode_subarray_device import FspModeSubarray
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

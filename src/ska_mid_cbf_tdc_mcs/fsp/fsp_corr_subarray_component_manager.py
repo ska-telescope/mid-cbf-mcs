@@ -19,8 +19,8 @@ from ska_control_model import CommunicationStatus, TaskStatus
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_tdc_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_tdc_mcs.component.obs_component_manager import (
-    CbfObsComponentManager,
+from ska_mid_cbf_tdc_mcs.fsp.fsp_mode_subarray_component_manager import (
+    FspModeSubarrayComponentManager,
 )
 
 FSP_CORR_PARAM_PATH = "mnt/fsp_param/internal_params_fsp_corr_subarray.json"

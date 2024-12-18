@@ -24,8 +24,8 @@ from ska_control_model import ObsState, ResultCode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from tango.server import attribute, command, device_property
 
-from ska_mid_cbf_mcs.device.base_device import CbfFastCommand
-from ska_mid_cbf_mcs.device.obs_device import CbfObsDevice
+from ska_mid_cbf_tdc_mcs.device.base_device import CbfFastCommand
+from ska_mid_cbf_tdc_mcs.device.obs_device import CbfObsDevice
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

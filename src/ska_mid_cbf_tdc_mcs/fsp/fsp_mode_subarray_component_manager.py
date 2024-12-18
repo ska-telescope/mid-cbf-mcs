@@ -18,8 +18,8 @@ from ska_control_model import PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.component.obs_component_manager import (
+from ska_mid_cbf_tdc_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_tdc_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
 

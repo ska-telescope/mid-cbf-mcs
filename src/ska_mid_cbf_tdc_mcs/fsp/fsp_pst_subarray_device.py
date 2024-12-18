@@ -18,8 +18,8 @@ import os
 # PyTango imports
 from tango.server import attribute, device_property, run
 
-from ska_mid_cbf_mcs.fsp.fsp_mode_subarray_device import FspModeSubarray
-from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
+from ska_mid_cbf_tdc_mcs.fsp.fsp_mode_subarray_device import FspModeSubarray
+from ska_mid_cbf_tdc_mcs.fsp.fsp_pst_subarray_component_manager import (
     FspPstSubarrayComponentManager,
 )
 

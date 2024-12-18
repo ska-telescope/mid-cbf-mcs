@@ -18,7 +18,7 @@ import tango
 from ska_control_model import CommunicationStatus, TaskStatus
 from ska_tango_base.commands import ResultCode
 
-from ska_mid_cbf_mcs.fsp.fsp_mode_subarray_component_manager import (
+from ska_mid_cbf_tdc_mcs.fsp.fsp_mode_subarray_component_manager import (
     FspModeSubarrayComponentManager,
 )
 
