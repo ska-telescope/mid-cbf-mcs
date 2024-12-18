@@ -25,6 +25,7 @@ from ska_mid_cbf_tdc_mcs.commons.global_enum import const
 DEFAULT_COUNT_SUBARRAY = 1
 DEFAULT_COUNT_VCC = 4
 DEFAULT_COUNT_FSP = 4
+DEFAULT_COUNT_LRU = 2
 
 
 @pytest.fixture(
@@ -35,11 +36,15 @@ DEFAULT_COUNT_FSP = 4
             "sys_param_file": "sys_param_4_boards.json",
             "sys_param_from_file": True,
             "hw_config_file": "mnt/hw_config/hw_config.yaml",
+            "num_board": DEFAULT_COUNT_LRU * 2,
+            "num_lru": DEFAULT_COUNT_LRU,
         },
         {
             "sys_param_file": "source_init_sys_param.json",
             "sys_param_from_file": False,
             "hw_config_file": "mnt/hw_config/hw_config.yaml",
+            "num_board": DEFAULT_COUNT_LRU * 2,
+            "num_lru": DEFAULT_COUNT_LRU,
         },
         # TODO: this JSON causes the following exception:
         # "urllib.error.URLError: <urlopen error [Errno -5] No address associated with hostname>""
@@ -61,8 +66,8 @@ def controller_test_parameters(request: pytest.FixtureRequest) -> dict[any]:
     """
     with open(request.param["hw_config_file"]) as f:
         hw_config_dict = yaml.safe_load(f)
-    request.param["num_lru"] = len(hw_config_dict["talon_lru"])
-    request.param["num_board"] = len(hw_config_dict["talon_board"])
+    request.param["num_lru_total"] = len(hw_config_dict["talon_lru"])
+    request.param["num_board_total"] = len(hw_config_dict["talon_board"])
     request.param["num_pdu"] = len(hw_config_dict["power_switch"])
     return request.param
 
@@ -142,6 +147,25 @@ def talon_lru_proxies(
     ]
 
 
+@pytest.fixture(name="talon_lru_not_fitted", scope="module", autouse=True)
+def talon_lru_not_fitted_proxies(
+    controller_params: dict[any],
+) -> list[context.DeviceProxy]:
+    """
+    Fixture that returns a list of proxies to Talon LRU devices that are NOT_FITTED.
+
+    :param controller_params: Input parameters for running different instances of the suite.
+    :return: list of DeviceProxy to TalonLRU devices
+    """
+    return [
+        context.DeviceProxy(device_name=f"mid_csp_cbf/talon_lru/{i:03}")
+        for i in range(
+            controller_params["num_lru"] + 1,
+            controller_params["num_lru_total"] + 1,
+        )
+    ]
+
+
 @pytest.fixture(name="talon_board", scope="module", autouse=True)
 def talon_board_proxies(
     controller_params: dict[any],
@@ -155,6 +179,25 @@ def talon_board_proxies(
     return [
         context.DeviceProxy(device_name=f"mid_csp_cbf/talon_board/{i:03}")
         for i in range(1, controller_params["num_board"] + 1)
+    ]
+
+
+@pytest.fixture(name="talon_board_not_fitted", scope="module", autouse=True)
+def talon_board_not_fitted_proxies(
+    controller_params: dict[any],
+) -> list[context.DeviceProxy]:
+    """
+    Fixture that returns a list of proxies to Talon board devices that are NOT_FITTED.
+
+    :param controller_params: Input parameters for running different instances of the suite.
+    :return: list of DeviceProxy to TalonBoard devices
+    """
+    return [
+        context.DeviceProxy(device_name=f"mid_csp_cbf/talon_board/{i:03}")
+        for i in range(
+            controller_params["num_board"] + 1,
+            controller_params["num_board_total"] + 1,
+        )
     ]
 
 
@@ -229,7 +272,9 @@ def tango_event_tracer(
     slim_vis: context.DeviceProxy,
     subarray: list[context.DeviceProxy],
     talon_board: list[context.DeviceProxy],
+    talon_board_not_fitted: list[context.DeviceProxy],
     talon_lru: list[context.DeviceProxy],
+    talon_lru_not_fitted: list[context.DeviceProxy],
     vcc: list[context.DeviceProxy],
 ) -> Generator[TangoEventTracer, None, None]:
     """
@@ -261,5 +306,8 @@ def tango_event_tracer(
         tracer.subscribe_event(proxy, "adminMode")
         tracer.subscribe_event(proxy, "state")
         tracer.subscribe_event(proxy, "dishID")
+
+    for proxy in talon_board_not_fitted + talon_lru_not_fitted:
+        tracer.subscribe_event(proxy, "adminMode")
 
     return tracer

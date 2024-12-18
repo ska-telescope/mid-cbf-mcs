@@ -49,6 +49,7 @@ class TestCbfController:
         controller: context.DeviceProxy,
         fsp: list[context.DeviceProxy],
         talon_lru: list[context.DeviceProxy],
+        talon_lru_not_fitted: list[context.DeviceProxy],
         power_switch: list[context.DeviceProxy],
         slim_fs: context.DeviceProxy,
         slim_vis: context.DeviceProxy,
@@ -64,6 +65,7 @@ class TestCbfController:
         :param controller: The controller device proxy
         :param fsp: The list of FSP device proxies
         :param talon_lru: The list of talon_lru device proxies
+        :param talon_lru_not_fitted: The list of talon_lru device proxies that are NOT_FITTED
         :param power_switch: The list of power_switch device proxies
         :param slim_fs: The slim_fs device proxy
         :param slim_vis: The slim_vis device proxy
@@ -96,11 +98,28 @@ class TestCbfController:
                     min_n_events=n,
                 )
 
+        # Check devices set ONLINE
         expected_events = [
             ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
             ("state", DevState.OFF, DevState.DISABLE, 1),
         ]
         for device in talon_lru + [slim_fs, slim_vis] + [controller]:
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=device,
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
+
+        # Check devices set NOT_FITTED
+        expected_events = [
+            ("adminMode", AdminMode.NOT_FITTED, None, 1),
+        ]
+        for device in talon_lru_not_fitted:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
@@ -201,6 +220,7 @@ class TestCbfController:
         slim_fs: context.DeviceProxy,
         slim_vis: context.DeviceProxy,
         talon_board: list[context.DeviceProxy],
+        talon_board_not_fitted: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
         controller_params: dict[any],
     ):
@@ -216,6 +236,7 @@ class TestCbfController:
         :param slim_fs: The slim_fs device proxy
         :param slim_vis: The slim_vis device proxy
         :param talon_board: The list of talon_board device proxies
+        :param talon_board_not_fitted: The list of talon_board device proxies that are NOT_FITTED
         :param event_tracer: The event tracer for the controller
         :param controller_params: Input parameters for running different instances of the suite.
         """
@@ -262,6 +283,23 @@ class TestCbfController:
                         previous_value=previous,
                         min_n_events=n,
                     )
+
+        # Check devices set NOT_FITTED
+        # TODO: CIP-2550 TalonBoard devices not going to NOT_FITTED
+        # expected_events = [
+        #     ("adminMode", AdminMode.NOT_FITTED, None, 1),
+        # ]
+        # for device in talon_board_not_fitted:
+        #     for name, value, previous, n in expected_events:
+        #         assert_that(event_tracer).within_timeout(
+        #             test_utils.EVENT_TIMEOUT
+        #         ).has_change_event_occurred(
+        #             device_name=device,
+        #             attribute_name=name,
+        #             attribute_value=value,
+        #             previous_value=previous,
+        #             min_n_events=n,
+        #         )
 
         expected_events = [
             ("state", DevState.ON, DevState.OFF, 1),

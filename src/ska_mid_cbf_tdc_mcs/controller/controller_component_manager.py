@@ -451,7 +451,6 @@ class ControllerComponentManager(CbfComponentManager):
                 fsp_mode = "IDLE"
             else:
                 fsp_mode = config_command["fpga_bitstream_fsp_mode"].upper()
-            self.logger.info(f"Setting FSP function mode to {fsp_mode}")
 
             target = int(config_command["target"])
             fsp_fqdn = f"mid_csp_cbf/fsp/{target:02d}"
@@ -460,6 +459,8 @@ class ControllerComponentManager(CbfComponentManager):
                     f"{fsp_fqdn} was requested but is not part of CBF capabilities; available FSPs: {self._fsp_fqdn}"
                 )
                 return False
+
+            self.logger.info(f"Setting {fsp_fqdn} function mode to {fsp_mode}")
 
             fsp_proxy = self._proxies[fsp_fqdn]
 
@@ -507,17 +508,31 @@ class ControllerComponentManager(CbfComponentManager):
         self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
 
         # Read the talondx config JSON
-        try:
-            with open(f"{self._talondx_config_path}/talondx-config.json") as f:
-                self.talondx_config_json = json.load(f)
-        except FileNotFoundError as e:
-            self.logger.error(
-                f"Failed to read talondx-config file at {self._talondx_config_path}: {e}"
-            )
-            return
-        except json.JSONDecodeError as e:
-            self.logger.error(f"Failed to decode talondx-config JSON: {e}")
-            return
+        if not self.simulation_mode:
+            try:
+                with open(
+                    f"{self._talondx_config_path}/talondx-config.json"
+                ) as f:
+                    self.talondx_config_json = json.load(f)
+            except FileNotFoundError as e:
+                self.logger.error(
+                    f"Failed to read talondx-config file at {self._talondx_config_path}: {e}"
+                )
+                return
+            except json.JSONDecodeError as e:
+                self.logger.error(f"Failed to decode talondx-config JSON: {e}")
+                return
+        else:
+            # TODO: Controller hard coded to only be in CORR while in simulation mode. Should use other modes too.
+            self.talondx_config_json = {
+                "config_commands": [
+                    {
+                        "target": f"{t+1:03d}",
+                        "fpga_bitstream_fsp_mode": "corr",
+                    }
+                    for t in range(self._count_fsp)
+                ]
+            }
 
         self.logger.debug(f"Talon-DX config JSON: {self.talondx_config_json}")
 
