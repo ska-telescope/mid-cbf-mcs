@@ -30,7 +30,6 @@ __all__ = ["CbfController", "main"]
 
 
 class CbfController(CbfDevice):
-
     """
     CbfController TANGO device class.
 
