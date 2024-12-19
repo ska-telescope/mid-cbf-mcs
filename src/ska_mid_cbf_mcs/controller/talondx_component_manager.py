@@ -101,6 +101,7 @@ class TalonDxComponentManager(CbfComponentManager):
         try:
             hps_master.set_timeout_millis(self._lrc_timeout * 1000)
             cmd_ret = hps_master.configure(json.dumps(talon_cfg))
+            self.logger.info(f"Talon Config: {talon_cfg}")
             if cmd_ret != 0:
                 self.logger.error(
                     f"Configure command for {hps_master_fqdn}"
@@ -114,6 +115,7 @@ class TalonDxComponentManager(CbfComponentManager):
             )
             ret = ResultCode.FAILED
 
+        self.logger.info("HPS Master configured successfully!")
         return ret
 
     def _create_hps_master_device_proxies(
