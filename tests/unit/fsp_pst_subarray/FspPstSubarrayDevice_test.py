@@ -217,12 +217,12 @@ class TestFspPstSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.parametrize(
@@ -320,13 +320,14 @@ class TestFspPstSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
+
 
     @pytest.mark.parametrize(
         "config_file_name",
@@ -392,12 +393,12 @@ class TestFspPstSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
 
     @pytest.mark.parametrize(
@@ -467,13 +468,14 @@ class TestFspPstSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
+
 
     @pytest.mark.parametrize(
         "config_file_name, delay_model_file_name, scan_id",
@@ -539,13 +541,14 @@ class TestFspPstSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
+
 
         result = device_under_test.UpdateDelayModel(delay_model)
         assert result == [
@@ -554,13 +557,14 @@ class TestFspPstSubarray:
         ]
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
-        ).cbf_has_change_event_occurred(
+        ).has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="delayModel",
             attribute_value=delay_model,
             previous_value="",
-            target_n_events=1,
+            min_n_events=1,
         )
+
 
         # test issuing delay model from SCANNING
         [[result_code], [command_id]] = device_under_test.Scan(scan_id)
@@ -582,13 +586,14 @@ class TestFspPstSubarray:
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
-                target_n_events=n,
+                min_n_events=n,
             )
+
 
         # Send a delay model with missing data just to check change event
         # JSON is only validated above FSP in the subarray
@@ -604,10 +609,11 @@ class TestFspPstSubarray:
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
-        ).cbf_has_change_event_occurred(
+        ).has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="delayModel",
             attribute_value=new_delay_model,
             previous_value=delay_model,
-            target_n_events=1,
+            min_n_events=1,
         )
+

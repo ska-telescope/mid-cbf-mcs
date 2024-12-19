@@ -35,7 +35,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         talons: list[str],
         pdus: list[str],
         pdu_outlets: list[str],
-        pdu_cmd_timeout: int,
         **kwargs: Any,
     ) -> None:
         """
@@ -44,14 +43,12 @@ class TalonLRUComponentManager(CbfComponentManager):
         :param talons: FQDNs of the Talon DX board
         :param pdus: FQDNs of the power switch devices
         :param pdu_outlets: IDs of the PDU outlets
-        :param pdu_cmd_timeout: timeout for PDU commands in seconds
         """
         super().__init__(*args, **kwargs)
 
         self._talons = talons
         self._pdus = pdus
         self._pdu_outlets = pdu_outlets
-        self._pdu_cmd_timeout = pdu_cmd_timeout
 
         self._proxy_power_switch1 = None
         self._proxy_power_switch2 = None
@@ -95,6 +92,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         )
         if power_switch_proxy is not None:
             try:
+                power_switch_proxy.set_timeout_millis(self._lrc_timeout * 1000)
                 if power_switch_proxy.numOutlets == 0:
                     self.logger.error(
                         "PowerSwitch driver has not been initialized."
