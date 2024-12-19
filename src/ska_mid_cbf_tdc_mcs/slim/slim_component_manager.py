@@ -313,15 +313,19 @@ class SlimComponentManager(CbfComponentManager):
                 # Tx data
                 f"{occupancy[idx][0] * const.GBPS:.2f}\n({tx_word_count})",
                 # Tx idle - Guard for divide by zero
-                f"{tx_idle_word_count/tx_words * const.GBPS:.2f}"
-                if tx_words != 0
-                else "NaN",
+                (
+                    f"{tx_idle_word_count/tx_words * const.GBPS:.2f}"
+                    if tx_words != 0
+                    else "NaN"
+                ),
                 # Rx data
                 f"{occupancy[idx][1] * const.GBPS:.2f}\n({rx_word_count})",
                 # Rx idle - Guard for divide by zero
-                f"{rx_idle_word_count/rx_words * const.GBPS:.2f}"
-                if rx_words != 0
-                else "NaN",
+                (
+                    f"{rx_idle_word_count/rx_words * const.GBPS:.2f}"
+                    if rx_words != 0
+                    else "NaN"
+                ),
                 # Idle error count
                 f"{rx_idle_error_count} /\n{rx_words:.2e}",
                 # Word error rate

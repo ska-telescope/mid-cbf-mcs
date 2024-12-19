@@ -1292,6 +1292,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         regions and convert to individual FSP configurations.
 
         :param configuration: The Mid.CSP Function specific configurations
+        :param common_configuration: The common portion of the scan configuration
         :raises ValueError: if there is an exception processing any processing
         regions
         :return: list of Individual FSP configurations
