@@ -1,25 +1,25 @@
 [tool.poetry]
-name = "ska-mid-cbf-mcs"
+name = "ska-mid-cbf-tdc-mcs"
 version = "1.1.0"
 description = ""
 authors = ["Mariana Paulo <mariana.paulo@criticalsoftware.com>"]
 readme = "README.md"
 packages = [
-    { include = "ska_mid_cbf_mcs", from = "src" }
+    { include = "ska_mid_cbf_tdc_mcs", from = "src" }
 ]
 
 [tool.poetry.scripts]
-CbfController='ska_mid_cbf_mcs.controller.controller_device:main'
-CbfSubarray='ska_mid_cbf_mcs.subarray.subarray_device:main'
-FspMulti='ska_mid_cbf_mcs.fsp.fsp_multi:main'
-Vcc='ska_mid_cbf_mcs.vcc.vcc_device:main'
-TalonLRU='ska_mid_cbf_mcs.talon_lru.talon_lru_device:main'
-TalonBoard='ska_mid_cbf_mcs.talon_board.talon_board_device:main'
-PowerSwitch='ska_mid_cbf_mcs.power_switch.power_switch_device:main'
-SlimLink='ska_mid_cbf_mcs.slim.slim_link_device:main'
-Slim='ska_mid_cbf_mcs.slim.slim_device:main'
-TalonDxLogConsumer='ska_mid_cbf_mcs.talondx_log_consumer.talondx_log_consumer_device:main'
-TmCspSubarrayLeafNodeTest='ska_mid_cbf_mcs.tm_leaf_node:main'
+CbfController='ska_mid_cbf_tdc_mcs.controller.controller_device:main'
+CbfSubarray='ska_mid_cbf_tdc_mcs.subarray.subarray_device:main'
+FspMulti='ska_mid_cbf_tdc_mcs.fsp.fsp_multi:main'
+Vcc='ska_mid_cbf_tdc_mcs.vcc.vcc_device:main'
+TalonLRU='ska_mid_cbf_tdc_mcs.talon_lru.talon_lru_device:main'
+TalonBoard='ska_mid_cbf_tdc_mcs.talon_board.talon_board_device:main'
+PowerSwitch='ska_mid_cbf_tdc_mcs.power_switch.power_switch_device:main'
+SlimLink='ska_mid_cbf_tdc_mcs.slim.slim_link_device:main'
+Slim='ska_mid_cbf_tdc_mcs.slim.slim_device:main'
+TalonDxLogConsumer='ska_mid_cbf_tdc_mcs.talondx_log_consumer.talondx_log_consumer_device:main'
+TmCspSubarrayLeafNodeTest='ska_mid_cbf_tdc_mcs.tm_leaf_node:main'
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"

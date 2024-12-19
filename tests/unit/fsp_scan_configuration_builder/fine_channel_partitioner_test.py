@@ -14,8 +14,8 @@ import os
 
 import pytest
 
-from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.fine_channel_partitioner import (
+from ska_mid_cbf_tdc_mcs.commons.global_enum import const
+from ska_mid_cbf_tdc_mcs.subarray.fsp_scan_configuration_builder.fine_channel_partitioner import (
     partition_spectrum_to_frequency_slices,
 )
 

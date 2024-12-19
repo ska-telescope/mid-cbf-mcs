@@ -2,7 +2,7 @@
 
 Document directory structure:
 ```
-ska-mid-cbf-mcs/
+ska-mid-cbf-tdc-mcs/
    docs/
       build
       src/
