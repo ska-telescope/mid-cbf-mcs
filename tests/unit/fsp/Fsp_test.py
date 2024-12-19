@@ -325,7 +325,7 @@ class TestFsp:
         :param sub_ids: list of subarray IDs to add
         :param fsp_mode: FspMode to be set for the device
         """
-        # set set function mode to CORR
+        # set device ONLINE, ON and set function mode to CORR
         self.test_SetFunctionMode(
             device_under_test, event_tracer, FspModes.CORR
         )
