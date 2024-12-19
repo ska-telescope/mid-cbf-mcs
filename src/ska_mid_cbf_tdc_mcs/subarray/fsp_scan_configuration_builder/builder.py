@@ -135,14 +135,10 @@ class FspScanConfigurationBuilder:
                         + f"of subarray receptors {self._subarray_dish_ids}"
                     )
 
-        # PST Processing region does not need to include the channel width
-        # included the channel width from
-        # https://confluence.skatelescope.org/display/SE/Mid+CBF+AA1+PST+Software
-        if self._function_mode is FspModes.PST_BF:
-            processing_region_config["channel_width"] = const.PST_CHANNEL_WIDTH
-
         vcc_to_fs_infos = {}
-        for dish_id in dish_ids:
+        # Need to send vcc shift values for all subarray vcc's not just those
+        # specified in the `receptors` property
+        for dish_id in self._subarray_dish_ids:
             calculated_fsp_infos = partition_spectrum_to_frequency_slices(
                 fsp_ids=fsp_ids,
                 start_freq=processing_region_config["start_freq"],
@@ -417,13 +413,6 @@ class FspScanConfigurationBuilder:
                 fsp_config["output_host"] = fsp_to_output_host_map[fsp_id]
             if "output_port" in processing_region_config:
                 fsp_config["output_port"] = fsp_to_output_port_map[fsp_id]
-
-            # TODO: This will need some refining, as timing_beams in PST Configs
-            # includes the output_host and output_port
-            if "timing_beams" in processing_region_config:
-                fsp_config["timing_beams"] = processing_region_config[
-                    "timing_beams"
-                ]
 
             fsp_configs.append(fsp_config)
 
