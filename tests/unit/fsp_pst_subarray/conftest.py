@@ -21,7 +21,7 @@ from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 
 @pytest.fixture(name="device_under_test")
-def fsp_corr_device_under_test_fixture(
+def fsp_pst_device_under_test_fixture(
     test_context: TangoTestHarnessContext,
 ) -> context.DeviceProxy:
     """
@@ -30,7 +30,7 @@ def fsp_corr_device_under_test_fixture(
     :param test_context: the context in which the tests run
     :return: the DeviceProxy for the device under test
     """
-    return test_context.get_device("mid_csp_cbf/fspCorrSubarray/01_01")
+    return test_context.get_device("mid_csp_cbf/fspPstSubarray/01_01")
 
 
 @pytest.fixture(name="event_tracer", autouse=True)
@@ -60,7 +60,7 @@ def tango_event_tracer(
 
 
 @pytest.fixture()
-def mock_hps_fsp_corr_controller() -> unittest.mock.Mock:
+def mock_hps_fsp_pst_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.add_command("SetInternalParameters", None)
     builder.add_command("ConfigureScan", None)
@@ -73,15 +73,15 @@ def mock_hps_fsp_corr_controller() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
-    mock_hps_fsp_corr_controller: unittest.mock.Mock,
+    mock_hps_fsp_pst_controller: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_hps_fsp_corr_controller: a mock FspCorrController.
+    :param mock_hps_fsp_pst_controller: a mock FspPstController.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "talondx-001/fsp-app/fsp-corr-controller": mock_hps_fsp_corr_controller,
+        "talondx-001/fsp-app/fsp-pst-controller": mock_hps_fsp_pst_controller,
     }

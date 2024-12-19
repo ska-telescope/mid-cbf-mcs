@@ -86,10 +86,6 @@ notebook-test:
   rules:
     - when: never
 
-python-gemnasium-scan:
-  rules:
-    - when: never
-
 deploy-dev-environment:
   variables:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
