@@ -522,7 +522,7 @@ class TestVcc:
         # Check all obsState transitions
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
-        ).cbf_has_change_event_occurred(
+        ).has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="obsState",
             attribute_value=ObsState.CONFIGURING,
@@ -537,18 +537,18 @@ class TestVcc:
         ]:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name="obsState",
                 attribute_value=obs_state.value,
                 previous_value=previous_state,
-                target_n_events=2,
+                min_n_events=2,
             )
             previous_state = obs_state
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
-        ).cbf_has_change_event_occurred(
+        ).has_change_event_occurred(
             device_name=device_under_test,
             attribute_name="obsState",
             attribute_value=ObsState.IDLE,
@@ -704,12 +704,12 @@ class TestVcc:
         ]:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name="obsState",
                 attribute_value=obs_state.value,
                 previous_value=previous_state,
-                target_n_events=2,
+                min_n_events=2,
             )
             previous_state = obs_state
 
@@ -857,11 +857,11 @@ class TestVcc:
         ]:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
-            ).cbf_has_change_event_occurred(
+            ).has_change_event_occurred(
                 device_name=device_under_test,
                 attribute_name="obsState",
                 attribute_value=obs_state.value,
                 previous_value=previous_state,
-                target_n_events=2,
+                min_n_events=2,
             )
             previous_state = obs_state

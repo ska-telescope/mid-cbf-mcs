@@ -15,7 +15,7 @@ from __future__ import annotations  # allow forward references in type hints
 import logging
 import time
 import unittest.mock
-from threading import Thread
+from threading import Timer
 from typing import Callable
 
 import tango
@@ -326,7 +326,7 @@ class MockDeviceBuilder:
             callback: Callable[[tango.EventData], None],
             attr_quality: tango.AttrQuality = tango.AttrQuality.ATTR_VALID,
             attr_err: bool = False,
-            sleep_time_s: int = 0,
+            sleep_time_s: float = 0.0,
         ) -> None:
             """
             Mock a Tango change event callback
@@ -349,8 +349,11 @@ class MockDeviceBuilder:
             mock_event_data.attr_value.quality = attr_quality
 
             # Invoke callback asynchronously
-            time.sleep(sleep_time_s)
-            Thread(target=callback, args=(mock_event_data,)).start()
+            Timer(
+                interval=sleep_time_s,
+                function=callback,
+                args=(mock_event_data,),
+            ).start()
 
         def _mock_subscribe_event(
             attr_name: str,
