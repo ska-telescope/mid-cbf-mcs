@@ -68,7 +68,6 @@ class ControllerComponentManager(CbfComponentManager):
         self._count_vcc = max_capabilities["VCC"]
         self._count_fsp = max_capabilities["FSP"]
         self._count_subarray = max_capabilities["Subarray"]
-
         # --- All FQDNs --- #
         self._subarray_fqdns_all = fqdn_dict["CbfSubarray"]
         self._vcc_fqdns_all = fqdn_dict["VCC"]
@@ -425,7 +424,11 @@ class ControllerComponentManager(CbfComponentManager):
                 init_success = False
 
         for fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]:
-            if not self._init_device_proxy(fqdn=fqdn, subscribe_results=True):
+            if not self._init_device_proxy(
+                fqdn=fqdn,
+                subscribe_results=True,
+                subscribe_state=True,
+            ):
                 init_success = False
 
         return init_success
@@ -449,7 +452,6 @@ class ControllerComponentManager(CbfComponentManager):
                 f"Failed to read HW config file at {self._hw_config_path}: {e}"
             )
             return
-
         self._filter_all_fqdns()  # Filter all FQDNs by hw config and max capabilities
 
         # Read the talondx config JSON
@@ -796,17 +798,17 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if any LRUs were successfully turned on, otherwise False
         """
         # Determine which LRUs must be turned on by checking which current states are OFF
-        lru_fqdns = []
+        lru_to_power = []
         with self._attr_event_lock:
             for fqdn, state in self._op_states.items():
                 if (
                     fqdn in self._talon_lru_fqdn
                     and state == tango.DevState.OFF
                 ):
-                    lru_fqdns.append(fqdn)
+                    lru_to_power.append(fqdn)
 
         self.blocking_command_ids = set()
-        for fqdn in lru_fqdns:
+        for fqdn in lru_to_power:
             self.logger.info(f"Turning on LRU {fqdn}")
             lru = self._proxies[fqdn]
             try:
@@ -837,10 +839,10 @@ class ControllerComponentManager(CbfComponentManager):
         num_lru = 0
         with self._attr_event_lock:
             for fqdn, state in self._op_states.items():
-                if fqdn in lru_fqdns and state == tango.DevState.ON:
+                if fqdn in lru_to_power and state == tango.DevState.ON:
                     num_lru += 1
         self.logger.info(
-            f"{num_lru} out of {len(lru_fqdns)} TalonLru devices successfully turned on"
+            f"{num_lru} out of {len(lru_to_power)} TalonLru devices successfully turned on"
         )
 
         return True
@@ -854,24 +856,36 @@ class ControllerComponentManager(CbfComponentManager):
 
         :param task_abort_event: Event to signal task abort.
         """
-        self.logger.info(
-            f"Setting SLIM simulation mode to {self.simulation_mode}"
-        )
         slim_config_paths = [
             self._fs_slim_config_path,
             self._vis_slim_config_path,
         ]
-        self.blocking_command_ids = set()
-        for i, fqdn in enumerate([self._fs_slim_fqdn, self._vis_slim_fqdn]):
-            try:
-                self._proxies[fqdn].simulationMode = self.simulation_mode
-                [[result_code], [command_id]] = self._proxies[fqdn].On()
-                # Guard incase LRC was rejected.
-                if result_code == ResultCode.REJECTED:
-                    raise tango.DevFailed("On command rejected")
-                self.blocking_command_ids.add(command_id)
 
-                with open(slim_config_paths[i]) as f:
+        self.blocking_command_ids = set()
+
+        slim_to_power = []
+        with self._attr_event_lock:
+            for fqdn, state in self._op_states.items():
+                if (
+                    fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]
+                    and state == tango.DevState.OFF
+                ):
+                    slim_to_power.append(fqdn)
+
+        for index, fqdn in enumerate(
+            [self._fs_slim_fqdn, self._vis_slim_fqdn]
+        ):
+            try:
+                if fqdn in slim_to_power:
+                    self.logger.info(f"Turning on SLIM controller {fqdn}")
+                    [[result_code], [command_id]] = self._proxies[fqdn].On()
+                    # Guard incase LRC was rejected.
+                    if result_code == ResultCode.REJECTED:
+                        raise tango.DevFailed("On command rejected")
+                    self.blocking_command_ids.add(command_id)
+
+                self.logger.info(f"Configuring SLIM controller {fqdn}")
+                with open(slim_config_paths[index]) as f:
                     slim_config = f.read()
 
                 [[result_code], [command_id]] = self._proxies[fqdn].Configure(
@@ -1088,20 +1102,31 @@ class ControllerComponentManager(CbfComponentManager):
         """
         success = True
         message = []
+
         self.blocking_command_ids = set()
+
+        slim_to_power = []
+        with self._attr_event_lock:
+            for fqdn, state in self._op_states.items():
+                if (
+                    fqdn in [self._fs_slim_fqdn, self._vis_slim_fqdn]
+                    and state == tango.DevState.ON
+                ):
+                    slim_to_power.append(fqdn)
 
         # Turn off Slim devices
         for fqdn, slim in [
             (self._fs_slim_fqdn, self._proxies[self._fs_slim_fqdn]),
             (self._vis_slim_fqdn, self._proxies[self._vis_slim_fqdn]),
         ]:
-            self.logger.info(f"Turning off SLIM controller {fqdn}")
             try:
-                [[result_code], [command_id]] = slim.Off()
-                # Guard incase LRC was rejected.
-                if result_code == ResultCode.REJECTED:
-                    raise tango.DevFailed("Off command rejected")
-                self.blocking_command_ids.add(command_id)
+                if fqdn in slim_to_power:
+                    self.logger.info(f"Turning off SLIM controller {fqdn}")
+                    [[result_code], [command_id]] = slim.Off()
+                    # Guard incase LRC was rejected.
+                    if result_code == ResultCode.REJECTED:
+                        raise tango.DevFailed("Off command rejected")
+                    self.blocking_command_ids.add(command_id)
             except tango.DevFailed as df:
                 log_msg = f"Nested LRC Slim.Off() to {fqdn} failed: {df}"
                 self.logger.error(log_msg)
@@ -1201,14 +1226,14 @@ class ControllerComponentManager(CbfComponentManager):
         :return: True if any LRUs were successfully turned off, otherwise False
         """
         # Determine which LRUs must be turned off
-        lru_fqdns = []
+        lru_to_power = []
         with self._attr_event_lock:
             for fqdn, state in self._op_states.items():
                 if fqdn in self._talon_lru_fqdn and state == tango.DevState.ON:
-                    lru_fqdns.append(fqdn)
+                    lru_to_power.append(fqdn)
 
         self.blocking_command_ids = set()
-        for fqdn in lru_fqdns:
+        for fqdn in lru_to_power:
             lru = self._proxies[fqdn]
             self.logger.info(f"Turning off LRU {fqdn}")
             try:
@@ -1238,10 +1263,10 @@ class ControllerComponentManager(CbfComponentManager):
         num_lru = 0
         with self._attr_event_lock:
             for fqdn, state in self._op_states.items():
-                if fqdn in lru_fqdns and state == tango.DevState.OFF:
+                if fqdn in lru_to_power and state == tango.DevState.OFF:
                     num_lru += 1
         self.logger.info(
-            f"{num_lru} out of {len(lru_fqdns)} TalonLru devices successfully turned off"
+            f"{num_lru} out of {len(lru_to_power)} TalonLru devices successfully turned off"
         )
 
         return True
@@ -1286,8 +1311,10 @@ class ControllerComponentManager(CbfComponentManager):
         (result_code, message) = (ResultCode.OK, [])
 
         # reset subarray observing state to EMPTY
-        for subarray in [self._proxies[fqdn] for fqdn in self._subarray_fqdn]:
-            (subarray_empty, log_msg) = self._subarray_to_empty(subarray)
+        for fqdn in self._subarray_fqdn:
+            (subarray_empty, log_msg) = self._subarray_to_empty(
+                self._proxies[fqdn]
+            )
             if not subarray_empty:
                 self.logger.error(log_msg)
                 message.append(log_msg)
