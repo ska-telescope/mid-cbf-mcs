@@ -123,6 +123,10 @@ def mock_slim_link() -> unittest.mock.Mock:
     builder.add_command("set_timeout_millis", None)
     builder.add_command("poll_command", None)
     builder.add_command("stop_poll_command", None)
+    builder.add_command(
+        "VerifyConnection",
+        (ResultCode.OK, "Unit Test VerifyConnection completed OK"),
+    )
     builder.add_lrc(
         name="ConnectTxRx",
         result_code=ResultCode.OK,
@@ -160,6 +164,10 @@ def mock_fail_slim_link() -> unittest.mock.Mock:
     builder.add_command("set_timeout_millis", None)
     builder.add_command("poll_command", None)
     builder.add_command("stop_poll_command", None)
+    builder.add_command(
+        "VerifyConnection",
+        (ResultCode.FAILED, "Unit Test VerifyConnection FAILED"),
+    )
     builder.add_lrc(
         name="ConnectTxRx",
         queued=False,

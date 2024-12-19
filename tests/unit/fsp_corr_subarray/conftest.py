@@ -68,6 +68,7 @@ def mock_hps_fsp_corr_controller() -> unittest.mock.Mock:
     builder.add_command("EndScan", None)
     builder.add_command("Abort", None)
     builder.add_command("ObsReset", None)
+    builder.add_command("UpdateDelayModels", None)
     return builder()
 
 
