@@ -328,7 +328,6 @@ class TestFspPstSubarray:
                 min_n_events=n,
             )
 
-
     @pytest.mark.parametrize(
         "config_file_name",
         ["FspPstSubarray_ConfigureScan_basic.json"],
@@ -476,7 +475,6 @@ class TestFspPstSubarray:
                 min_n_events=n,
             )
 
-
     @pytest.mark.parametrize(
         "config_file_name, delay_model_file_name, scan_id",
         [
@@ -549,7 +547,6 @@ class TestFspPstSubarray:
                 min_n_events=n,
             )
 
-
         result = device_under_test.UpdateDelayModel(delay_model)
         assert result == [
             [ResultCode.OK.value],
@@ -564,7 +561,6 @@ class TestFspPstSubarray:
             previous_value="",
             min_n_events=1,
         )
-
 
         # test issuing delay model from SCANNING
         [[result_code], [command_id]] = device_under_test.Scan(scan_id)
@@ -594,7 +590,6 @@ class TestFspPstSubarray:
                 min_n_events=n,
             )
 
-
         # Send a delay model with missing data just to check change event
         # JSON is only validated above FSP in the subarray
         delay_model_json = json.loads(delay_model)
@@ -616,4 +611,3 @@ class TestFspPstSubarray:
             previous_value=delay_model,
             min_n_events=1,
         )
-
