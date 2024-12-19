@@ -618,7 +618,17 @@ class SlimLinkComponentManager(CbfComponentManager):
                 return
             self._link_enabled = True
             self._link_name = f"{self._tx_device_name}->{self._rx_device_name}"
-            self.clear_counters()
+            (result, msg) = self.clear_counters()
+            if result != ResultCode.OK:
+                self.logger.error(msg)
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        f"{msg}",
+                    ),
+                )
+                return
 
         task_callback(
             status=TaskStatus.COMPLETED,
