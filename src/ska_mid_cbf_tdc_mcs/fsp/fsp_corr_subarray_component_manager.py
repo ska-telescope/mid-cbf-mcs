@@ -18,12 +18,12 @@ import tango
 from ska_control_model import CommunicationStatus, PowerState, TaskStatus
 from ska_tango_base.commands import ResultCode
 from ska_tango_testing import context
+
 from ska_mid_cbf_tdc_mcs.commons.gain_utils import GAINUtils
 from ska_mid_cbf_tdc_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_tdc_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
-
 
 FSP_CORR_PARAM_PATH = "mnt/fsp_param/internal_params_fsp_corr_subarray.json"
 
