@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-2550 Migrated FSP SetFuntionMode from subarray to controller
 * CIP-2660 Added back FspPstSubarray to MCS
 
 1.1.1
