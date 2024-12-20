@@ -285,7 +285,7 @@ class TestCbfController:
                     )
 
         # Check devices set NOT_FITTED
-        # TODO: CIP-2550 TalonBoard devices not going to NOT_FITTED
+        # TODO: CIP-3250 TalonBoard devices not going to NOT_FITTED
         # expected_events = [
         #     ("adminMode", AdminMode.NOT_FITTED, None, 1),
         # ]
