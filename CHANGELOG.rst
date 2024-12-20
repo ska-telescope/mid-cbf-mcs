@@ -8,6 +8,7 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 UNRELEASED CHANGES
 ******************
 * CIP-2660 Added back FspPstSubarray to MCS
+* CIP-2790: Added error handling for CbfFastCommands processed within MCS
 
 1.1.1
 **********
@@ -29,7 +30,6 @@ UNRELEASED CHANGES
 * SKB-668: Sort VCC IDs by their associated receptor IDs when passing to FSPs
 * SKB-669: Added configurable timeout to values for TalonLRU's PowerSwitch proxies
 * CIP-3159: disable loopback on unused visibility SLIM rx devices to prevent unexpected visibility outputs from other FSPs
-* CIP-2790: Added error handling for CbfFastCommands processed within MCS
 
 1.1.0
 **********
