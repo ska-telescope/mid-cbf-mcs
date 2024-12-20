@@ -1376,7 +1376,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         function_mode: str,
     ) -> bool:
         """
-        Set FSP function mode and add subarray membership
+        Check FSP function mode and add FSP to subarray membership
 
         :param fsp_id: ID of FSP to assign
         :param function_mode: target FSP function mode
@@ -1392,8 +1392,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     f"{fsp_proxy.dev_name()} is not fitted; skipping assignment."
                 )
                 return False
-            # Only set function mode if FSP is both IDLE and not configured for
-            # another mode
+
+            # Only assign if FSP is both IDLE and not configured for another mode
             current_function_mode = fsp_proxy.functionMode
             if current_function_mode != FspModes[function_mode].value:
                 if current_function_mode != FspModes.IDLE.value:
@@ -1402,20 +1402,8 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     )
                     return False
 
-                # If FSP function mode is IDLE, turn on FSP and set function mode
-                fsp_proxy.simulationMode = self.simulation_mode
-                fsp_proxy.adminMode = AdminMode.ONLINE
-
-                [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
-                    function_mode
-                )
-                if result_code == ResultCode.REJECTED:
-                    self.logger.error(
-                        f"{fsp_proxy.dev_name()} SetFunctionMode command rejected"
-                    )
-                    return False
-
-                self.blocking_command_ids.add(command_id)
+            fsp_proxy.simulationMode = self.simulation_mode
+            fsp_proxy.adminMode = AdminMode.ONLINE
 
             # Add subarray membership, which powers on this FSP's function mode devices
             [[result_code], [command_id]] = fsp_proxy.AddSubarrayMembership(

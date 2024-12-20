@@ -151,10 +151,7 @@ class TestFsp:
                              events from the device under test.
         :param function_mode: the function mode to be set
         """
-        # set device ONLINE and ON
-        self.device_online_and_on(device_under_test, event_tracer)
-
-        # test issuing SetFunctionMode from ON
+        # test issuing SetFunctionMode from DISABLED
         (return_value, command_id) = device_under_test.SetFunctionMode(
             function_mode.name
         )
@@ -201,10 +198,7 @@ class TestFsp:
                              events from the device under test.
         :param function_mode: the function mode to be set
         """
-        # set device ONLINE and ON
-        self.device_online_and_on(device_under_test, event_tracer)
-
-        # test issuing SetFunctionMode from ON
+        # test issuing SetFunctionMode from DISABLED
         (return_value, command_id) = device_under_test.SetFunctionMode(
             function_mode.name
         )
@@ -231,14 +225,17 @@ class TestFsp:
         function_mode: FspModes,
     ) -> None:
         """
-        Test the SetFunctionMode() command before the DUT has been turned ON.
+        Test the SetFunctionMode() command after the DUT has been turned ON.
 
         :param device_under_test: DeviceProxy to the device under test.
         :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param function_mode: the function mode to be set
         """
-        # SetFunctionMode not allowed if state is not ON
+        # set device ONLINE and ON
+        self.device_online_and_on(device_under_test, event_tracer)
+
+        # SetFunctionMode not allowed if state is ON
         (return_value, command_id) = device_under_test.SetFunctionMode(
             function_mode.name
         )
@@ -328,9 +325,13 @@ class TestFsp:
         :param sub_ids: list of subarray IDs to add
         :param fsp_mode: FspMode to be set for the device
         """
-
         # set device ONLINE, ON and set function mode to CORR
-        self.test_SetFunctionMode(device_under_test, event_tracer, fsp_mode)
+        self.test_SetFunctionMode(
+            device_under_test, event_tracer, FspModes.CORR
+        )
+
+        # set device ONLINE and ON
+        self.device_online_and_on(device_under_test, event_tracer)
 
         sub_ids_added = []
         for sub_id in sub_ids:

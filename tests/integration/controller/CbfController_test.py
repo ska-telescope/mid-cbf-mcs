@@ -24,6 +24,7 @@ from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
 from ska_mid_cbf_tdc_mcs.commons.dish_utils import DISHUtils
+from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes
 
 from ... import test_utils
 
@@ -46,7 +47,9 @@ class TestCbfController:
     def test_Online(
         self: TestCbfController,
         controller: context.DeviceProxy,
+        fsp: list[context.DeviceProxy],
         talon_lru: list[context.DeviceProxy],
+        talon_lru_not_fitted: list[context.DeviceProxy],
         power_switch: list[context.DeviceProxy],
         slim_fs: context.DeviceProxy,
         slim_vis: context.DeviceProxy,
@@ -60,7 +63,9 @@ class TestCbfController:
         can start communicating.
 
         :param controller: The controller device proxy
+        :param fsp: The list of FSP device proxies
         :param talon_lru: The list of talon_lru device proxies
+        :param talon_lru_not_fitted: The list of talon_lru device proxies that are NOT_FITTED
         :param power_switch: The list of power_switch device proxies
         :param slim_fs: The slim_fs device proxy
         :param slim_vis: The slim_vis device proxy
@@ -69,7 +74,9 @@ class TestCbfController:
         :param controller_params: Input parameters for running different instances of the suite.
         """
         # Generate config JSON with deployer for controller use
-        deployer.targetTalons = [1, 2, 3, 4, 5, 6, 7, 8]
+        deployer.targetTalons = list(
+            range(1, controller_params["num_board"] + 1)
+        )
         deployer.generate_config_jsons()
 
         # Trigger start_communicating by setting the AdminMode to ONLINE
@@ -91,6 +98,7 @@ class TestCbfController:
                     min_n_events=n,
                 )
 
+        # Check devices set ONLINE
         expected_events = [
             ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
             ("state", DevState.OFF, DevState.DISABLE, 1),
@@ -106,6 +114,36 @@ class TestCbfController:
                     previous_value=previous,
                     min_n_events=n,
                 )
+
+        # Check devices set NOT_FITTED
+        expected_events = [
+            ("adminMode", AdminMode.NOT_FITTED, None, 1),
+        ]
+        for device in talon_lru_not_fitted:
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=device,
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
+
+        # Validate FSP function mode
+        for device in fsp:
+            # CIP-2550: in SimulationMode.TRUE, controller is hard-coded to only
+            # set CORR function mode
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device,
+                attribute_name="functionMode",
+                attribute_value=FspModes.CORR.value,
+                previous_value=FspModes.IDLE.value,
+                min_n_events=1,
+            )
 
     @pytest.mark.dependency(
         depends=["CbfController_Online"],
@@ -182,6 +220,7 @@ class TestCbfController:
         slim_fs: context.DeviceProxy,
         slim_vis: context.DeviceProxy,
         talon_board: list[context.DeviceProxy],
+        talon_board_not_fitted: list[context.DeviceProxy],
         event_tracer: TangoEventTracer,
         controller_params: dict[any],
     ):
@@ -197,6 +236,7 @@ class TestCbfController:
         :param slim_fs: The slim_fs device proxy
         :param slim_vis: The slim_vis device proxy
         :param talon_board: The list of talon_board device proxies
+        :param talon_board_not_fitted: The list of talon_board device proxies that are NOT_FITTED
         :param event_tracer: The event tracer for the controller
         :param controller_params: Input parameters for running different instances of the suite.
         """
@@ -243,6 +283,23 @@ class TestCbfController:
                         previous_value=previous,
                         min_n_events=n,
                     )
+
+        # Check devices set NOT_FITTED
+        # TODO: CIP-3250 TalonBoard devices not going to NOT_FITTED
+        # expected_events = [
+        #     ("adminMode", AdminMode.NOT_FITTED, None, 1),
+        # ]
+        # for device in talon_board_not_fitted:
+        #     for name, value, previous, n in expected_events:
+        #         assert_that(event_tracer).within_timeout(
+        #             test_utils.EVENT_TIMEOUT
+        #         ).has_change_event_occurred(
+        #             device_name=device,
+        #             attribute_name=name,
+        #             attribute_value=value,
+        #             previous_value=previous,
+        #             min_n_events=n,
+        #         )
 
         expected_events = [
             ("state", DevState.ON, DevState.OFF, 1),
@@ -544,6 +601,7 @@ class TestCbfController:
     def test_Offline(
         self: TestCbfController,
         controller: context.DeviceProxy,
+        fsp: list[context.DeviceProxy],
         talon_lru: list[context.DeviceProxy],
         power_switch: list[context.DeviceProxy],
         slim_fs: context.DeviceProxy,
@@ -558,6 +616,7 @@ class TestCbfController:
         Set the AdminMode to OFFLINE and expect the controller and its subelements to transition to the DISABLE state.
 
         :param controller: The controller device proxy
+        :param fsp: The list of FSP device proxies
         :param talon_lru: The list of talon_lru device proxies
         :param power_switch: The list of power_switch device proxies
         :param slim_fs: The slim_fs device proxy
@@ -568,6 +627,20 @@ class TestCbfController:
         """
         # Trigger stop_communicating by setting the AdminMode to OFFLINE
         controller.adminMode = AdminMode.OFFLINE
+
+        # Validate FSP function mode
+        for device in fsp:
+            # CIP-2550: in SimulationMode.TRUE, controller is hard-coded to only
+            # set CORR function mode
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device,
+                attribute_name="functionMode",
+                attribute_value=FspModes.IDLE.value,
+                previous_value=FspModes.CORR.value,
+                min_n_events=1,
+            )
 
         expected_events = [
             ("state", DevState.DISABLE, DevState.ON, 1),
