@@ -57,7 +57,7 @@ class FspPstSubarray(FspModeSubarray):
         :rtype: List[int]
         """
 
-        return self.component_manager.timing_beam_id
+        return self.component_manager._timing_beam_id
 
     # --------------
     # Initialization

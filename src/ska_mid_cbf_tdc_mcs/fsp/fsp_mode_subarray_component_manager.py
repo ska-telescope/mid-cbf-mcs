@@ -10,6 +10,7 @@
 # Copyright (c) 2019 National Research Council of Canada
 from __future__ import annotations
 
+import json
 from threading import Event
 from typing import Any, Callable, Optional
 
@@ -32,6 +33,7 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
     def __init__(
         self: FspModeSubarrayComponentManager,
         hps_fsp_mode_controller_fqdn: str,
+        internal_parameter_path: str,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -39,6 +41,7 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         Initialise a new instance.
 
         :param hps_fsp_mode_controller_fqdn: FQDN of the HPS FSP controller device for a given FSP Mode
+        :param internal_parameter_path: Path of the internal parameter JSON file for the FPS Subarray Device
 
         TODO: for Mid.CBF, param hps_fsp_hsp_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         :param hps_fsp_corr_controller_fqdn: FQDN of the HPS FSP Correlator controller device
@@ -47,6 +50,7 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
 
         self._proxy_hps_fsp_mode_controller = None
         self._hps_fsp_mode_controller_fqdn = hps_fsp_mode_controller_fqdn
+        self._internal_parameter_path = internal_parameter_path
         self.delay_model = ""
         self.vcc_ids = []
         self.scan_id = 0
@@ -91,9 +95,6 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
     # -------------
     # Class Helpers
     # -------------
-
-    # TODO: See if _build_hps_fsp_config can be abstracted out when we implement it
-    # for PST
 
     def _assign_vcc(
         self: FspModeSubarrayComponentManager, argin: list[int]
@@ -140,6 +141,93 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         self.last_hps_scan_configuration = ""
 
         self._release_vcc(self.vcc_ids.copy())
+
+    def _build_hps_fsp_config(
+        self: FspModeSubarrayComponentManager, configuration: dict
+    ) -> str:
+        """
+        Builds the input JSON string for the HPS FSP controller ConfigureScan command.
+        Helper functions to be overrided in specific function mode Child Classes
+        for building HPS FSP config for specific function modes.
+
+        :param configuration: A FSP scan configuration, refer to
+                              CbfSubarrayComponentManager._fsp_configure_scan
+
+        :return: A JSON string representing a HPS FSP configuration
+        :rtype: str
+        """
+
+        # append all internal parameters to the configuration to pass to HPS
+        # first construct HPS FSP ConfigureScan input
+        hps_fsp_configuration = dict({"configure_scan": configuration})
+
+        self.logger.debug(f"{hps_fsp_configuration}")
+
+        self._build_hps_fsp_config_common(configuration, hps_fsp_configuration)
+        self._build_hps_fsp_config_mode_specific(
+            configuration, hps_fsp_configuration
+        )
+
+        self.logger.debug(f"HPS FSP configuration: {hps_fsp_configuration}.")
+
+        return json.dumps(hps_fsp_configuration)
+
+    def _build_hps_fsp_config_common(
+        self: FspModeSubarrayComponentManager,
+        configuration: dict,
+        hps_fsp_configuration: dict,
+    ) -> None:
+        """
+        Helper function for _build_hps_fsp_config.
+
+        Builds the parameters for HPS FSP configuration that is common to all
+        function modes.
+
+        :param configuration: A FSP scan configuration, refer to
+                              CbfSubarrayComponentManager._fsp_configure_scan
+        :param hps_fsp_configuration: A work in progress HPS FSP configuration
+
+
+        """
+        # Get the internal parameters from file
+        internal_params_file_name = self._internal_parameter_path
+        with open(internal_params_file_name) as f:
+            hps_fsp_configuration.update(
+                json.loads(f.read().replace("\n", ""))
+            )
+
+        # append the fs_sample_rates to the configuration
+        hps_fsp_configuration["fs_sample_rates"] = configuration[
+            "fs_sample_rates"
+        ]
+
+        hps_fsp_configuration["vcc_id_to_rdt_freq_shifts"] = configuration[
+            "vcc_id_to_rdt_freq_shifts"
+        ]
+
+    def _build_hps_fsp_config_mode_specific(
+        self: FspModeSubarrayComponentManager,
+        configuration: dict,
+        hps_fsp_configuration: dict,
+    ) -> None:
+        """
+        Helper function for _build_hps_fsp_config.
+
+        Builds the parameters for HPS FSP configuration that is specific for a
+        function modes.
+
+        Abstract function; To be implemented in Child Classes
+
+        :raises NotImplementedError: Not implemented in abstract class
+
+        :param configuration: A FSP scan configuration, refer to
+                              CbfSubarrayComponentManager._fsp_configure_scan
+        :param hps_fsp_configuration: A work in progress HPS FSP configuration
+        """
+
+        raise NotImplementedError(
+            "_build_hps_fsp_config_mode_specific needs to be implemented in child class."
+        )
 
     # -------------
     # Fast Commands
