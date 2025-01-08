@@ -43,6 +43,12 @@ server:
             - "mid_csp_cbf/fspCorrSubarray/02_0{{ add1 $i }}"
             - "mid_csp_cbf/fspCorrSubarray/03_0{{ add1 $i }}"
             - "mid_csp_cbf/fspCorrSubarray/04_0{{ add1 $i }}"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/01_0{{ add1 $i }}"
+            - "mid_csp_cbf/fspPstSubarray/02_0{{ add1 $i }}"
+            - "mid_csp_cbf/fspPstSubarray/03_0{{ add1 $i }}"
+            - "mid_csp_cbf/fspPstSubarray/04_0{{ add1 $i }}"
           - name: "SubID"
             values:
             - "1"

@@ -160,6 +160,12 @@ class Fsp(CbfDevice):
     # Long Running Commands
     # ---------------------
 
+    def is_SetFunctionMode_allowed(self: Fsp) -> bool:
+        """
+        Returns True; SetFunctionMode must be allowed in DISABLED state for AA0.5 approach (CIP-2550)
+        """
+        return True
+
     @command(
         dtype_in="str",
         dtype_out="DevVarLongStringArray",

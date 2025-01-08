@@ -5,6 +5,7 @@ routing the visibilities from FSPs to SDP.
 It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1,
 supporting up to 8 boards.
 """
+
 import ctypes
 import logging
 
@@ -145,6 +146,13 @@ class VisibilityTransport:
             self._create_device_proxies(vis_out_map)
 
             # Create the SPEAD descriptor to be sent at start of scan
+            #
+            # Subarray sets some SPEAD attributes here only for use in CreateDescriptor,
+            # they are not to be written to the descriptor registers using Configure
+            #
+            # This supports the case where an FSP might not be used for processing,
+            # but is still used to output visibilities
+            #
             # SPEAD descriptor expects 0 based subarray ID
             sub_id = subarray_id - 1
             n_vcc = len(fsp_config[0]["corr_vcc_ids"])
