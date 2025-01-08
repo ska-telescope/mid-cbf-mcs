@@ -96,6 +96,11 @@ a full copy of the current assigned receptors to the loop that resets the subdev
 Configure Scan Sequence
 +++++++++++++++++++++++
 
+MCS currently supports Correlation and Pulsar Search Timing Models. Each of these modes 
+have their own specific schema for a Configure Scan.
+
+Correlator:
+
 The sequence diagram below shows the main sequence of calls in MCS 
 to configure a correlation scan. Return calls are not shown.
 
@@ -112,7 +117,7 @@ When the Subarray calls **ConfigureBand**, the jsonstr argument contains:
 - "dish_sample_rate"
 - "samples_per_frame"
 
-When the Subarray calls **ConfigureScan** for corr, the jsonstr argument contains:
+When the Subarray calls **ConfigureScan** for CORR, the jsonstr argument contains:
 
 - "config_id"
 - "frequency_band"
@@ -127,27 +132,21 @@ correlation scan.
 
 .. uml:: ../../diagrams/configure-scan-hps-fsp.puml
 
+Pulsar Search Timing:
+
+When the Subarray calls **ConfigureScan** for PST, the jsonstr argument contains:
+
+- TBD
+
 The sequence diagram below shows details of calls to configure a FSP for a 
 PST Configure Scan.
 
-.. figure:: ../../diagrams/configure-scan-pst-fsp-hps.png
-    :align: center  
-
-When the Subarray calls **ConfigureScan** for pst, the jsonstr argument contains:
-
-- "config_id"
-- "subarray_id"
-- "frequency_band"
-- "fsp_id"
-- "function_mode"
-- "frequency_band_offset_stream1"
-- "frequency_band_offset_stream2"
+.. uml:: ../../diagrams/configure-scan-pst-fsp-hps.puml
 
 The sequence diagram below shows details of calls a FSP for a 
 PST scan.
 
-.. figure:: ../../diagrams/scan-pst-hps-fsp.png
-    :align: center
+.. uml:: ../../diagrams/scan-pst-hps-fsp.puml
 
 Abort Sequence
 ++++++++++++++
@@ -164,7 +163,7 @@ The sequence diagram below shows the main sequence of calls in MCS
 to return to IDLE via the ObsReset command for a correlation scan.
 Return calls are not shown.
 
-.. uml:: ../../../diagrams/obsreset-command.puml
+.. uml:: ../../diagrams/obsreset-command.puml
 
 Restart Sequence
 ++++++++++++++++
@@ -173,7 +172,7 @@ The sequence diagram below shows the main sequence of calls in MCS
 to return to EMPTY via the Restart command for a correlation scan.
 Return calls are not shown.
 
-.. uml:: ../../../diagrams/restart-command.puml
+.. uml:: ../../diagrams/restart-command.puml
 
 
 Serial Lightweight Interconnect Mesh (SLIM) Interface
