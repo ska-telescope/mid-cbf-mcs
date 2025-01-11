@@ -99,7 +99,8 @@ Configure Scan Sequence
 MCS currently supports Correlation and Pulsar Search Timing Models. Each of these modes 
 have their own specific schema for a Configure Scan.
 
-Correlator:
+Correlator
+----------
 
 The sequence diagram below shows the main sequence of calls in MCS 
 to configure a correlation scan. Return calls are not shown.
@@ -132,7 +133,12 @@ correlation scan.
 
 .. uml:: ../../diagrams/configure-scan-hps-fsp.puml
 
-Pulsar Search Timing:
+Pulsar Search Timing
+--------------------
+
+When the Subarray calls **ConfigureBand**, the jsonstr argument contains:
+
+- TBD
 
 When the Subarray calls **ConfigureScan** for PST, the jsonstr argument contains:
 
@@ -143,16 +149,14 @@ PST Configure Scan.
 
 .. uml:: ../../diagrams/configure-scan-pst-fsp-hps.puml
 
-The sequence diagram below shows details of calls a FSP for a 
-PST scan.
-
-.. uml:: ../../diagrams/scan-pst-hps-fsp.puml
+All Modes
+---------
 
 Abort Sequence
 ++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS 
-to Abort from a correlation scan. Return calls are not shown.
+to Abort from a correlation/pst scan. Return calls are not shown.
 
 .. uml:: ../../diagrams/abort-command.puml
 
@@ -160,7 +164,7 @@ ObsReset Sequence
 +++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
-to return to IDLE via the ObsReset command for a correlation scan.
+to return to IDLE via the ObsReset command for a correlation/pst scan.
 Return calls are not shown.
 
 .. uml:: ../../diagrams/obsreset-command.puml
@@ -169,7 +173,7 @@ Restart Sequence
 ++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS
-to return to EMPTY via the Restart command for a correlation scan.
+to return to EMPTY via the Restart command for a correlation/pst scan.
 Return calls are not shown.
 
 .. uml:: ../../diagrams/restart-command.puml
