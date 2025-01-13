@@ -20,12 +20,12 @@ from ska_mid_cbf_tdc_mcs.commons.global_enum import const, freq_band_dict
 VCC_PARAM_PATH = "mnt/vcc_param/"
 
 
-class GAINUtils:
+class VccGainUtils:
     """
     Utilities for modifying and correcting the vcc gain.
     """
 
-    def __init__(self: GAINUtils) -> None:
+    def __init__(self: VccGainUtils) -> None:
         """
         Initialize a new instance.
 

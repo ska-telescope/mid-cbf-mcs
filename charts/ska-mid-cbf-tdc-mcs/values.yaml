@@ -91,7 +91,7 @@ controllerTimeout: 60
 fspTimeout: 15
 lruTimeout: 60
 slimLinkTimeout: 10
-vccTimeout: 3
+vccTimeout: 60
 
 nodeSelector: {}
 

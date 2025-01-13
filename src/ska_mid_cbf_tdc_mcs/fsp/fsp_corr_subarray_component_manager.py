@@ -18,7 +18,7 @@ import tango
 from ska_control_model import CommunicationStatus, TaskStatus
 from ska_tango_base.commands import ResultCode
 
-from ska_mid_cbf_tdc_mcs.commons.gain_utils import GAINUtils
+from ska_mid_cbf_tdc_mcs.commons.vcc_gain_utils import VccGainUtils
 from ska_mid_cbf_tdc_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_tdc_mcs.fsp.fsp_mode_subarray_component_manager import (
     FspModeSubarrayComponentManager,
@@ -107,12 +107,12 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         # For now, we will reinitialize gain as a large (32k) sized array in the component manager
         # TODO: TEst comment tdc mcs build
         hps_fsp_configuration["fine_channelizer"]["gain"] = [1] * (16384)
-        fsid = hps_fsp_configuration["configure_scan"]["frequency_slice_id"]
-        self.logger.info(f"Frequency slice id: {fsid}")
-        gain_corrections = GAINUtils.get_vcc_ripple_correction(
+        fs_id = hps_fsp_configuration["configure_scan"]["frequency_slice_id"]
+        self.logger.info(f"Frequency slice id: {fs_id}")
+        gain_corrections = VccGainUtils.get_vcc_ripple_correction(
             hps_fsp_configuration["configure_scan"]["frequency_band"],
             self.logger,
-            fsid
+            fs_id
             # hps_fsp_configuration["configure_scan"]["frequency_slice_id"]
         )
         for gain_index, gain in enumerate(
