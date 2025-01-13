@@ -63,6 +63,7 @@ class TestFsp:
             ),
             HpsFspControllerAddress="talondx-001/fsp-app/fsp-controller",
             HpsFspCorrControllerAddress="talondx-001/fsp-app/fsp-corr-controller",
+            HpsFspPstControllerAddress="talondx-001/fsp-app/fsp-pst-controller",
             DeviceID="1",
         )
         for name, mock in initial_mocks.items():
@@ -150,10 +151,7 @@ class TestFsp:
                              events from the device under test.
         :param function_mode: the function mode to be set
         """
-        # set device ONLINE and ON
-        self.device_online_and_on(device_under_test, event_tracer)
-
-        # test issuing SetFunctionMode from ON
+        # test issuing SetFunctionMode from DISABLED
         (return_value, command_id) = device_under_test.SetFunctionMode(
             function_mode.name
         )
@@ -200,10 +198,7 @@ class TestFsp:
                              events from the device under test.
         :param function_mode: the function mode to be set
         """
-        # set device ONLINE and ON
-        self.device_online_and_on(device_under_test, event_tracer)
-
-        # test issuing SetFunctionMode from ON
+        # test issuing SetFunctionMode from DISABLED
         (return_value, command_id) = device_under_test.SetFunctionMode(
             function_mode.name
         )
@@ -222,7 +217,7 @@ class TestFsp:
             ),
         )
 
-    @pytest.mark.parametrize("function_mode", [FspModes.CORR])
+    @pytest.mark.parametrize("function_mode", [FspModes.CORR, FspModes.PST_BF])
     def test_SetFunctionMode_not_allowed_from_off(
         self: TestFsp,
         device_under_test: context.DeviceProxy,
@@ -230,14 +225,17 @@ class TestFsp:
         function_mode: FspModes,
     ) -> None:
         """
-        Test the SetFunctionMode() command before the DUT has been turned ON.
+        Test the SetFunctionMode() command after the DUT has been turned ON.
 
         :param device_under_test: DeviceProxy to the device under test.
         :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param function_mode: the function mode to be set
         """
-        # SetFunctionMode not allowed if state is not ON
+        # set device ONLINE and ON
+        self.device_online_and_on(device_under_test, event_tracer)
+
+        # SetFunctionMode not allowed if state is ON
         (return_value, command_id) = device_under_test.SetFunctionMode(
             function_mode.name
         )
@@ -256,7 +254,7 @@ class TestFsp:
             ),
         )
 
-    @pytest.mark.parametrize("function_mode", [FspModes.CORR])
+    @pytest.mark.parametrize("function_mode", [FspModes.CORR, FspModes.PST_BF])
     def test_SetFunctionMode_not_allowed_already_set(
         self: TestFsp,
         device_under_test: context.DeviceProxy,
@@ -276,6 +274,7 @@ class TestFsp:
             device_under_test=device_under_test,
             event_tracer=event_tracer,
             sub_ids=[1, 2, 3],
+            fsp_mode=function_mode,
         )
 
         # test issuing SetFunctionMode on a previously set FSP
@@ -297,6 +296,10 @@ class TestFsp:
             ),
         )
 
+    @pytest.mark.parametrize(
+        "fsp_mode",
+        [FspModes.CORR, FspModes.PST_BF],
+    )
     # parameterized with all possible subarray IDs, a duplicate ID and IDs below and above range
     @pytest.mark.parametrize(
         "sub_ids",
@@ -311,6 +314,7 @@ class TestFsp:
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         sub_ids: list[int],
+        fsp_mode: FspModes,
     ) -> None:
         """
         Test the AddSubarrayMembership() command's happy path.
@@ -319,12 +323,15 @@ class TestFsp:
         :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param sub_ids: list of subarray IDs to add
+        :param fsp_mode: FspMode to be set for the device
         """
-
         # set device ONLINE, ON and set function mode to CORR
         self.test_SetFunctionMode(
             device_under_test, event_tracer, FspModes.CORR
         )
+
+        # set device ONLINE and ON
+        self.device_online_and_on(device_under_test, event_tracer)
 
         sub_ids_added = []
         for sub_id in sub_ids:
@@ -418,12 +425,17 @@ class TestFsp:
                 ),
             )
 
+    @pytest.mark.parametrize(
+        "fsp_mode",
+        [FspModes.CORR, FspModes.PST_BF],
+    )
     @pytest.mark.parametrize("sub_ids", [[1, 2, 3]])
     def test_RemoveSubarrayMembership(
         self: TestFsp,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         sub_ids: list[int],
+        fsp_mode: FspModes,
     ) -> None:
         """
         Test the RemoveSubarrayMembership() command's happy path.
@@ -432,11 +444,12 @@ class TestFsp:
         :param event_tracer: A TangoEventTracer used to receive subscribed change
                              events from the device under test.
         :param sub_ids: list of subarray IDs to remove
+        :param fsp_mode: FspMode to be set for the device
         """
 
         # set device ONLINE, ON, function mode to CORR and add subarray membership
         self.test_AddSubarrayMembership(
-            device_under_test, event_tracer, sub_ids
+            device_under_test, event_tracer, sub_ids, fsp_mode
         )
 
         # test invalid subarray ID

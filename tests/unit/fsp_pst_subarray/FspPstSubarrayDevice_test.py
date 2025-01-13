@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the FspCorrSubarray."""
+"""Contain the tests for the FspPstSubarray."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_tdc_mcs.fsp.fsp_corr_subarray_device import FspCorrSubarray
+from ska_mid_cbf_tdc_mcs.fsp.fsp_pst_subarray_device import FspPstSubarray
 
 from ... import test_utils
 
@@ -37,26 +37,26 @@ gc.disable()
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 
-class TestFspCorrSubarray:
+class TestFspPstSubarray:
     """
-    Test class for FspCorrSubarray.
+    Test class for FspPstSubarray.
     """
 
     @pytest.fixture(name="test_context")
-    def fsp_corr_test_context(
-        self: TestFspCorrSubarray, initial_mocks: dict[str, Mock]
+    def fsp_pst_test_context(
+        self: TestFspPstSubarray, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
         """
-        A fixture that creates a test context for the FspCorrSubarray tests.
+        A fixture that creates a test context for the FspPstSubarray tests.
 
-        :param initial_mocks: A dictionary of initial mocks for the FspCorrSubarray.
-        :return: A test context for the FspCorrSubarray.
+        :param initial_mocks: A dictionary of initial mocks for the FspPstSubarray.
+        :return: A test context for the FspPstSubarray.
         """
         harness = context.ThreadedTestTangoContextManager()
         harness.add_device(
-            device_name="mid_csp_cbf/fspCorrSubarray/01_01",
-            device_class=FspCorrSubarray,
-            HpsFspCorrControllerAddress="talondx-001/fsp-app/fsp-corr-controller",
+            device_name="mid_csp_cbf/fspPstSubarray/01_01",
+            device_class=FspPstSubarray,
+            HpsFspPstControllerAddress="talondx-001/fsp-app/fsp-pst-controller",
             DeviceID="1",
             LRCTimeout="15",
         )
@@ -67,7 +67,7 @@ class TestFspCorrSubarray:
             yield test_context
 
     def test_State(
-        self: TestFspCorrSubarray, device_under_test: context.DeviceProxy
+        self: TestFspPstSubarray, device_under_test: context.DeviceProxy
     ) -> None:
         """
         Test the State attribute just after device initialization.
@@ -77,7 +77,7 @@ class TestFspCorrSubarray:
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestFspCorrSubarray, device_under_test: context.DeviceProxy
+        self: TestFspPstSubarray, device_under_test: context.DeviceProxy
     ) -> None:
         """
         Test the Status attribute just after device initialization.
@@ -87,7 +87,7 @@ class TestFspCorrSubarray:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestFspCorrSubarray, device_under_test: context.DeviceProxy
+        self: TestFspPstSubarray, device_under_test: context.DeviceProxy
     ) -> None:
         """
         Test the adminMode attribute just after device initialization.
@@ -97,7 +97,7 @@ class TestFspCorrSubarray:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     def device_online_and_on(
-        self: TestFspCorrSubarray,
+        self: TestFspPstSubarray,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
     ) -> bool:
@@ -131,10 +131,10 @@ class TestFspCorrSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
-        [("FspCorrSubarray_ConfigureScan_basic.json", 1)],
+        [("FspPstSubarray_ConfigureScan_basic.json", 1)],
     )
     def test_Scan(
-        self: TestFspCorrSubarray,
+        self: TestFspPstSubarray,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         config_file_name: str,
@@ -227,17 +227,17 @@ class TestFspCorrSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
-        [("FspCorrSubarray_ConfigureScan_basic.json", 1)],
+        [("FspPstSubarray_ConfigureScan_basic.json", 1)],
     )
     def test_Scan_reconfigure(
-        self: TestFspCorrSubarray,
+        self: TestFspPstSubarray,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         config_file_name: str,
         scan_id: int,
     ) -> None:
         """
-        Test FspCorrSubarray's ability to reconfigure and run multiple scans.
+        Test FspPstSubarray's ability to reconfigure and run multiple scans.
 
         :param device_under_test: DeviceProxy to the device under test.
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
@@ -330,10 +330,10 @@ class TestFspCorrSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name",
-        ["FspCorrSubarray_ConfigureScan_basic.json"],
+        ["FspPstSubarray_ConfigureScan_basic.json"],
     )
     def test_Abort_from_ready(
-        self: TestFspCorrSubarray,
+        self: TestFspPstSubarray,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         config_file_name: str,
@@ -402,10 +402,10 @@ class TestFspCorrSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
-        [("FspCorrSubarray_ConfigureScan_basic.json", 1)],
+        [("FspPstSubarray_ConfigureScan_basic.json", 1)],
     )
     def test_Abort_from_scanning(
-        self: TestFspCorrSubarray,
+        self: TestFspPstSubarray,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         config_file_name: str,
@@ -479,14 +479,14 @@ class TestFspCorrSubarray:
         "config_file_name, delay_model_file_name, scan_id",
         [
             (
-                "FspCorrSubarray_ConfigureScan_basic.json",
+                "FspPstSubarray_ConfigureScan_basic.json",
                 "/../../data/delaymodel_unit_test.json",
                 1,
             )
         ],
     )
     def test_UpdateDelayModel(
-        self: TestFspCorrSubarray,
+        self: TestFspPstSubarray,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         config_file_name: str,

@@ -34,7 +34,7 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-tdc-mcs
-    tag: 1.1.0
+    tag: 1.1.1
     pullPolicy: IfNotPresent
 
 resources:
@@ -59,11 +59,11 @@ deviceServers:
   vcc:
     enabled: true
     file: "data/vcc.yaml"
-  
+
   fsp:
     enabled: true
     file: "data/fsp.yaml"
-  
+
   powerswitch:
     file: "data/powerswitch.yaml"
 

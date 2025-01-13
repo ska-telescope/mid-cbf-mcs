@@ -313,15 +313,19 @@ class SlimComponentManager(CbfComponentManager):
                 # Tx data
                 f"{occupancy[idx][0] * const.GBPS:.2f}\n({tx_word_count})",
                 # Tx idle - Guard for divide by zero
-                f"{tx_idle_word_count/tx_words * const.GBPS:.2f}"
-                if tx_words != 0
-                else "NaN",
+                (
+                    f"{tx_idle_word_count/tx_words * const.GBPS:.2f}"
+                    if tx_words != 0
+                    else "NaN"
+                ),
                 # Rx data
                 f"{occupancy[idx][1] * const.GBPS:.2f}\n({rx_word_count})",
                 # Rx idle - Guard for divide by zero
-                f"{rx_idle_word_count/rx_words * const.GBPS:.2f}"
-                if rx_words != 0
-                else "NaN",
+                (
+                    f"{rx_idle_word_count/rx_words * const.GBPS:.2f}"
+                    if rx_words != 0
+                    else "NaN"
+                ),
                 # Idle error count
                 f"{rx_idle_error_count} /\n{rx_words:.2e}",
                 # Word error rate
@@ -514,7 +518,13 @@ class SlimComponentManager(CbfComponentManager):
             for idx, _ in enumerate(self._active_links):
                 # Poll link health every 20 seconds, and also verify now.
                 try:
-                    self._dp_links[idx].VerifyConnection()
+                    (result, msg) = self._dp_links[idx].VerifyConnection()
+                    if result != ResultCode.OK:
+                        self.logger.error(msg)
+                        self._update_communication_state(
+                            CommunicationStatus.NOT_ESTABLISHED
+                        )
+                        return ResultCode.FAILED, msg
                     self._dp_links[idx].poll_command("VerifyConnection", 20000)
                 except tango.DevFailed as df:
                     message = f"Failed to initialize SLIM links: {df}"

@@ -35,36 +35,72 @@ class TestCbfSubarray:
     def test_Online(
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
+        controller: context.DeviceProxy,
+        fsp: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
     ) -> None:
         """
-        Test the initial states and verify the component manager
-        can start communicating.
+        Setup the initial states for subarray through turning controller ON.
 
         :param event_tracer: TangoEventTracer
+        :param controller: proxy to controller devices
+        :param fsp: dict of DeviceProxy to Fsp devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         """
         sub_id = subarray_params["sub_id"]
 
-        # Trigger start_communicating by setting the AdminMode to ONLINE
-        subarray[sub_id].adminMode = AdminMode.ONLINE
+        with open(test_data_path + "sys_param_4_boards.json") as f:
+            sys_param_str = f.read()
+
+        controller.adminMode = AdminMode.ONLINE
+
+        result_code, init_command_id = controller.InitSysParam(sys_param_str)
+        assert result_code == [ResultCode.QUEUED]
+
+        result_code, on_command_id = controller.On()
+        assert result_code == [ResultCode.QUEUED]
 
         expected_events = [
-            ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
-            ("state", DevState.ON, DevState.DISABLE, 1),
+            (
+                controller,
+                "longRunningCommandResult",
+                (f"{init_command_id[0]}", '[0, "InitSysParam completed OK"]'),
+                None,
+                1,
+            ),
+            (controller, "state", DevState.ON, DevState.OFF, 1),
+            (
+                controller,
+                "longRunningCommandResult",
+                (f"{on_command_id[0]}", '[0, "On completed OK"]'),
+                None,
+                1,
+            ),
+            (subarray[sub_id], "state", DevState.ON, DevState.DISABLE, 1),
         ]
 
-        for name, value, previous, n in expected_events:
+        for device, name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
-                device_name=subarray[sub_id],
+                device_name=device,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
                 min_n_events=n,
+            )
+
+        for fsp_id in fsp:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=fsp[fsp_id],
+                attribute_name="functionMode",
+                attribute_value=FspModes.CORR.value,
+                previous_value=FspModes.IDLE.value,
+                min_n_events=1,
             )
 
     @pytest.mark.dependency(
@@ -255,7 +291,6 @@ class TestCbfSubarray:
                     None,
                     1,
                 ),
-                ("functionMode", None, function_mode, FspModes.IDLE.value, 1),
                 ("adminMode", None, AdminMode.ONLINE, AdminMode.OFFLINE, 1),
                 ("state", None, DevState.ON, DevState.DISABLE, 1),
             ]
@@ -641,7 +676,6 @@ class TestCbfSubarray:
                     None,
                     1,
                 ),
-                ("functionMode", None, FspModes.IDLE.value, fsp_mode, 1),
                 ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 1),
                 ("state", None, DevState.DISABLE, DevState.ON, 1),
             ]
@@ -902,6 +936,8 @@ class TestCbfSubarray:
     def test_Offline(
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
+        controller: context.DeviceProxy,
+        fsp: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
     ) -> None:
@@ -909,29 +945,59 @@ class TestCbfSubarray:
         Verify component manager can stop communication with the component.
 
         Set the AdminMode to OFFLINE and expect the subarray to transition to the DISABLE state.
+        Turn off controller.
 
         :param event_tracer: TangoEventTracer
+        :param controller: proxy to controller devices
+        :param fsp: dict of DeviceProxy to Fsp devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         """
         sub_id = subarray_params["sub_id"]
 
-        # trigger stop_communicating by setting the AdminMode to OFFLINE
-        subarray[sub_id].adminMode = AdminMode.OFFLINE
+        result_code, off_command_id = controller.Off()
+        assert result_code == [ResultCode.QUEUED]
+
+        controller.adminMode = AdminMode.OFFLINE
 
         expected_events = [
-            ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
-            ("state", DevState.DISABLE, DevState.ON, 1),
+            (
+                controller,
+                "longRunningCommandResult",
+                (f"{off_command_id[0]}", '[0, "Off completed OK"]'),
+                None,
+                1,
+            ),
+            (
+                subarray[sub_id],
+                "adminMode",
+                AdminMode.OFFLINE,
+                AdminMode.ONLINE,
+                1,
+            ),
+            (subarray[sub_id], "state", DevState.DISABLE, DevState.ON, 1),
         ]
-        for name, value, previous, n in expected_events:
+
+        for device, name, value, previous, n in expected_events:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
-                device_name=subarray[sub_id],
+                device_name=device,
                 attribute_name=name,
                 attribute_value=value,
                 previous_value=previous,
                 min_n_events=n,
+            )
+
+        for fsp_id in fsp:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=fsp[fsp_id],
+                attribute_name="functionMode",
+                attribute_value=FspModes.IDLE.value,
+                previous_value=FspModes.CORR.value,
+                min_n_events=1,
             )
 
     @pytest.mark.dependency(
@@ -961,7 +1027,9 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(event_tracer, subarray, subarray_params)
+        self.test_Online(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
         self.test_sysParam(event_tracer, subarray, subarray_params)
 
         # -------------------------
@@ -1117,7 +1185,6 @@ class TestCbfSubarray:
                 None,
                 1,
             ),
-            ("functionMode", None, FspModes.IDLE.value, None, 1),
             ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 1),
             ("state", None, DevState.DISABLE, DevState.ON, 1),
         ]
@@ -1203,7 +1270,6 @@ class TestCbfSubarray:
                     None,
                     2,
                 ),
-                ("functionMode", None, FspModes.IDLE.value, None, 2),
                 ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 2),
                 ("state", None, DevState.DISABLE, DevState.ON, 2),
             ]
@@ -1281,7 +1347,9 @@ class TestCbfSubarray:
         self.test_RemoveAllReceptors(
             event_tracer, subarray, subarray_params, vcc
         )
-        self.test_Offline(event_tracer, subarray, subarray_params)
+        self.test_Offline(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Abort_1"],
@@ -1310,7 +1378,9 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(event_tracer, subarray, subarray_params)
+        self.test_Online(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
         self.test_sysParam(event_tracer, subarray, subarray_params)
 
         # -------------------------
@@ -1473,7 +1543,6 @@ class TestCbfSubarray:
                 None,
                 1,
             ),
-            ("functionMode", None, FspModes.IDLE.value, None, 1),
             ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 1),
             ("state", None, DevState.DISABLE, DevState.ON, 1),
         ]
@@ -1563,7 +1632,6 @@ class TestCbfSubarray:
                     None,
                     2,
                 ),
-                ("functionMode", None, FspModes.IDLE.value, None, 2),
                 ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 2),
                 ("state", None, DevState.DISABLE, DevState.ON, 2),
             ]
@@ -1638,7 +1706,9 @@ class TestCbfSubarray:
 
         # --- Cleanup --- #
 
-        self.test_Offline(event_tracer, subarray, subarray_params)
+        self.test_Offline(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Offline_1"],
@@ -1671,7 +1741,9 @@ class TestCbfSubarray:
         alt_params = subarray_params["alt_params"]
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(event_tracer, subarray, subarray_params)
+        self.test_Online(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
         self.test_sysParam(event_tracer, subarray, subarray_params)
         self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
         self.test_ConfigureScan(
@@ -1714,7 +1786,6 @@ class TestCbfSubarray:
                     None,
                     1,
                 ),
-                ("functionMode", None, FspModes.IDLE.value, fsp_mode, 1),
                 ("adminMode", None, AdminMode.OFFLINE, AdminMode.ONLINE, 1),
                 ("state", None, DevState.DISABLE, DevState.ON, 1),
             ]
@@ -1756,7 +1827,6 @@ class TestCbfSubarray:
                     None,
                     1,
                 ),
-                ("functionMode", None, fsp_mode, FspModes.IDLE.value, 1),
                 ("adminMode", None, AdminMode.ONLINE, AdminMode.OFFLINE, 1),
                 ("state", None, DevState.ON, DevState.DISABLE, 1),
             ]
@@ -1847,7 +1917,9 @@ class TestCbfSubarray:
         self.test_RemoveAllReceptors(
             event_tracer, subarray, subarray_params, vcc
         )
-        self.test_Offline(event_tracer, subarray, subarray_params)
+        self.test_Offline(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
 
     @pytest.mark.dependency(
         depends=["CbfSubarray_Reconfigure_1"],
@@ -1880,7 +1952,9 @@ class TestCbfSubarray:
         alt_params = subarray_params["alt_params"]
         sub_id = subarray_params["sub_id"]
 
-        self.test_Online(event_tracer, subarray, subarray_params)
+        self.test_Online(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
         self.test_sysParam(event_tracer, subarray, subarray_params)
         self.test_AddReceptors(event_tracer, subarray, subarray_params, vcc)
         self.test_ConfigureScan(
@@ -2008,4 +2082,6 @@ class TestCbfSubarray:
         self.test_RemoveAllReceptors(
             event_tracer, subarray, subarray_params, vcc
         )
-        self.test_Offline(event_tracer, subarray, subarray_params)
+        self.test_Offline(
+            event_tracer, controller, fsp, subarray, subarray_params
+        )
