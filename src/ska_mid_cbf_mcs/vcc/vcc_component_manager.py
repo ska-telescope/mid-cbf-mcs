@@ -274,7 +274,6 @@ class VccComponentManager(CbfObsComponentManager):
         else:
             try:
                 self._vcc_controller_proxy.ConfigureBand(frequency_band)
-
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 self._update_communication_state(
