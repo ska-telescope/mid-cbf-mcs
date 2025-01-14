@@ -93,13 +93,11 @@ def get_vcc_ripple_correction(
         gain * factor for gain, factor in zip(default_gains, gain_factors)
     ]
 
-    # Duplicate values for both polarizations
-    vcc_gains_pol = [[gc, gc] for gc in vcc_gain_corrections]
-
     # FFT-shift to match registers.
+    vcc_gains_copy = list(vcc_gain_corrections)
     center_channel = const.FINE_CHANNELS // 2
     vcc_gain_corrections = (
-        vcc_gains_pol[center_channel:] + vcc_gains_pol[:center_channel]
+        vcc_gains_copy[center_channel:] + vcc_gains_copy[:center_channel]
     )
 
     return vcc_gain_corrections
