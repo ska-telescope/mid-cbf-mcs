@@ -18,8 +18,10 @@ import tango
 from ska_control_model import CommunicationStatus, TaskStatus
 from ska_tango_base.commands import ResultCode
 
-from ska_mid_cbf_tdc_mcs.commons.vcc_gain_utils import VccGainUtils
 from ska_mid_cbf_tdc_mcs.commons.global_enum import const, freq_band_dict
+from ska_mid_cbf_tdc_mcs.commons.vcc_gain_utils import (
+    get_vcc_ripple_correction,
+)
 from ska_mid_cbf_tdc_mcs.fsp.fsp_mode_subarray_component_manager import (
     FspModeSubarrayComponentManager,
 )
@@ -85,7 +87,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         # Access constants for CIP-2364 through configuration[band_number] and send that to gloabl enums for values
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
-        # self.logger.info(f"{hps_fsp_configuration}")
+        self.logger.debug(f"{hps_fsp_configuration}")
 
         # Get the internal parameters from file
         internal_params_file_name = FSP_CORR_PARAM_PATH
@@ -105,30 +107,25 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         # TODO: Assume gain is an array, check with JSON Validator, consider lowering the size of the array for testing, also print on HPS side and validate
         # For now, we will reinitialize gain as a large (32k) sized array in the component manager
-        # TODO: TEst comment tdc mcs build
-        hps_fsp_configuration["fine_channelizer"]["gain"] = [1] * (16384)
         fs_id = hps_fsp_configuration["configure_scan"]["frequency_slice_id"]
-        self.logger.info(f"Frequency slice id: {fs_id}")
-        gain_corrections = VccGainUtils.get_vcc_ripple_correction(
-            hps_fsp_configuration["configure_scan"]["frequency_band"],
-            self.logger,
-            fs_id
-            # hps_fsp_configuration["configure_scan"]["frequency_slice_id"]
+        self.logger.debug(f"frequency_slice_id: {fs_id}")
+        vcc_gain_corrections = get_vcc_ripple_correction(
+            freq_band=hps_fsp_configuration["configure_scan"][
+                "frequency_band"
+            ],
+            logger=self.logger,
+            vcc_freq_slice=fs_id,
         )
-        for gain_index, gain in enumerate(
-            hps_fsp_configuration["fine_channelizer"]["gain"]
-        ):
-            gain = gain * gain_corrections[gain_index % 16384]
-            hps_fsp_configuration["fine_channelizer"]["gain"][
-                gain_index
-            ] = gain
+        hps_fsp_configuration["fine_channelizer"][
+            "gain"
+        ] = vcc_gain_corrections
 
         # TODO: zoom-factor removed from configurescan, but required by HPS, to
         # be inferred from channel_width introduced in ADR-99 when ready to
         # implement zoom
         hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
 
-        self.logger.info(
+        self.logger.debug(
             f"HPS FSP Corr configuration: {hps_fsp_configuration}."
         )
 
@@ -167,7 +164,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         :return: None
         """
         # Set task status in progress, check for abort event
-        self.logger.info("STARTING CONFIGSCAN")
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
             "ConfigureScan", task_callback, task_abort_event
@@ -183,9 +179,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         self.frequency_band = freq_band_dict()[
             configuration["frequency_band"]
         ]["band_index"]
-        self.logger.info(
-            f"Here is the frequency band class attribute: {self.frequency_band}"
-        )
+        self.logger.debug(f"frequency band set to {self.frequency_band}")
         self.frequency_slice_id = int(configuration["frequency_slice_id"])
 
         # Assign newly specified VCCs
@@ -197,11 +191,8 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
-                self.logger.info("Entering HPS FSP configurescan")
-                # self.logger.info("Printing HPS ConfigScan")
                 # TODO: Validate this with JSON Validator
                 # TODO: Update: Valid if replace ' ' with " "
-                # self.logger.info(f"{hps_fsp_configuration}")
                 # TODO: Error is here, does this call configurescan in DsFspCorrControllerComponentManager.cpp? Or where? Timeout happens but where is error? Can't find.
                 self._proxy_hps_fsp_corr_controller.ConfigureScan(
                     hps_fsp_configuration
