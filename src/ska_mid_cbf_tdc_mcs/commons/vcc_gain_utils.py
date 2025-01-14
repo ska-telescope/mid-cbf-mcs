@@ -5,7 +5,7 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE for more info.
 
-"""This module implements utilities for modifying gain"""
+"""This module implements utilities for gain correction of VCC frequency response"""
 
 from __future__ import annotations  # allow forward references in type hints
 
@@ -27,15 +27,18 @@ MAX_GAIN = 4.005
 def get_vcc_ripple_correction(
     freq_band: str,
     logger: logging.Logger,
-    vcc_freq_slice: int = None,
+    fs_id: int = None,
 ) -> list:
     """
     Applies VCC Gain ripple correction to a list of gains.
     Based on https://gitlab.com/ska-telescope/ska-mid-cbf-signal-verification/-/blob/main/images/ska-mid-cbf-signal-verification/hardware_testing_notebooks/talon_pyro/talon_FSP.py
 
+    :param freq_band: the frequency band of the VCC
+    :param logger: a logger
+    :param fs_id: the frequency slice ID processed by the FSP
     :return: list of new gain values
     """
-    if vcc_freq_slice is None:
+    if fs_id is None:
         logger.warning(
             f"No frequency slice provided, setting all gains to default value {DEFAULT_GAIN}"
         )
@@ -43,7 +46,7 @@ def get_vcc_ripple_correction(
             [DEFAULT_GAIN, DEFAULT_GAIN] for _ in range(const.FINE_CHANNELS)
         ]
 
-    # Load VCC frequency band info
+    # Load VCC band info
     try:
         freq_band_info = freq_band_dict()[freq_band]
     except KeyError as ke:
@@ -55,7 +58,7 @@ def get_vcc_ripple_correction(
     frequency_slice_sample_rate = input_sample_rate // input_frame_size
 
     # Assuming frequency shifting is applied in the resampler, calculate shift
-    scf0_fsft = vcc_freq_slice * (
+    scf0_fsft = fs_id * (
         frequency_slice_sample_rate - const.COMMON_SAMPLE_RATE
     )
     # Calculate normalized actual center frequency of secondary channelizer

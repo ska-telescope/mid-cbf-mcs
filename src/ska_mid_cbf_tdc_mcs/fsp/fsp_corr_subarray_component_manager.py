@@ -84,7 +84,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         # append all internal parameters to the configuration to pass to HPS
         # first construct HPS FSP ConfigureScan input
 
-        # Access constants for CIP-2364 through configuration[band_number] and send that to gloabl enums for values
+        # Access constants for CIP-2364 through configuration[band_number] and send that to global enums for values
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
         self.logger.debug(f"{hps_fsp_configuration}")
@@ -114,7 +114,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
                 "frequency_band"
             ],
             logger=self.logger,
-            vcc_freq_slice=fs_id,
+            fs_id=fs_id,
         )
         hps_fsp_configuration["fine_channelizer"][
             "gain"
