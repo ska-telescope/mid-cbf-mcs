@@ -97,7 +97,7 @@ Configure Scan Sequence
 +++++++++++++++++++++++
 
 MCS currently supports Correlation and Pulsar Search Timing Models. Each of these modes 
-have their own specific schema for a Configure Scan.
+have their own specific schema for a Configure Scan. 
 
 Correlator
 ----------
@@ -106,17 +106,6 @@ The sequence diagram below shows the main sequence of calls in MCS
 to configure a correlation scan. Return calls are not shown.
 
 .. uml:: ../../diagrams/configure-corr-scan-mcs.puml   
-
-The sequence diagram below shows additional detail for configuration of 
-the VCC for a correlation scan, following the ConfigureScan call from LMC.
-
-.. uml:: ../../diagrams/configure-scan-vcc.puml
-
-When the Subarray calls **ConfigureBand**, the jsonstr argument contains:
-
-- "frequency_band"
-- "dish_sample_rate"
-- "samples_per_frame"
 
 When the Subarray calls **ConfigureScan** for CORR, the jsonstr argument contains:
 
@@ -136,13 +125,13 @@ correlation scan.
 Pulsar Search Timing
 --------------------
 
-When the Subarray calls **ConfigureBand**, the jsonstr argument contains:
-
-- TBD
-
 When the Subarray calls **ConfigureScan** for PST, the jsonstr argument contains:
 
-- TBD
+- "fsp_ids"
+- "start_freq"
+- "channel_count"
+- "pst_start_channel_id"
+- "timing_beams"
 
 The sequence diagram below shows details of calls to configure a FSP for a 
 PST Configure Scan.
@@ -151,6 +140,17 @@ PST Configure Scan.
 
 All Modes
 ---------
+
+The sequence diagram below shows additional detail for configuration of 
+the VCC for a scan, following the ConfigureScan call from LMC.
+
+.. uml:: ../../diagrams/configure-scan-vcc.puml
+
+When the Subarray calls **ConfigureBand**, the jsonstr argument contains:
+
+- "frequency_band"
+- "dish_sample_rate"
+- "samples_per_frame"
 
 Abort Sequence
 ++++++++++++++
