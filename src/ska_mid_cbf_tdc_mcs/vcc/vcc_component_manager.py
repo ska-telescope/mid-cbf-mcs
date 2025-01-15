@@ -27,10 +27,6 @@ from ska_control_model import (
 from ska_tango_testing import context
 
 from ska_mid_cbf_tdc_mcs.commons.global_enum import freq_band_dict
-
-# from ska_mid_cbf_tdc_mcs.commons.vcc_gain_utils import (
-#     get_vcc_ripple_correction,
-# )
 from ska_mid_cbf_tdc_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
@@ -293,36 +289,6 @@ class VccComponentManager(CbfObsComponentManager):
                     ),
                 )
                 return
-
-        # args = json.loads(json_string)
-
-        # log_string = str(args["vcc_gain"])
-        # self._logger.info(f"Pre VCC gain values: {log_string}")
-
-        # gain_corrections = get_vcc_ripple_correction(
-        #     self._logger
-        # )
-
-        # # Apply Gain Correction to parameters
-        # gain_index = 0
-
-        # # Use a default channel_offset of 0 if not passed in
-        # if "channel_offset" in band_config.keys():
-        #     channel_index = band_config["channel_offset"]
-        # else:
-        #     channel_index = 0
-
-        # self._logger.info(f"channel_offset: {channel_index}")
-        # for gain in args["vcc_gain"]:
-        #     gain = gain * gain_corrections[channel_index + gain_index]
-        #     args["vcc_gain"][gain_index] = gain
-        #     gain_index = gain_index + 1
-
-        # log_string = str(args["vcc_gain"])
-        # self._logger.info(f"Post VCC gain values: {log_string}")
-        # args.update({"dish_sample_rate": band_config["dish_sample_rate"]})
-        # args.update(
-        #     {"samples_per_frame": band_config["samples_per_frame"]}
 
         # Set internal params for the configured band
         json_string = self._load_internal_params(
