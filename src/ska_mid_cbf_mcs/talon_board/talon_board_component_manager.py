@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 from threading import Event, Thread
 from typing import Optional
@@ -32,7 +33,8 @@ POLLING_PERIOD = 2
 
 
 class Eth100gClient:
-    def __init__(self, eth_100g_fqdn: str):
+    def __init__(self, logger: logging.Logger, eth_100g_fqdn: str):
+        self.logger = logger
         self._eth_100g_fqdn = eth_100g_fqdn
         self._eth_100g_id = 0 if "100g_0" in eth_100g_fqdn else 1
         self._dp_eth_100g = context.DeviceProxy(device_name=eth_100g_fqdn)
@@ -381,8 +383,12 @@ class TalonBoardComponentManager(CbfComponentManager):
                         )
                         return
 
-                self._eth_100g_0_client = Eth100gClient(self._eth_100g_0_fqdn)
-                self._eth_100g_1_client = Eth100gClient(self._eth_100g_1_fqdn)
+                self._eth_100g_0_client = Eth100gClient(
+                    self.logger, self._eth_100g_0_fqdn
+                )
+                self._eth_100g_1_client = Eth100gClient(
+                    self.logger, self._eth_100g_1_fqdn
+                )
 
                 # Begin the polling thread
                 self._poll_thread_event = Event()

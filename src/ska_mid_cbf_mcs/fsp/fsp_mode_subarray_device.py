@@ -92,16 +92,16 @@ class FspModeSubarray(CbfObsDevice):
     @attribute(
         dtype=HealthState,
         doc="HealthState of the FSP Function Mode Subarray device",
-        polling_period=ATTR_POLLING_PERIOD,
     )
-    def healthState(self: FspModeSubarray) -> str:
+    def healthState(self: FspModeSubarray) -> HealthState:
         """
         Read the healthState attribute.
 
         :return: the healthState attribute.
         :rtype: string
         """
-        return self.component_manager.health_state()
+        self.component_manager.update_health_state_from_hps()
+        return self._health_state
 
     # --------------
     # Initialization
@@ -204,14 +204,6 @@ class FspModeSubarray(CbfObsDevice):
         command_handler = self.get_command_object("UpdateDelayModel")
         result_code, message = command_handler(argin)
         return [[result_code], [message]]
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
-
-    # -------------
-    # Fast Commands
-    # -------------
 
     # ---------------------
     # Long Running Commands

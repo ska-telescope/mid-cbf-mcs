@@ -19,6 +19,7 @@ from typing import Callable, Optional
 import tango
 from ska_control_model import (
     CommunicationStatus,
+    HealthState,
     ObsState,
     PowerState,
     ResultCode,
@@ -37,6 +38,9 @@ __all__ = ["VccComponentManager"]
 
 VCC_PARAM_PATH = "mnt/vcc_param/"
 
+# Global Variable for polling period of Attributes, in ms
+ATTR_POLLING_PERIOD = 10000  # 10s
+
 
 class VccComponentManager(CbfObsComponentManager):
     """
@@ -45,10 +49,11 @@ class VccComponentManager(CbfObsComponentManager):
 
     def __init__(
         self: VccComponentManager,
-        *args: any,
+        device_fqdn: str,
         talon_lru: str,
         vcc_controller: str,
         vcc_band: list[str],
+        *args: any,
         **kwargs: any,
     ) -> None:
         """
@@ -60,6 +65,7 @@ class VccComponentManager(CbfObsComponentManager):
         """
         super().__init__(*args, **kwargs)
 
+        self._device_fqdn = device_fqdn
         self._talon_lru_fqdn = talon_lru
         self._vcc_controller_fqdn = vcc_controller
         self._vcc_band_fqdn = vcc_band
@@ -128,6 +134,14 @@ class VccComponentManager(CbfObsComponentManager):
                     band_proxy = context.DeviceProxy(device_name=fqdn)
                     band_proxy.set_timeout_millis(self._lrc_timeout * 1000)
                     self._band_proxies.append(band_proxy)
+
+                    # Poll this device (not the HPS device)'s healthState.
+                    # This is established here so that only configured FSPs are polled.
+                    self._device_proxy = context.DeviceProxy(self._device_fqdn)
+                    self._device_proxy.poll_attribute(
+                        attr_name="healthState", period=ATTR_POLLING_PERIOD
+                    )
+                    self.logger.debug("Polling commenced on healthState attr")
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 self._update_communication_state(
@@ -140,6 +154,17 @@ class VccComponentManager(CbfObsComponentManager):
 
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
+
+    def _stop_communicating(
+        self: VccComponentManager, *args, **kwargs
+    ) -> None:
+        """
+        Thread for stop_communicating operation.
+        """
+        if not self.simulation_mode:
+            self._device_proxy.stop_poll_attribute(attr_name="healthState")
+        self.update_device_health_state(HealthState.UNKNOWN)
+        super()._stop_communicating()
 
     # --------------
     # Helper Methods
@@ -203,6 +228,33 @@ class VccComponentManager(CbfObsComponentManager):
         args.update({"samples_per_frame": samples_per_frame})
         json_string = json.dumps(args)
         return json_string
+
+    def update_health_state_from_hps(
+        self: VccComponentManager,
+    ) -> HealthState:
+        """
+        Read the HPS VCC controller device's healthState
+        attr and update the MCS VCC device accordingly.
+
+        :return: The current healthState of the FSP.
+        :rtype: tango.HealthState
+        """
+        if self.is_communicating:
+            # FIXME: Exception handling messages...
+            try:
+                healthState = HealthState(self._band_proxies[0].healthState)
+                self.update_device_health_state(healthState)
+            except tango.CommunicationFailed as cf1:
+                self.logger.error(f"1. Could not reach HPS device; {cf1}")
+                self.update_device_health_state(HealthState.UNKNOWN)
+            except tango.ConnectionFailed as cf2:
+                self.logger.error(f"2. Could not reach HPS device; {cf2}")
+                self.update_device_health_state(HealthState.UNKNOWN)
+            except tango.DevFailed as df:
+                self.logger.error(f"Failed to read HPS healthState; {df}")
+                self.update_device_health_state(HealthState.FAILED)
+        else:
+            self.update_device_health_state(HealthState.UNKNOWN)
 
     # -------------
     # Fast Commands

@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 from threading import Event
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 import tango
 from ska_control_model import HealthState, PowerState, TaskStatus
@@ -23,6 +23,9 @@ from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
 
+# Global Variable for polling period of Attributes, in ms
+ATTR_POLLING_PERIOD = 10000  # 10s
+
 
 class FspModeSubarrayComponentManager(CbfObsComponentManager):
     """
@@ -31,9 +34,10 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
 
     def __init__(
         self: FspModeSubarrayComponentManager,
+        device_fqdn: str,
         hps_fsp_mode_controller_fqdn: str,
-        *args: Any,
-        **kwargs: Any,
+        *args: any,
+        **kwargs: any,
     ) -> None:
         """
         Initialise a new instance.
@@ -45,6 +49,7 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         """
         super().__init__(*args, **kwargs)
 
+        self._device_fqdn = device_fqdn
         self._proxy_hps_fsp_mode_controller = None
         self._hps_fsp_mode_controller_fqdn = hps_fsp_mode_controller_fqdn
         self.delay_model = ""
@@ -73,6 +78,13 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
                 self._proxy_hps_fsp_mode_controller.set_timeout_millis(
                     self._lrc_timeout * 1000
                 )
+                # Poll this device (not the HPS device)'s healthState.
+                # This is established here so that only configured FSPs are polled.
+                self._device_proxy = context.DeviceProxy(self._device_fqdn)
+                self._device_proxy.poll_attribute(
+                    attr_name="healthState", period=ATTR_POLLING_PERIOD
+                )
+                self.logger.debug("Polling commenced on healthState attr")
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failed to connect to {self._hps_fsp_mode_controller_fqdn}; {df}"
@@ -88,21 +100,49 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
 
+    def _stop_communicating(
+        self: FspModeSubarrayComponentManager, *args, **kwargs
+    ) -> None:
+        """
+        Thread for stop_communicating operation.
+        """
+        if not self.simulation_mode:
+            self._device_proxy.stop_poll_attribute(attr_name="healthState")
+        self.update_device_health_state(HealthState.UNKNOWN)
+        super()._stop_communicating()
+
     # -------------
     # Class Helpers
     # -------------
 
-    def health_state(self: FspModeSubarrayComponentManager) -> HealthState:
+    def update_health_state_from_hps(
+        self: FspModeSubarrayComponentManager,
+    ) -> HealthState:
         """
-        Reads the HPS function mode controller device's healthState and updates accordingly.
+        Read the HPS function mode controller device's healthState
+        attr and update the MCS FspModeSubarray device accordingly.
 
         :return: The current healthState of the FSP.
         :rtype: tango.HealthState
         """
-        healthState = self._proxy_hps_fsp_mode_controller.healthState
-        self.update_device_health_state(healthState)
-
-        return healthState
+        if self.is_communicating:
+            # FIXME: Exception handling messages...
+            try:
+                healthState = HealthState(
+                    self._proxy_hps_fsp_mode_controller.healthState
+                )
+                self.update_device_health_state(healthState)
+            except tango.CommunicationFailed as cf1:
+                self.logger.error(f"1. Could not reach HPS device; {cf1}")
+                self.update_device_health_state(HealthState.UNKNOWN)
+            except tango.ConnectionFailed as cf2:
+                self.logger.error(f"2. Could not reach HPS device; {cf2}")
+                self.update_device_health_state(HealthState.UNKNOWN)
+            except tango.DevFailed as df:
+                self.logger.error(f"Failed to read HPS healthState; {df}")
+                self.update_device_health_state(HealthState.FAILED)
+        else:
+            self.update_device_health_state(HealthState.UNKNOWN)
 
     # TODO: See if _build_hps_fsp_config can be abstracted out when we implement it
     # for PST
@@ -186,8 +226,8 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
 
         # the whole delay model must be stored
         self.delay_model = model
-        self.device_attr_change_callback("delayModel", model)
-        self.device_attr_archive_callback("delayModel", model)
+        self.device_attr_change_callback("delayModel", self.delay_model)
+        self.device_attr_archive_callback("delayModel", self.delay_model)
 
         return (ResultCode.OK, "UpdateDelayModel completed OK")
 
