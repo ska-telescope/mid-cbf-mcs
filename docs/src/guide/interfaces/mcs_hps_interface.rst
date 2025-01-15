@@ -100,7 +100,7 @@ MCS currently supports Correlation and Pulsar Search Timing Models. Each of thes
 have their own specific schema for a Configure Scan. 
 
 Correlator
-----------
+^^^^^^^^^^
 
 The sequence diagram below shows the main sequence of calls in MCS 
 to configure a correlation scan. Return calls are not shown.
@@ -123,7 +123,7 @@ correlation scan.
 .. uml:: ../../diagrams/configure-scan-hps-fsp.puml
 
 Pulsar Search Timing
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 When the Subarray calls **ConfigureScan** for PST, the jsonstr argument contains:
 
@@ -139,7 +139,7 @@ PST Configure Scan.
 .. uml:: ../../diagrams/configure-scan-pst-fsp-hps.puml
 
 All Modes
----------
+^^^^^^^^^
 
 The sequence diagram below shows additional detail for configuration of 
 the VCC for a scan, following the ConfigureScan call from LMC.
