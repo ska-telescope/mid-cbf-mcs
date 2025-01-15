@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 UNRELEASED CHANGES
 ******************
 * CIP-2660 Added back FspPstSubarray to MCS
+* CIP-2790: Added error handling for CbfFastCommands processed within MCS
+
+1.1.1
+**********
 * CIP-2953 increase SV pod storage from 375Mi to 2Gi
 * CIP-2659: CbfController On/Off command partial success
   * On command succeeds if one or more LRUs are powered on; Off command succeeds if one or more LRUs are powered off
