@@ -250,14 +250,16 @@ class TestFspCorrSubarray:
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
-            json_str = f.read().replace("\n", "")
+            scan_config_json = json.load(f)
+
+        json_str_1 = json.dumps(scan_config_json)
 
         # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
         # Test happy path observing command sequence
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
-            json_str
+            json_str_1
         )
         command_dict["Scan"] = device_under_test.Scan(scan_id)
         command_dict["EndScan"] = device_under_test.EndScan()
@@ -279,14 +281,32 @@ class TestFspCorrSubarray:
                 ),
             )
 
+        assert device_under_test.lastScanConfiguration == json_str_1
+
+        dut_lastHpsSCJson_1 = json.loads(
+            device_under_test.lastHpsScanConfiguration
+        )
+        assert dut_lastHpsSCJson_1["configure_scan"]["zoom_factor"] == 0
+        assert dut_lastHpsSCJson_1["configure_scan"]["corr_vcc_ids"] == [1]
+        assert dut_lastHpsSCJson_1["configure_scan"]["frequency_slice_id"] == 1
+
         # Second round of observation
         command_dict = {}
+
+        # Change some values with the loaded Scan Configuration, to simulate
+        # loading a new configuration
+
+        scan_config_json["corr_vcc_ids"] = [4]
+        scan_config_json["frequency_slice_id"] = 2
+        scan_config_json["output_port"] = [[0, 1000], [20, 2000]]
+
+        json_str_2 = json.dumps(scan_config_json)
+
         command_dict["ConfigureScan"] = device_under_test.ConfigureScan(
-            json_str
+            json_str_2
         )
         command_dict["Scan"] = device_under_test.Scan(scan_id)
         command_dict["EndScan"] = device_under_test.EndScan()
-        command_dict["GoToIdle"] = device_under_test.GoToIdle()
 
         attr_values = [
             ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
@@ -297,7 +317,6 @@ class TestFspCorrSubarray:
             ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
             ("obsState", ObsState.SCANNING, ObsState.READY, 2),
             ("obsState", ObsState.READY, ObsState.SCANNING, 2),
-            ("obsState", ObsState.IDLE, ObsState.READY, 1),
         ]
 
         # Assertions for all issued LRC
@@ -326,6 +345,48 @@ class TestFspCorrSubarray:
                 attribute_value=value,
                 previous_value=previous,
                 min_n_events=n,
+            )
+
+        assert device_under_test.lastScanConfiguration == json_str_2
+
+        dut_lastHpsSCJson_2 = json.loads(
+            device_under_test.lastHpsScanConfiguration
+        )
+        assert dut_lastHpsSCJson_2["configure_scan"]["zoom_factor"] == 0
+        assert dut_lastHpsSCJson_2["configure_scan"]["corr_vcc_ids"] == [4]
+        assert dut_lastHpsSCJson_2["configure_scan"]["frequency_slice_id"] == 2
+
+        # Configure to idle
+        command_dict = {}
+        command_dict["GoToIdle"] = device_under_test.GoToIdle()
+
+        # Assertions for all issued LRC
+        for command_name, return_value in command_dict.items():
+            # Check that the command was successfully queued
+            assert return_value[0] == ResultCode.QUEUED
+
+            attr_values.append(
+                (
+                    "longRunningCommandResult",
+                    (
+                        f"{return_value[1][0]}",
+                        f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
+                    ),
+                    None,
+                    1,
+                )
+            )
+
+            attr_values.append(("obsState", ObsState.IDLE, ObsState.READY, 1))
+
+        for name, value, previous, n in attr_values:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=device_under_test,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
             )
 
     @pytest.mark.parametrize(

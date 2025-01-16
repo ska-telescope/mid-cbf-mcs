@@ -123,7 +123,7 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
                 self._proxy_hps_fsp_mode_controller.ConfigureScan(
-                    configuration
+                    hps_fsp_configuration
                 )
             except tango.DevFailed as df:
                 self.logger.error(
