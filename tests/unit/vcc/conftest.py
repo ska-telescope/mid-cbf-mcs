@@ -14,6 +14,7 @@ from typing import Generator
 
 import pytest
 import tango
+from ska_control_model import HealthState
 from ska_tango_testing import context
 from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.integration import TangoEventTracer
@@ -61,6 +62,46 @@ def tango_event_tracer(
     return tracer
 
 
+@pytest.fixture(name="device_under_test_unhealthy")
+def device_under_test_unhealthy_fixture(
+    test_context: TangoTestHarnessContext,
+) -> context.DeviceProxy:
+    """
+    Fixture that returns the DeviceProxy to the unhealthy device under test.
+
+    :param test_context: the context in which the tests run
+    :return: the DeviceProxy for the device under test
+    """
+    return test_context.get_device("mid_csp_cbf/vcc/002")
+
+
+@pytest.fixture(name="event_tracer_unhealthy", autouse=True)
+def tango_event_tracer_unhealthy(
+    device_under_test_unhealthy: context.DeviceProxy,
+) -> Generator[TangoEventTracer, None, None]:
+    """
+    Fixture that returns a TangoEventTracer for pertinent devices.
+    Takes as parameter all required device proxy fixtures for this test module.
+
+    :param device_under_test: the DeviceProxy to device under test
+    :return: TangoEventTracer
+    """
+    tracer = TangoEventTracer()
+
+    change_event_attr_list = [
+        "longRunningCommandResult",
+        "frequencyBand",
+        "obsState",
+        "subarrayMembership",
+        "adminMode",
+        "state",
+    ]
+    for attr in change_event_attr_list:
+        tracer.subscribe_event(device_under_test_unhealthy, attr)
+
+    return tracer
+
+
 @pytest.fixture()
 def mock_vcc_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
@@ -81,6 +122,21 @@ def mock_vcc_band() -> unittest.mock.Mock:
     builder.add_command("EndScan", None)
     builder.add_command("Abort", None)
     builder.add_command("ObsReset", None)
+    builder.add_attribute("healthState", HealthState.OK)
+    return builder()
+
+
+@pytest.fixture()
+def mock_vcc_band_unhealthy() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.INIT)
+    builder.add_command("SetInternalParameters", None)
+    builder.add_command("ConfigureScan", None)
+    builder.add_command("Scan", None)
+    builder.add_command("EndScan", None)
+    builder.add_command("Abort", None)
+    builder.add_command("ObsReset", None)
+    builder.add_attribute("healthState", HealthState.FAILED)
     return builder()
 
 
@@ -88,6 +144,7 @@ def mock_vcc_band() -> unittest.mock.Mock:
 def initial_mocks(
     mock_vcc_controller: unittest.mock.Mock,
     mock_vcc_band: unittest.mock.Mock,
+    mock_vcc_band_unhealthy: unittest.mock.Mock,
 ) -> dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -102,4 +159,9 @@ def initial_mocks(
         "talondx-001/vcc-app/vcc-band-3": mock_vcc_band,
         "talondx-001/vcc-app/vcc-band-4": mock_vcc_band,
         "talondx-001/vcc-app/vcc-band-5": mock_vcc_band,
+        "talondx-002/vcc-app/vcc-controller": mock_vcc_controller,
+        "talondx-002/vcc-app/vcc-band-1-and-2": mock_vcc_band_unhealthy,
+        "talondx-002/vcc-app/vcc-band-3": mock_vcc_band_unhealthy,
+        "talondx-002/vcc-app/vcc-band-4": mock_vcc_band_unhealthy,
+        "talondx-002/vcc-app/vcc-band-5": mock_vcc_band_unhealthy,
     }

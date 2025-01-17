@@ -126,17 +126,13 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         :rtype: tango.HealthState
         """
         if self.is_communicating:
-            # FIXME: Exception handling messages...
             try:
                 healthState = HealthState(
                     self._proxy_hps_fsp_mode_controller.healthState
                 )
                 self.update_device_health_state(healthState)
-            except tango.CommunicationFailed as cf1:
-                self.logger.error(f"1. Could not reach HPS device; {cf1}")
-                self.update_device_health_state(HealthState.UNKNOWN)
-            except tango.ConnectionFailed as cf2:
-                self.logger.error(f"2. Could not reach HPS device; {cf2}")
+            except tango.ConnectionFailed as cf:
+                self.logger.error(f"Could not reach HPS device; {cf}")
                 self.update_device_health_state(HealthState.UNKNOWN)
             except tango.DevFailed as df:
                 self.logger.error(f"Failed to read HPS healthState; {df}")

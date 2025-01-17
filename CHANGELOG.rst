@@ -9,6 +9,7 @@ UNRELEASED CHANGES
 ******************
 * CIP-2660 Added back FspPstSubarray to MCS
 * CIP-2790: Added error handling for CbfFastCommands processed within MCS
+* CIP-3213: Rolled up healthState from HPS VCC Band 1/2 and FSP Corr into MCS VCC and FspModeSubarray, respectively
 
 1.1.1
 **********

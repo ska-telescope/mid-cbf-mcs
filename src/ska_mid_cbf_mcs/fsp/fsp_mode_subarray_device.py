@@ -31,9 +31,6 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 __all__ = ["FspModeSubarray", "main"]
 
-# Global Variable for polling period of Attributes, in ms
-ATTR_POLLING_PERIOD = 10000  # 10s
-
 
 class FspModeSubarray(CbfObsDevice):
     """
