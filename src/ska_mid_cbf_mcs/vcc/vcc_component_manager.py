@@ -136,7 +136,7 @@ class VccComponentManager(CbfObsComponentManager):
                     self._band_proxies.append(band_proxy)
 
                     # Poll this device (not the HPS device)'s healthState.
-                    # This is established here so that only configured FSPs are polled.
+                    # This is established here so that only configured VCCs are polled.
                     self._device_proxy = context.DeviceProxy(self._device_fqdn)
                     self._device_proxy.poll_attribute(
                         attr_name="healthState", period=ATTR_POLLING_PERIOD
