@@ -73,7 +73,6 @@ class FspPstSubarray(FspModeSubarray):
         """
 
         return FspPstSubarrayComponentManager(
-            device_fqdn=self.get_name(),
             hps_fsp_mode_controller_fqdn=self.HpsFspPstControllerAddress,
             lrc_timeout=int(self.LRCTimeout),
             logger=self.logger,

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import os
 
-from ska_control_model import HealthState, ObsState, ResultCode
+from ska_control_model import ObsState, ResultCode
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from tango.server import attribute, command, device_property
 
@@ -85,20 +85,6 @@ class FspModeSubarray(CbfObsDevice):
         :rtype: string
         """
         return self.component_manager.delay_model
-
-    @attribute(
-        dtype=HealthState,
-        doc="HealthState of the FSP Function Mode Subarray device",
-    )
-    def healthState(self: FspModeSubarray) -> HealthState:
-        """
-        Read the healthState attribute.
-
-        :return: the healthState attribute.
-        :rtype: string
-        """
-        self.component_manager.update_health_state_from_hps()
-        return self._health_state
 
     # --------------
     # Initialization

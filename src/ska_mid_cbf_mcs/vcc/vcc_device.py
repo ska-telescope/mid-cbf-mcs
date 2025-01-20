@@ -14,7 +14,6 @@ from __future__ import annotations
 import tango
 
 # Tango imports
-from ska_control_model import HealthState
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango.server import attribute, command, device_property
@@ -139,20 +138,6 @@ class Vcc(CbfObsDevice):
         """
         return self.component_manager.last_hps_scan_configuration
 
-    @attribute(
-        dtype=HealthState,
-        doc="HealthState of the VCC device",
-    )
-    def healthState(self: Vcc) -> HealthState:
-        """
-        Read the healthState attribute.
-
-        :return: the healthState attribute.
-        :rtype: string
-        """
-        self.component_manager.update_health_state_from_hps()
-        return self._health_state
-
     # --------------
     # Initialization
     # --------------
@@ -176,7 +161,6 @@ class Vcc(CbfObsDevice):
 
     def create_component_manager(self: Vcc) -> VccComponentManager:
         return VccComponentManager(
-            device_fqdn=self.get_name(),
             talon_lru=self.TalonLRUAddress,
             vcc_controller=self.VccControllerAddress,
             vcc_band=[
