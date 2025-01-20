@@ -70,7 +70,7 @@ class FspModes(IntEnum):
     IDLE = 0
     CORR = 1
     PSS_BF = 2
-    PST_BF = 3
+    PST = 3
     VLBI = 4
 
 

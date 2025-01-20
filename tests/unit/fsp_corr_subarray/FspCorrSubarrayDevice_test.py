@@ -293,9 +293,7 @@ class TestFspCorrSubarray:
         # Second round of observation
         command_dict = {}
 
-        # Change some values with the loaded Scan Configuration, to simulate
-        # loading a new configuration
-
+        # Change some values in the Scan Configuration, to simulate loading a new configuration
         scan_config_json["corr_vcc_ids"] = [4]
         scan_config_json["frequency_slice_id"] = 2
         scan_config_json["output_port"] = [[0, 1000], [20, 2000]]
