@@ -10,7 +10,7 @@
 # Copyright (c) 2019 National Research Council of Canada
 from __future__ import annotations
 
-from threading import Event
+from threading import Event, Thread
 from typing import Callable, Optional
 
 import tango
@@ -23,8 +23,8 @@ from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
 
-# Global Variable for polling period of Attributes, in ms
-ATTR_POLLING_PERIOD = 10000  # 10s
+# Polling thread attr polling period in seconds
+POLLING_PERIOD = 10
 
 
 class FspModeSubarrayComponentManager(CbfObsComponentManager):
@@ -34,7 +34,6 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
 
     def __init__(
         self: FspModeSubarrayComponentManager,
-        device_fqdn: str,
         hps_fsp_mode_controller_fqdn: str,
         *args: any,
         **kwargs: any,
@@ -49,7 +48,6 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         """
         super().__init__(*args, **kwargs)
 
-        self._device_fqdn = device_fqdn
         self._proxy_hps_fsp_mode_controller = None
         self._hps_fsp_mode_controller_fqdn = hps_fsp_mode_controller_fqdn
         self.delay_model = ""
@@ -61,6 +59,26 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
     # -------------
     # Communication
     # -------------
+
+    def _internal_polling_thread(
+        self: FspModeSubarrayComponentManager,
+        event: Event,
+    ):
+        """
+        Polling function that runs in a thread separate from the tango polling loop.
+
+        :param event: this event is used to trigger the polling thread to stop.
+        """
+        self.logger.info("Started polling")
+        while True:
+            # polls until event is set
+            if event.wait(timeout=POLLING_PERIOD):
+                break
+
+            # Poll HPS FSP Mode Controller healthState
+            self.update_health_state_from_hps()
+
+        self.logger.info("Stopped polling")
 
     def _start_communicating(
         self: FspModeSubarrayComponentManager, *args, **kwargs
@@ -78,13 +96,16 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
                 self._proxy_hps_fsp_mode_controller.set_timeout_millis(
                     self._lrc_timeout * 1000
                 )
-                # Poll this device (not the HPS device)'s healthState.
-                # This is established here so that only configured FSPs are polled.
-                self._device_proxy = context.DeviceProxy(self._device_fqdn)
-                self._device_proxy.poll_attribute(
-                    attr_name="healthState", period=ATTR_POLLING_PERIOD
+
+                # Begin the polling thread
+                self._poll_thread_event = Event()
+                self._poll_thread = Thread(
+                    target=self._internal_polling_thread,
+                    args=[
+                        self._poll_thread_event,
+                    ],
                 )
-                self.logger.debug("Polling commenced on healthState attr")
+                self._poll_thread.start()
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failed to connect to {self._hps_fsp_mode_controller_fqdn}; {df}"
@@ -107,7 +128,9 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         Thread for stop_communicating operation.
         """
         if not self.simulation_mode:
-            self._device_proxy.stop_poll_attribute(attr_name="healthState")
+            if self._poll_thread is not None:
+                self._poll_thread_event.set()
+                self._poll_thread.join()
         self.update_device_health_state(HealthState.UNKNOWN)
         super()._stop_communicating()
 

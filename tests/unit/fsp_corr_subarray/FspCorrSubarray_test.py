@@ -160,7 +160,13 @@ class TestFspCorrSubarray:
         # Prepare device for observation
         assert device_under_test.healthState == HealthState.UNKNOWN
         assert self.device_online_and_on(device_under_test, event_tracer)
-        assert device_under_test.healthState == HealthState.OK
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="healthState",
+            attribute_value=HealthState.OK,
+        )
 
     def test_healthState_fail(
         self: TestFspCorrSubarray,
@@ -179,7 +185,13 @@ class TestFspCorrSubarray:
         assert self.device_online_and_on(
             device_under_test_unhealthy, event_tracer_unhealthy
         )
-        assert device_under_test_unhealthy.healthState == HealthState.FAILED
+        assert_that(event_tracer_unhealthy).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test_unhealthy,
+            attribute_name="healthState",
+            attribute_value=HealthState.FAILED,
+        )
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",

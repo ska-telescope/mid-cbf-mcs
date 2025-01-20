@@ -93,7 +93,6 @@ class FspCorrSubarray(FspModeSubarray):
         """
 
         return FspCorrSubarrayComponentManager(
-            device_fqdn=self.get_name(),
             hps_fsp_mode_controller_fqdn=self.HpsFspCorrControllerAddress,
             lrc_timeout=int(self.LRCTimeout),
             logger=self.logger,

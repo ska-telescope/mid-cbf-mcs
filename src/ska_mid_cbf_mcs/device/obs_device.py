@@ -21,7 +21,6 @@ from typing import Any, Callable, Optional, cast
 
 from ska_control_model import (
     AdminMode,
-    HealthState,
     ObsState,
     ObsStateModel,
     PowerState,
@@ -447,27 +446,6 @@ class CbfObsDevice(SKAObsDevice):
         :param action: an action, as given in the transitions table
         """
         self.admin_mode_model.perform_action(action)
-
-    # TODO: CIP-3262 This method is overridden from SkaBaseDevice.
-    # The parent implementation includes the event pushing calls that have
-    # been commented out here because in this device it causes the pod to
-    # crash. Once the bug has been squashed, this overriden method can be
-    # removed to allow the original implementation to push events again.
-    def _update_health_state(
-        self: CbfObsDevice, health_state: HealthState
-    ) -> None:
-        """
-        Callback for updating device's healthState attr.
-
-        :param health_state: A HealthState enum representing the device's
-        current health.
-        """
-        self.logger.info(
-            "Updating device healthState but skipping pushing events..."
-        )
-        self._health_state = health_state
-        # self.push_change_event("healthState", self._health_state)
-        # self.push_archive_event("healthState", self._health_state)
 
     # ---------------
     # General methods

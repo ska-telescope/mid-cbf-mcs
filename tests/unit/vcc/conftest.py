@@ -50,6 +50,7 @@ def tango_event_tracer(
 
     change_event_attr_list = [
         "longRunningCommandResult",
+        "healthState",
         "frequencyBand",
         "obsState",
         "subarrayMembership",
@@ -90,6 +91,7 @@ def tango_event_tracer_unhealthy(
 
     change_event_attr_list = [
         "longRunningCommandResult",
+        "healthState",
         "frequencyBand",
         "obsState",
         "subarrayMembership",

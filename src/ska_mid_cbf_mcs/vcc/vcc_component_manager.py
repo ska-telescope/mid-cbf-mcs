@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import json
-from threading import Event
+from threading import Event, Thread
 from typing import Callable, Optional
 
 # tango imports
@@ -38,8 +38,8 @@ __all__ = ["VccComponentManager"]
 
 VCC_PARAM_PATH = "mnt/vcc_param/"
 
-# Global Variable for polling period of Attributes, in ms
-ATTR_POLLING_PERIOD = 10000  # 10s
+# Polling thread attr polling period in seconds
+POLLING_PERIOD = 10
 
 
 class VccComponentManager(CbfObsComponentManager):
@@ -49,7 +49,6 @@ class VccComponentManager(CbfObsComponentManager):
 
     def __init__(
         self: VccComponentManager,
-        device_fqdn: str,
         talon_lru: str,
         vcc_controller: str,
         vcc_band: list[str],
@@ -65,7 +64,6 @@ class VccComponentManager(CbfObsComponentManager):
         """
         super().__init__(*args, **kwargs)
 
-        self._device_fqdn = device_fqdn
         self._talon_lru_fqdn = talon_lru
         self._vcc_controller_fqdn = vcc_controller
         self._vcc_band_fqdn = vcc_band
@@ -109,6 +107,26 @@ class VccComponentManager(CbfObsComponentManager):
     # Communication
     # -------------
 
+    def _internal_polling_thread(
+        self: VccComponentManager,
+        event: Event,
+    ):
+        """
+        Polling function that runs in a thread separate from the tango polling loop.
+
+        :param event: this event is used to trigger the polling thread to stop.
+        """
+        self.logger.info("Started polling")
+        while True:
+            # polls until event is set
+            if event.wait(timeout=POLLING_PERIOD):
+                break
+
+            # Poll HPS VCC healthState
+            self.update_health_state_from_hps()
+
+        self.logger.info("Stopped polling")
+
     def _start_communicating(
         self: VccComponentManager, *args, **kwargs
     ) -> None:
@@ -135,13 +153,15 @@ class VccComponentManager(CbfObsComponentManager):
                     band_proxy.set_timeout_millis(self._lrc_timeout * 1000)
                     self._band_proxies.append(band_proxy)
 
-                    # Poll this device (not the HPS device)'s healthState.
-                    # This is established here so that only configured VCCs are polled.
-                    self._device_proxy = context.DeviceProxy(self._device_fqdn)
-                    self._device_proxy.poll_attribute(
-                        attr_name="healthState", period=ATTR_POLLING_PERIOD
+                    # Begin the polling thread
+                    self._poll_thread_event = Event()
+                    self._poll_thread = Thread(
+                        target=self._internal_polling_thread,
+                        args=[
+                            self._poll_thread_event,
+                        ],
                     )
-                    self.logger.debug("Polling commenced on healthState attr")
+                    self._poll_thread.start()
             except tango.DevFailed as df:
                 self.logger.error(f"{df}")
                 self._update_communication_state(
@@ -162,7 +182,9 @@ class VccComponentManager(CbfObsComponentManager):
         Thread for stop_communicating operation.
         """
         if not self.simulation_mode:
-            self._device_proxy.stop_poll_attribute(attr_name="healthState")
+            if self._poll_thread is not None:
+                self._poll_thread_event.set()
+                self._poll_thread.join()
         self.update_device_health_state(HealthState.UNKNOWN)
         super()._stop_communicating()
 
