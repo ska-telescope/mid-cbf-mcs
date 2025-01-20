@@ -7,7 +7,7 @@
         "output_sample_rate": 220200960
     },
     "fine_channelizer":{
-        "gain": [[1.0, 1.0]]
+        "gain": [1.0]
     },
     "ddr4_corner_turner":{
         "min_integration_time_num_samps": 1904,

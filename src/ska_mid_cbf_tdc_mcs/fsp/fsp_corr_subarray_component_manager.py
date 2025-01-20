@@ -55,7 +55,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             [
                 int(
                     i
-                    * const.NUM_FINE_CHANNELS
+                    * const.NUM_FINE_CHANNELS_PR
                     / const.NUM_CHANNELS_PER_SPEAD_STREAM
                 )
                 + 1,

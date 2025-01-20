@@ -43,7 +43,8 @@ def get_vcc_ripple_correction(
             f"No frequency slice provided, setting all gains to default value {DEFAULT_GAIN}"
         )
         return [
-            [DEFAULT_GAIN, DEFAULT_GAIN] for _ in range(const.FINE_CHANNELS)
+            [DEFAULT_GAIN, DEFAULT_GAIN]
+            for _ in range(const.NUM_FINE_CHANNELS)
         ]
 
     # Load VCC band info
@@ -62,7 +63,9 @@ def get_vcc_ripple_correction(
         frequency_slice_sample_rate - const.COMMON_SAMPLE_RATE
     )
     # Calculate normalized actual center frequency of secondary channelizer
-    fc0 = np.linspace(-1, 1 - 2 / const.FINE_CHANNELS, num=const.FINE_CHANNELS)
+    fc0 = np.linspace(
+        -1, 1 - 2 / const.NUM_FINE_CHANNELS, num=const.NUM_FINE_CHANNELS
+    )
     actual_center_frequency = fc0 * const.COMMON_SAMPLE_RATE / 2 - scf0_fsft
     normalized_center_frequency = (
         actual_center_frequency
@@ -87,15 +90,15 @@ def get_vcc_ripple_correction(
     #     0.99 / abs(fr_values), 0, 1
     # )  # NOTE: The 0.99 factor avoids the saturation of gain correction factors
 
-    # Initialize the Imaging Channel gain array with length of FINE_CHANNELS
-    default_gains = [DEFAULT_GAIN for _ in range(const.FINE_CHANNELS)]
+    # Initialize the Imaging Channel gain array with length of NUM_FINE_CHANNELS
+    default_gains = [DEFAULT_GAIN for _ in range(const.NUM_FINE_CHANNELS)]
     vcc_gain_corrections = [
         gain * factor for gain, factor in zip(default_gains, gain_factors)
     ]
 
     # FFT-shift to match registers.
     vcc_gains_copy = list(vcc_gain_corrections)
-    center_channel = const.FINE_CHANNELS // 2
+    center_channel = const.NUM_FINE_CHANNELS // 2
     vcc_gain_corrections = (
         vcc_gains_copy[center_channel:] + vcc_gains_copy[:center_channel]
     )

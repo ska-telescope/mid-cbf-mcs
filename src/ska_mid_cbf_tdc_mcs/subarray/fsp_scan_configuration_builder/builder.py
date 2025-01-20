@@ -91,7 +91,7 @@ class FspScanConfigurationBuilder:
         # the Host-LUT channel offset is based on the number of fine channels
         # in the FSP, as well as the number of FSP in the configuration
         host_lut_channel_offsets = [
-            index * const.NUM_FINE_CHANNELS
+            index * const.NUM_FINE_CHANNELS_PR
             for index in range(0, len(fsp_configurations))
         ]
         for host_lut_channel_offset, fsp_config in zip(
