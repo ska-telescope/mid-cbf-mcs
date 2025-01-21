@@ -167,6 +167,13 @@ class VisibilityTransport:
                 self._dp_spead_desc.region_port_count = ports_per_region[
                     region_id
                 ]
+                self.logger.info(
+                    f"creating descriptor with sub_id = {sub_id}, " 
+                    f"region_id = {region_id}, "
+                    f"baseline_count = {n_baselines}, "
+                    f"channel_count = 20, "
+                    f"region_port_count = {ports_per_region[region_id]}"
+                )
                 self._dp_spead_desc.command_inout("CreateDescriptor", sub_id)
 
             # reset attributes for first spead descriptor
