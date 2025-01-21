@@ -1854,7 +1854,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         ports_per_region = []
         receptors_per_region = []
         if "correlation" in configuration:
-            number_of_regions = len(configuration["correlation"]["processing_regions"])
+            number_of_regions = len(
+                configuration["correlation"]["processing_regions"]
+            )
             for region in configuration["correlation"]["processing_regions"]:
                 ports_per_region.append(len(region["output_port"]))
                 if "receptors" in region:
@@ -1873,7 +1875,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 vis_slim_yaml=vis_slim_yaml,
                 number_of_regions=number_of_regions,
                 ports_per_region=ports_per_region,
-                receptors_per_region=receptors_per_region
+                receptors_per_region=receptors_per_region,
             )
 
         # Update obsState callback

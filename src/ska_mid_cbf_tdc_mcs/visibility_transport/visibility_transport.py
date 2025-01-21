@@ -113,7 +113,7 @@ class VisibilityTransport:
         vis_slim_yaml: str,
         number_of_regions: int,
         ports_per_region: list[int],
-        receptors_per_region: list[int]
+        receptors_per_region: list[int],
     ) -> None:
         """
         Configure the visibility transport devices.
@@ -164,7 +164,9 @@ class VisibilityTransport:
                 self._dp_spead_desc.baseline_count = [n_baselines]
                 self._dp_spead_desc.channel_count = [20]
                 self._dp_spead_desc.region_id = region_id
-                self._dp_spead_desc.region_port_count = ports_per_region[region_id]
+                self._dp_spead_desc.region_port_count = ports_per_region[
+                    region_id
+                ]
                 self._dp_spead_desc.command_inout("CreateDescriptor", sub_id)
 
             # reset attributes for first spead descriptor
