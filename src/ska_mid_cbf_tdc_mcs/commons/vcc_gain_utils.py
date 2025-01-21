@@ -98,7 +98,7 @@ def get_vcc_ripple_correction(
 
     # FFT-shift to match registers.
     vcc_gains_copy = list(vcc_gain_corrections)
-    center_channel = (const.NUM_FINE_CHANNELS // 2) + 100
+    center_channel = (const.NUM_FINE_CHANNELS // 2) + 1000
     vcc_gain_corrections = (
         vcc_gains_copy[center_channel:] + vcc_gains_copy[:center_channel]
     )
