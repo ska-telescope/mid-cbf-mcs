@@ -19,9 +19,6 @@ from ska_control_model import CommunicationStatus, TaskStatus
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_tdc_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_tdc_mcs.commons.vcc_gain_utils import (
-    get_vcc_ripple_correction,
-)
 from ska_mid_cbf_tdc_mcs.fsp.fsp_mode_subarray_component_manager import (
     FspModeSubarrayComponentManager,
 )
@@ -71,8 +68,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         self.output_link_map = [[0, 0] for _ in range(40)]
 
-        self.fft_shift = 0
-
     # -------------
     # Class Helpers
     # -------------
@@ -107,21 +102,9 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             "vcc_id_to_rdt_freq_shifts"
         ]
 
-        # TODO: Assume gain is an array, check with JSON Validator, consider lowering the size of the array for testing, also print on HPS side and validate
-        # For now, we will reinitialize gain as a large (32k) sized array in the component manager
-        fs_id = hps_fsp_configuration["configure_scan"]["frequency_slice_id"]
-        self.logger.debug(f"frequency_slice_id: {fs_id}")
-        vcc_gain_corrections = get_vcc_ripple_correction(
-            freq_band=hps_fsp_configuration["configure_scan"][
-                "frequency_band"
-            ],
-            logger=self.logger,
-            fs_id=fs_id,
-            fft_shift=self.fft_shift,
-        )
-        hps_fsp_configuration["fine_channelizer"][
-            "gain"
-        ] = vcc_gain_corrections
+        hps_fsp_configuration["vcc_id_to_fc_gain"] = configuration[
+            "vcc_id_to_fc_gain"
+        ]
 
         # TODO: zoom-factor removed from configurescan, but required by HPS, to
         # be inferred from channel_width introduced in ADR-99 when ready to

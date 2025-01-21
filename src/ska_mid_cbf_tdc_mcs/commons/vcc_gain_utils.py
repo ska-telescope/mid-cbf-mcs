@@ -9,8 +9,6 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-import logging
-
 import numpy as np
 import scipy
 import yaml
@@ -26,43 +24,31 @@ MAX_GAIN = 4.005
 
 def get_vcc_ripple_correction(
     freq_band: str,
-    logger: logging.Logger,
+    scf0_fsft: int,
     fs_id: int = None,
-    fft_shift: int = 0,
 ) -> list:
     """
     Applies VCC Gain ripple correction to a list of gains.
     Based on https://gitlab.com/ska-telescope/ska-mid-cbf-signal-verification/-/blob/main/images/ska-mid-cbf-signal-verification/hardware_testing_notebooks/talon_pyro/talon_FSP.py
 
     :param freq_band: the frequency band of the VCC
-    :param logger: a logger
+    :param scf0_fsft: the frequency shift of the RDT required due to SCFO sampling
     :param fs_id: the frequency slice ID processed by the FSP
     :return: list of new gain values
     """
     if fs_id is None:
-        logger.warning(
-            f"No frequency slice provided, setting all gains to default value {DEFAULT_GAIN}"
-        )
         return [
             [DEFAULT_GAIN, DEFAULT_GAIN]
             for _ in range(const.NUM_FINE_CHANNELS)
         ]
 
     # Load VCC band info
-    try:
-        freq_band_info = freq_band_dict()[freq_band]
-    except KeyError as ke:
-        logger.error(f"Invalid frequency band {freq_band}; {ke}")
-    logger.debug(f"VCC frequency band info: {freq_band_info}")
+    freq_band_info = freq_band_dict()[freq_band]
     input_sample_rate = freq_band_info["base_dish_sample_rate_MHz"] * 1000000
     # TODO: Check some of the frame sizes says FIXME on them
     input_frame_size = freq_band_info["num_samples_per_frame"]
     frequency_slice_sample_rate = input_sample_rate // input_frame_size
 
-    # Assuming frequency shifting is applied in the resampler, calculate shift
-    scf0_fsft = fs_id * (
-        frequency_slice_sample_rate - const.COMMON_SAMPLE_RATE
-    )
     # Calculate normalized actual center frequency of secondary channelizer
     fc0 = np.linspace(
         -1, 1 - 2 / const.NUM_FINE_CHANNELS, num=const.NUM_FINE_CHANNELS
@@ -99,7 +85,7 @@ def get_vcc_ripple_correction(
 
     # FFT-shift to match registers.
     vcc_gains_copy = list(vcc_gain_corrections)
-    center_channel = (const.NUM_FINE_CHANNELS // 2) + fft_shift
+    center_channel = const.NUM_FINE_CHANNELS // 2
     vcc_gain_corrections = (
         vcc_gains_copy[center_channel:] + vcc_gains_copy[:center_channel]
     )

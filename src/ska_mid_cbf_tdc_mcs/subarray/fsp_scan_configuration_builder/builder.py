@@ -17,6 +17,9 @@ from ska_telmodel import channel_map
 
 from ska_mid_cbf_tdc_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes, const
+from ska_mid_cbf_tdc_mcs.commons.vcc_gain_utils import (
+    get_vcc_ripple_correction,
+)
 from ska_mid_cbf_tdc_mcs.subarray.fsp_scan_configuration_builder.fine_channel_partitioner import (
     partition_spectrum_to_frequency_slices,
 )
@@ -191,10 +194,17 @@ class FspScanConfigurationBuilder:
         #          shift values B
         #     vcc 2:
         #          shift values D
-
+        #
+        # ...
+        #
+        # vcc_id_to_fc_gain is the gain values needed by the 16k fine channelizer
+        # to correct for ripple in the signal created by VCC frequency response
+        #
         vcc_id_to_rdt_freq_shifts = {}
+        vcc_id_to_fc_gain = {}
         for fsp_id in calculated_fsp_ids:
             vcc_id_to_rdt_freq_shifts[fsp_id] = {}
+            vcc_id_to_fc_gain[fsp_id] = {}
             for vcc_id in vcc_to_fs_infos.keys():
                 # HPS wants vcc id to be a string value, not int
                 vcc_id_str = str(vcc_id)
@@ -208,9 +218,18 @@ class FspScanConfigurationBuilder:
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
                     "freq_wb_shift"
                 ] = self._wideband_shift
+                # scf0 shift is needed by both the RDT and FC
+                scf0_fsft = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
                     "freq_scfo_shift"
-                ] = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
+                ] = scf0_fsft
+                vcc_id_to_fc_gain[fsp_id][vcc_id_str][
+                    "gain"
+                ] = get_vcc_ripple_correction(
+                    freq_band=self._frequency_band,
+                    fs_id=calculated_fsp_infos[fsp_id]["fs_id"],
+                    scf0_fsft=scf0_fsft,
+                )
 
         # fsp_info["sdp_start_channel_id"] is the continuous start channel
         # id of the fsp's in a processing region
@@ -405,6 +424,8 @@ class FspScanConfigurationBuilder:
             fsp_config[
                 "vcc_id_to_rdt_freq_shifts"
             ] = vcc_id_to_rdt_freq_shifts[fsp_id]
+
+            fsp_config["vcc_id_to_fc_gain"] = vcc_id_to_fc_gain[fsp_id]
 
             fsp_config["output_link_map"] = fsp_to_output_link_map[fsp_id]
 
