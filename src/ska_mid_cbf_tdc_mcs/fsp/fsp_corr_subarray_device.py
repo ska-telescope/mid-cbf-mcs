@@ -79,6 +79,16 @@ class FspCorrSubarray(FspModeSubarray):
         """
         return self.component_manager.frequency_slice_id
 
+    @attribute(
+        dtype="int",
+    )
+    def fftShift(self: FspCorrSubarray) -> int:
+        return self.component_manager.fft_shift
+
+    @fftShift.write
+    def fftShift(self: FspCorrSubarray, value: int) -> None:
+        self.component_manager.fft_shift = value
+
     # --------------
     # Initialization
     # --------------

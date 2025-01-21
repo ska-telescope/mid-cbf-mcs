@@ -71,6 +71,8 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         self.output_link_map = [[0, 0] for _ in range(40)]
 
+        self.fft_shift = 0
+
     # -------------
     # Class Helpers
     # -------------
@@ -115,6 +117,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             ],
             logger=self.logger,
             fs_id=fs_id,
+            fft_shift=self.fft_shift,
         )
         hps_fsp_configuration["fine_channelizer"][
             "gain"

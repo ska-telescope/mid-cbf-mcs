@@ -28,6 +28,7 @@ def get_vcc_ripple_correction(
     freq_band: str,
     logger: logging.Logger,
     fs_id: int = None,
+    fft_shift: int = 0,
 ) -> list:
     """
     Applies VCC Gain ripple correction to a list of gains.
@@ -98,7 +99,7 @@ def get_vcc_ripple_correction(
 
     # FFT-shift to match registers.
     vcc_gains_copy = list(vcc_gain_corrections)
-    center_channel = (const.NUM_FINE_CHANNELS // 2) + 1000
+    center_channel = (const.NUM_FINE_CHANNELS // 2) + fft_shift
     vcc_gain_corrections = (
         vcc_gains_copy[center_channel:] + vcc_gains_copy[:center_channel]
     )
