@@ -111,6 +111,9 @@ class VisibilityTransport:
         subarray_id: int,
         fsp_config: list,
         vis_slim_yaml: str,
+        number_of_regions: int,
+        ports_per_region: list[int],
+        receptors_per_region: list[int]
     ) -> None:
         """
         Configure the visibility transport devices.
@@ -155,11 +158,19 @@ class VisibilityTransport:
             #
             # SPEAD descriptor expects 0 based subarray ID
             sub_id = subarray_id - 1
+            for region_id in range(number_of_regions):
+                n_vcc = len(receptors_per_region[region_id])
+                n_baselines = n_vcc * (n_vcc + 1) // 2
+                self._dp_spead_desc.baseline_count = [n_baselines]
+                self._dp_spead_desc.channel_count = [20]
+                self._dp_spead_desc.region_id = region_id
+                self._dp_spead_desc.region_port_count = ports_per_region[region_id]
+                self._dp_spead_desc.command_inout("CreateDescriptor", sub_id)
+
+            # reset attributes for first spead descriptor
             n_vcc = len(fsp_config[0]["corr_vcc_ids"])
             n_baselines = n_vcc * (n_vcc + 1) // 2
             self._dp_spead_desc.baseline_count = [n_baselines]
-            self._dp_spead_desc.channel_count = [20]
-            self._dp_spead_desc.command_inout("CreateDescriptor", sub_id)
 
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(

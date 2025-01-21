@@ -1850,6 +1850,17 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             return
 
         # --- Configure Visibility Transport --- #
+        number_of_regions = 0
+        ports_per_region = []
+        receptors_per_region = []
+        if "correlation" in configuration:
+            number_of_regions = len(configuration["correlation"]["processing_regions"])
+            for region in configuration["correlation"]["processing_regions"]:
+                ports_per_region.append(len(region["output_port"]))
+                if "receptors" in region:
+                    receptors_per_region.append(len(region["receptors"]))
+                else:
+                    receptors_per_region.append(len(self.dish_ids))
 
         # TODO
         # Route visibilities from each FSP to the outputting board
@@ -1860,6 +1871,9 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 subarray_id=self._subarray_id,
                 fsp_config=self._vis_fsp_config,
                 vis_slim_yaml=vis_slim_yaml,
+                number_of_regions=number_of_regions,
+                ports_per_region=ports_per_region,
+                receptors_per_region=receptors_per_region
             )
 
         # Update obsState callback
