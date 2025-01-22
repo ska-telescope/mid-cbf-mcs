@@ -41,12 +41,11 @@ def get_vcc_ripple_correction(
     :return: list of new gain values
     """
 
-    # Load VCC band info
+    # Load VCC band info to calculate FS sample rate
     freq_band_info = freq_band_dict()[freq_band]
     input_sample_rate = calculate_dish_sample_rate(
         freq_band_info=freq_band_info, freq_offset_k=freq_offset_k
     )
-    # TODO: Check some of the frame sizes says FIXME on them
     input_frame_size = freq_band_info["num_samples_per_frame"]
     frequency_slice_sample_rate = input_sample_rate // input_frame_size
 
@@ -73,10 +72,6 @@ def get_vcc_ripple_correction(
     gain_factors = np.clip(
         DEFAULT_GAIN / abs(fr_values), a_min=MIN_GAIN, a_max=MAX_GAIN
     )
-    # TODO: what is this alternate version for?
-    # gain_factors = np.clip(
-    #     0.99 / abs(fr_values), 0, 1
-    # )  # NOTE: The 0.99 factor avoids the saturation of gain correction factors
 
     # Initialize the Imaging Channel gain array with length of NUM_FINE_CHANNELS
     default_gains = [DEFAULT_GAIN for _ in range(const.NUM_FINE_CHANNELS)]

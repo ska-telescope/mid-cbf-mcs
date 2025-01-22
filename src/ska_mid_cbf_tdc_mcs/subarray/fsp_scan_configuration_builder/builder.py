@@ -157,6 +157,11 @@ class FspScanConfigurationBuilder:
 
         calculated_fsp_ids = list(calculated_fsp_infos.keys())
 
+        # Calculate vcc_id_to_fc_gain and vcc_id_to_rdt_freq_shifts values
+        #
+        # vcc_id_to_fc_gain is the gain values needed by the 16k fine channelizer
+        # to correct for ripple in the signal created by VCC frequency response
+        #
         # vcc_id_to_rdt_freq_shifts are the shift values needed by the
         # Resampler Delay Tracker (rdt) for each vcc of the FSP:
         # freq_down_shift  - the the shift to move the FS into the center of the
@@ -194,12 +199,7 @@ class FspScanConfigurationBuilder:
         #          shift values B
         #     vcc 2:
         #          shift values D
-        #
-        # ...
-        #
-        # vcc_id_to_fc_gain is the gain values needed by the 16k fine channelizer
-        # to correct for ripple in the signal created by VCC frequency response
-        #
+
         vcc_id_to_rdt_freq_shifts = {}
         vcc_id_to_fc_gain = {}
         for fsp_id in calculated_fsp_ids:
