@@ -13,7 +13,11 @@ import numpy as np
 import scipy
 import yaml
 
-from ska_mid_cbf_tdc_mcs.commons.global_enum import const, freq_band_dict
+from ska_mid_cbf_tdc_mcs.commons.global_enum import (
+    calculate_dish_sample_rate,
+    const,
+    freq_band_dict,
+)
 
 VCC_IR_PATH = "mnt/vcc_param/OS_Prototype_FIR_CH20.yml"
 
@@ -25,7 +29,7 @@ MAX_GAIN = 4.005
 def get_vcc_ripple_correction(
     freq_band: str,
     scf0_fsft: int,
-    fs_id: int = None,
+    freq_offset_k: int,
 ) -> list:
     """
     Applies VCC Gain ripple correction to a list of gains.
@@ -33,18 +37,15 @@ def get_vcc_ripple_correction(
 
     :param freq_band: the frequency band of the VCC
     :param scf0_fsft: the frequency shift of the RDT required due to SCFO sampling
-    :param fs_id: the frequency slice ID processed by the FSP
+    :param freq_offset_k: the frequency offset k value
     :return: list of new gain values
     """
-    if fs_id is None:
-        return [
-            [DEFAULT_GAIN, DEFAULT_GAIN]
-            for _ in range(const.NUM_FINE_CHANNELS)
-        ]
 
     # Load VCC band info
     freq_band_info = freq_band_dict()[freq_band]
-    input_sample_rate = freq_band_info["base_dish_sample_rate_MHz"] * 1000000
+    input_sample_rate = calculate_dish_sample_rate(
+        freq_band_info=freq_band_info, freq_offset_k=freq_offset_k
+    )
     # TODO: Check some of the frame sizes says FIXME on them
     input_frame_size = freq_band_info["num_samples_per_frame"]
     frequency_slice_sample_rate = input_sample_rate // input_frame_size

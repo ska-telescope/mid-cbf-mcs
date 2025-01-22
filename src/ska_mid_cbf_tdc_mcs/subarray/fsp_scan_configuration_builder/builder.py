@@ -218,17 +218,23 @@ class FspScanConfigurationBuilder:
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
                     "freq_wb_shift"
                 ] = self._wideband_shift
+
                 # scf0 shift is needed by both the RDT and FC
                 scf0_fsft = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
                     "freq_scfo_shift"
                 ] = scf0_fsft
+
+                # k value needed to calculate gain
+                dish_id = self._dish_utils.vcc_id_to_dish_id[vcc_id]
+                freq_offset_k = self._dish_utils.dish_id_to_k[dish_id]
+                vcc_id_to_fc_gain[fsp_id][vcc_id_str] = {}
                 vcc_id_to_fc_gain[fsp_id][vcc_id_str][
                     "gain"
                 ] = get_vcc_ripple_correction(
                     freq_band=self._frequency_band,
-                    fs_id=calculated_fsp_infos[fsp_id]["fs_id"],
                     scf0_fsft=scf0_fsft,
+                    freq_offset_k=freq_offset_k,
                 )
 
         # fsp_info["sdp_start_channel_id"] is the continuous start channel
