@@ -231,12 +231,12 @@ class TestFspScanConfigurationBuilder:
                 ), f"There are unassigned output_ports for PR index {index}"
 
             for fsp_config in fsp_to_pr[pr_index]:
-                # Assert vcc to rdt shift values set for all subarray receptors
+                # Assert VCC to RDT shift and 16k FC gain values set for all
+                # subarray receptors
                 for receptor in subarray_dish_ids:
                     vcc_id = dish_util.dish_id_to_vcc_id[receptor]
 
-                    # Note, hps wants vcc in the vcc_id_to_rdt_freq_shifts dict
-                    # to be a string
+                    # NOTE: HPS wants the VCC ID key in the dict to be a string
                     vcc_id_str = str(vcc_id)
                     assert (
                         vcc_id_str in fsp_config["vcc_id_to_rdt_freq_shifts"]
@@ -248,6 +248,12 @@ class TestFspScanConfigurationBuilder:
                     assert "freq_align_shift" in vcc_id_shift_config
                     assert "freq_wb_shift" in vcc_id_shift_config
                     assert "freq_scfo_shift" in vcc_id_shift_config
+
+                    assert vcc_id_str in fsp_config["vcc_id_to_fc_gain"]
+                    vcc_id_gain_config = fsp_config["vcc_id_to_fc_gain"][
+                        vcc_id_str
+                    ]
+                    assert "gain" in vcc_id_gain_config
 
                 # assert the receptors are set if they are set in the PR, else
                 # they are the subarray receptors

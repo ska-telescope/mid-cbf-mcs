@@ -218,5 +218,10 @@
             "freq_wb_shift": 30.10,
             "freq_scfo_shift": 40.10
         }
+    },
+    "vcc_id_to_fc_gain": {
+        "1": {
+            "gain": [1.0]
+        }
     }
 }
