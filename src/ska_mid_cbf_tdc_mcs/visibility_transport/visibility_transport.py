@@ -168,7 +168,7 @@ class VisibilityTransport:
                     region_id
                 ]
                 self.logger.info(
-                    f"creating SPEAD Descriptor with sub_id = {sub_id}, " 
+                    f"creating SPEAD Descriptor with sub_id = {sub_id}, "
                     f"region_id = {region_id}, "
                     f"baseline_count = {n_baselines}, "
                     f"channel_count = 20, "
