@@ -51,7 +51,7 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        with open(test_data_path + "sys_param_4_boards.json") as f:
+        with open(test_data_path + "sys_param_8_boards.json") as f:
             sys_param_str = f.read()
 
         controller.adminMode = AdminMode.ONLINE

@@ -17,6 +17,7 @@ from threading import Event
 from typing import Callable, Optional
 
 import tango
+import time
 import yaml
 from polling2 import TimeoutException, poll
 from ska_control_model import AdminMode, ObsState, PowerState, TaskStatus
@@ -433,7 +434,10 @@ class ControllerComponentManager(CbfComponentManager):
                 subscribe_state=True,
             ):
                 init_success = False
-
+        
+        # CIP 3092: The scaled up 64 FS SLIM Link Devices needs around 10 seconds
+        # to transition from DISABLE to OFF in integration tests enviroment.
+        time.sleep(10)
         return init_success
 
     def _set_fsp_function_mode(
@@ -601,6 +605,10 @@ class ControllerComponentManager(CbfComponentManager):
                 continue
 
         super()._stop_communicating()
+        
+        # CIP-3092: Scaling up to 64 FS SLIM link requires around 15 seconds for the
+        # SLIM Link devices to transition from OFF to DISABLE in integration tests enviroment.
+        time.sleep(15)
 
     # -------------
     # Fast Commands
