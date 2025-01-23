@@ -435,9 +435,6 @@ class ControllerComponentManager(CbfComponentManager):
             ):
                 init_success = False
 
-        # CIP 3092: The scaled up 64 FS SLIM Link Devices needs around 10 seconds
-        # to transition from DISABLE to OFF in integration tests enviroment.
-        time.sleep(10)
         return init_success
 
     def _set_fsp_function_mode(
@@ -565,6 +562,14 @@ class ControllerComponentManager(CbfComponentManager):
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
+        # CIP 3092: The scaled up 64 FS SLIM Link Devices needs around 10 seconds
+        # to transition from DISABLE to OFF in integration tests enviroment.
+        buffer_time = 10  # in seconds
+        self.logger.info(
+            f"Controller _start_communicating(): Buffering {buffer_time} for device state transiction"
+        )
+        time.sleep(buffer_time)
+
     def _stop_communicating(
         self: ControllerComponentManager, *args, **kwargs
     ) -> None:
@@ -608,7 +613,11 @@ class ControllerComponentManager(CbfComponentManager):
 
         # CIP-3092: Scaling up to 64 FS SLIM link requires around 15 seconds for the
         # SLIM Link devices to transition from OFF to DISABLE in integration tests enviroment.
-        time.sleep(15)
+        buffer_time = 15  # in seconds
+        self.logger.info(
+            f"Controller _stop_communicating(): Buffering {buffer_time} for device state transiction"
+        )
+        time.sleep(buffer_time)
 
     # -------------
     # Fast Commands
