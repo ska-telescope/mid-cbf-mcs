@@ -163,9 +163,9 @@ class VisibilityTransport:
                 n_baselines = n_vcc * (n_vcc + 1) // 2
                 self._dp_spead_desc.baseline_count = [n_baselines]
                 self._dp_spead_desc.channel_count = [20]
-                self._dp_spead_desc.region_id = region_id
-                self._dp_spead_desc.region_port_count = ports_per_region[
-                    region_id
+                self._dp_spead_desc.region_id = [region_id]
+                self._dp_spead_desc.region_port_count = [
+                    ports_per_region[region_id]
                 ]
                 self.logger.info(
                     f"creating SPEAD Descriptor with sub_id = {sub_id}, "
