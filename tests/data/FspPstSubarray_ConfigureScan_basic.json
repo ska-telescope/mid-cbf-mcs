@@ -74,9 +74,7 @@
         }
     },
     "vcc_id_to_fc_gain": {
-        "1": {
-            "gain": [1.0]
-        }
+        "1": [1.0]
     },
     "test_vector_gen":[
         {

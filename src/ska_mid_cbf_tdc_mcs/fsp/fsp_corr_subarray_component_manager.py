@@ -52,7 +52,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             [
                 int(
                     i
-                    * const.NUM_FINE_CHANNELS_PR
+                    * const.CENTRAL_FINE_CHANNELS
                     / const.NUM_CHANNELS_PER_SPEAD_STREAM
                 )
                 + 1,
@@ -176,9 +176,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
-                # TODO: Validate this with JSON Validator
-                # TODO: Update: Valid if replace ' ' with " "
-                # TODO: Error is here, does this call configurescan in DsFspCorrControllerComponentManager.cpp? Or where? Timeout happens but where is error? Can't find.
                 self._proxy_hps_fsp_mode_controller.ConfigureScan(
                     hps_fsp_configuration
                 )

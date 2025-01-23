@@ -19,7 +19,8 @@ from ska_mid_cbf_tdc_mcs.commons.global_enum import (
     freq_band_dict,
 )
 
-VCC_IR_PATH = "mnt/vcc_param/OS_Prototype_FIR_CH20.yml"
+# YAML file containing the finite impulse response (FIR) data for a VCC
+VCC_FIR_PATH = "mnt/vcc_param/VCC_FIR.yml"
 
 DEFAULT_GAIN = 1.0
 MIN_GAIN = 0.0
@@ -28,7 +29,7 @@ MAX_GAIN = 4.005
 
 def get_vcc_ripple_correction(
     freq_band: str,
-    scf0_fsft: int,
+    scfo_fsft: int,
     freq_offset_k: int,
 ) -> list:
     """
@@ -36,7 +37,7 @@ def get_vcc_ripple_correction(
     Based on https://gitlab.com/ska-telescope/ska-mid-cbf-signal-verification/-/blob/main/images/ska-mid-cbf-signal-verification/hardware_testing_notebooks/talon_pyro/talon_FSP.py
 
     :param freq_band: the frequency band of the VCC
-    :param scf0_fsft: the frequency shift of the RDT required due to SCFO sampling
+    :param scfo_fsft: the frequency shift of the RDT required due to SCFO sampling
     :param freq_offset_k: the frequency offset k value
     :return: list of new gain values
     """
@@ -51,9 +52,11 @@ def get_vcc_ripple_correction(
 
     # Calculate normalized actual center frequency of secondary channelizer
     fc0 = np.linspace(
-        -1, 1 - 2 / const.NUM_FINE_CHANNELS, num=const.NUM_FINE_CHANNELS
+        start=-1,
+        stop=1 - 2 / const.TOTAL_FINE_CHANNELS,
+        num=const.TOTAL_FINE_CHANNELS,
     )
-    actual_center_frequency = fc0 * const.COMMON_SAMPLE_RATE / 2 - scf0_fsft
+    actual_center_frequency = fc0 * const.COMMON_SAMPLE_RATE / 2 - scfo_fsft
     normalized_center_frequency = (
         actual_center_frequency
         / frequency_slice_sample_rate
@@ -61,11 +64,11 @@ def get_vcc_ripple_correction(
     )
 
     # Evaluate VCC frequency response data
-    with open(f"{VCC_IR_PATH}", "r") as file:
-        vcc_ir = yaml.safe_load(file)
-    vcc_ir_coeff = vcc_ir["h"]
+    with open(f"{VCC_FIR_PATH}", "r") as file:
+        vcc_fir = yaml.safe_load(file)
+    vcc_fir_coeff = vcc_fir["h"]
     _, fr_values = scipy.signal.freqz(
-        vcc_ir_coeff, a=1, worN=2 * np.pi * normalized_center_frequency
+        vcc_fir_coeff, a=1, worN=2 * np.pi * normalized_center_frequency
     )
 
     # Calculate 16k fine-channelizer gain correction factors
@@ -73,15 +76,12 @@ def get_vcc_ripple_correction(
         DEFAULT_GAIN / abs(fr_values), a_min=MIN_GAIN, a_max=MAX_GAIN
     )
 
-    # Initialize the Imaging Channel gain array with length of NUM_FINE_CHANNELS
-    default_gains = [DEFAULT_GAIN for _ in range(const.NUM_FINE_CHANNELS)]
-    vcc_gain_corrections = [
-        gain * factor for gain, factor in zip(default_gains, gain_factors)
-    ]
+    # Initialize the Imaging Channel gain array with length of TOTAL_FINE_CHANNELS
+    vcc_gain_corrections = [DEFAULT_GAIN * factor for factor in gain_factors]
 
     # FFT-shift to match registers.
     vcc_gains_copy = list(vcc_gain_corrections)
-    center_channel = const.NUM_FINE_CHANNELS // 2
+    center_channel = const.TOTAL_FINE_CHANNELS // 2
     vcc_gain_corrections = (
         vcc_gains_copy[center_channel:] + vcc_gains_copy[:center_channel]
     )

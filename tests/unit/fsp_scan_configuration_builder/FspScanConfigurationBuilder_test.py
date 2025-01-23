@@ -19,7 +19,7 @@ import pytest
 from ska_telmodel import channel_map
 
 from ska_mid_cbf_tdc_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes
+from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes, const
 from ska_mid_cbf_tdc_mcs.subarray.fsp_scan_configuration_builder.builder import (
     FspScanConfigurationBuilder as fsp_builder,
 )
@@ -250,10 +250,10 @@ class TestFspScanConfigurationBuilder:
                     assert "freq_scfo_shift" in vcc_id_shift_config
 
                     assert vcc_id_str in fsp_config["vcc_id_to_fc_gain"]
-                    vcc_id_gain_config = fsp_config["vcc_id_to_fc_gain"][
+                    vcc_id_gain_list = fsp_config["vcc_id_to_fc_gain"][
                         vcc_id_str
                     ]
-                    assert "gain" in vcc_id_gain_config
+                    assert len(vcc_id_gain_list) == const.NUM_FINE_CHANNELS
 
                 # assert the receptors are set if they are set in the PR, else
                 # they are the subarray receptors
