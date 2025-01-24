@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import logging
-import time
 from threading import Event
 from typing import Callable, Optional
 
@@ -560,15 +559,12 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         super()._start_communicating()
-        self._update_component_state(power=PowerState.OFF)
 
-        # CIP 3092: The scaled up 64 FS SLIM Link Devices needs around 10 seconds
-        # to transition from DISABLE to OFF in integration tests enviroment.
-        buffer_time = 10  # in seconds
-        self.logger.info(
-            f"Controller _start_communicating(): Buffering {buffer_time} for device state transiction"
-        )
-        time.sleep(buffer_time)
+        # We want to make the devices that we subscribe to state attribute change events
+        # transition to OFF state before proceeding
+        self.wait_for_op_state_change(tango.DevState.OFF)
+
+        self._update_component_state(power=PowerState.OFF)
 
     def _stop_communicating(
         self: ControllerComponentManager, *args, **kwargs
@@ -611,13 +607,9 @@ class ControllerComponentManager(CbfComponentManager):
 
         super()._stop_communicating()
 
-        # CIP-3092: Scaling up to 64 FS SLIM link requires around 15 seconds for the
-        # SLIM Link devices to transition from OFF to DISABLE in integration tests enviroment.
-        buffer_time = 15  # in seconds
-        self.logger.info(
-            f"Controller _stop_communicating(): Buffering {buffer_time} for device state transiction"
-        )
-        time.sleep(buffer_time)
+        # We want to make the devices that we subscribe to state attribute change events
+        # transition to DISABLE state before proceeding
+        self.wait_for_op_state_change(tango.DevState.DISABLE)
 
     # -------------
     # Fast Commands

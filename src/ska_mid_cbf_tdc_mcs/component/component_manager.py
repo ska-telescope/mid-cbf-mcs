@@ -62,6 +62,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager,
         *args: any,
         lrc_timeout: int = 15,
+        state_change_timeout: int = 15,
         attr_change_callback: Callable[[str, any], None] | None = None,
         attr_archive_callback: Callable[[str, any], None] | None = None,
         health_state_callback: Callable[[HealthState], None] | None = None,
@@ -79,7 +80,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
         to track LRCs, a current limitation of the SKABaseDevice class.
 
         :param lrc_timeout: timeout (in seconds) per LRC when waiting for blocking results;
-            defaults to 10.0 seconds
+            defaults to 15.0 seconds
+        :param state_change_timeout: timeout (in seconds) when waiting for Devices state attrigute change;
+            defaults to 15.0 seconds
         :param attr_change_callback: callback to be called when
             an attribute change event needs to be pushed from the component manager
         :param attr_archive_callback: callback to be called when
@@ -118,6 +121,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # dict and lock to store latest sub-device state attribute values
         self._op_states = {}
         self._attr_event_lock = Lock()
+        self._state_change_timeout = state_change_timeout
 
         # NOTE: currently all devices are using constructor default
         # simulation_mode == SimulationMode.TRUE
@@ -644,6 +648,68 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         self.logger.error("All blocking commands failed.")
         return TaskStatus.FAILED
+
+    # -------------------------
+    # Wait for Blocking Results
+    # -------------------------
+
+    def wait_for_op_state_change(
+        self: CbfComponentManager, desired_state: tango.DevState
+    ) -> TaskStatus:
+        """
+        Wait for subordinate devices' state attribute to change to the given desired_state.
+        Only check for devices that are subscribed in self._op_state.
+
+        :param desired_state: The desired_state that we want to observe with the devices of interest
+
+
+        :return: TaskStatus.COMPLETED if status reached, TaskStatus.FAILED if timed out
+            TaskStatus.ABORTED if aborted
+        """
+
+        ticks_10ms = int(self._state_change_timeout / TIMEOUT_RESOLUTION)
+
+        # Used as a stack to keep track of devices that has not change to the
+        # desired state.
+        op_state_devices_fqdn = list(self._op_states.keys())
+
+        while len(op_state_devices_fqdn):
+            # Remove any successful results from blocking command IDs
+            curr_device_fqdn = op_state_devices_fqdn.pop()
+
+            with self._attr_event_lock:
+                state = self._op_states[curr_device_fqdn]
+
+            # Add the devices back to the stack if the desired state has not been reached
+            if state != desired_state:
+                op_state_devices_fqdn.append(curr_device_fqdn)
+
+            sleep(TIMEOUT_RESOLUTION)
+            ticks_10ms -= 1
+            if ticks_10ms <= 0:
+                self.logger.error(
+                    f"{len(op_state_devices_fqdn)} devices has not change to desired state after {self._state_change_timeout}s.\n"
+                    f"Remaining Devices: {op_state_devices_fqdn}"
+                    f"Desired State: {desired_state}"
+                )
+                with self._results_lock:
+                    self._received_lrc_results = {}
+                return TaskStatus.FAILED
+
+        self.logger.debug(
+            f"Waited for {self._state_change_timeout - ticks_10ms * TIMEOUT_RESOLUTION:.3f} seconds"
+        )
+
+        if len(op_state_devices_fqdn) == 0:
+            self.logger.debug(
+                "All observing device(s) changed to desired state."
+            )
+            return TaskStatus.COMPLETED
+        else:
+            self.logger.error(
+                "There are observing device(s) that faile dto change to desired state."
+            )
+            return TaskStatus.FAILED
 
     # -----------------------
     # Subscription Management
