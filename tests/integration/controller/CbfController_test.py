@@ -86,7 +86,7 @@ class TestCbfController:
             ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
             ("state", DevState.ON, DevState.DISABLE, 1),
         ]
-        for device in subarray + power_switch:
+        for device in power_switch + subarray:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
@@ -103,7 +103,7 @@ class TestCbfController:
             ("adminMode", AdminMode.ONLINE, AdminMode.OFFLINE, 1),
             ("state", DevState.OFF, DevState.DISABLE, 1),
         ]
-        for device in talon_lru + [slim_fs, slim_vis] + [controller]:
+        for device in [controller] + talon_lru + [slim_fs, slim_vis]:
             for name, value, previous, n in expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
