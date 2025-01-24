@@ -10,6 +10,8 @@ UNRELEASED CHANGES
 * CIP-2550 Migrated FSP SetFuntionMode from subarray to controller
 * CIP-2660 Added back FspPstSubarray to MCS
 * CIP-2790: Added error handling for CbfFastCommands processed within MCS
+* CIP-3092: Scaled Up VCC Devices Deployed By MCS to 8 and SLIM Devices Needed to Support The Additional VCC
+* CIP-3344: Added State Attribute Wait Loop to Monitor State Change to Desired State; Added State Monitor in Controller's Start and Stop Communicating Functions.
 
 1.1.1
 *****
