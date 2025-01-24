@@ -253,7 +253,7 @@ class TestFspScanConfigurationBuilder:
                     vcc_id_gain_list = fsp_config["vcc_id_to_fc_gain"][
                         vcc_id_str
                     ]
-                    assert len(vcc_id_gain_list) == const.NUM_FINE_CHANNELS
+                    assert len(vcc_id_gain_list) == const.TOTAL_FINE_CHANNELS
 
                 # assert the receptors are set if they are set in the PR, else
                 # they are the subarray receptors

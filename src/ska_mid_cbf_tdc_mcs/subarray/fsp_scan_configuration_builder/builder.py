@@ -168,7 +168,8 @@ class FspScanConfigurationBuilder:
         #                    digitized frequency (Hz)
         # freq_align_shift - the shift to align channels between FSs (Hz)
         # freq_wb_shift    - the wideband shift (Hz)
-        # freq_scfo_shift  - the frequency shift required due to SCFO sampling (Hz)
+        # freq_scfo_shift  - the frequency shift required due to Sample Clock
+        #                    Frequency Offset (SCFO) sampling (Hz)
         #
         # See CIP-2622, or parent epic CIP-2145
         #

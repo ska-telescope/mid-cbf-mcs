@@ -81,7 +81,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         # append all internal parameters to the configuration to pass to HPS
         # first construct HPS FSP ConfigureScan input
 
-        # Access constants for CIP-2364 through configuration[band_number] and send that to global enums for values
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
         self.logger.debug(f"{hps_fsp_configuration}")
@@ -98,10 +97,12 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             "fs_sample_rates"
         ]
 
+        # append RDT frequency shift values, indexed by VCC ID
         hps_fsp_configuration["vcc_id_to_rdt_freq_shifts"] = configuration[
             "vcc_id_to_rdt_freq_shifts"
         ]
 
+        # append FC gain values, indexed by VCC ID
         hps_fsp_configuration["vcc_id_to_fc_gain"] = configuration[
             "vcc_id_to_fc_gain"
         ]

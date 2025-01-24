@@ -31,13 +31,14 @@ def get_vcc_ripple_correction(
     freq_band: str,
     scfo_fsft: int,
     freq_offset_k: int,
-) -> list:
+) -> list[float]:
     """
     Applies VCC Gain ripple correction to a list of gains.
     Based on https://gitlab.com/ska-telescope/ska-mid-cbf-signal-verification/-/blob/main/images/ska-mid-cbf-signal-verification/hardware_testing_notebooks/talon_pyro/talon_FSP.py
 
     :param freq_band: the frequency band of the VCC
-    :param scfo_fsft: the frequency shift of the RDT required due to SCFO sampling
+    :param scfo_fsft: the frequency shift of the RDT required due to Sample Clock
+        Frequency Offset (SCFO) sampling
     :param freq_offset_k: the frequency offset k value
     :return: list of new gain values
     """
