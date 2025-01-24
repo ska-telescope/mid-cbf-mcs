@@ -15,7 +15,7 @@ skinparam collections {
     BorderColor DodgerBlue
 }
 
-title MCS Correlation Configure Scan Band 1/2 - VCC Detail\n
+title MCS Configure Scan Band 1/2 - VCC Detail\n
 
 box "\nMCS\n"
     participant "Mid.CBF\nSubarray" as subarray
