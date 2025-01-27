@@ -13,7 +13,7 @@ from __future__ import annotations  # allow forward references in type hints
 import copy
 import ctypes
 
-from ska_mid_cbf_tdc_mcs.commons.vcc_gain_utils import (
+from ska_mid_cbf_mcs.commons.vcc_gain_utils import (
     get_vcc_ripple_correction,
 )
 from ska_telmodel import channel_map
