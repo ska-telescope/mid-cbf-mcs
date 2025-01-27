@@ -192,14 +192,6 @@ class FspModeSubarray(CbfObsDevice):
     # Long Running Commands
     # ---------------------
 
-    # -------------
-    # Fast Commands
-    # -------------
-
-    # ---------------------
-    # Long Running Commands
-    # ---------------------
-
 
 # ----------
 # Run server

@@ -23,7 +23,7 @@ from __future__ import annotations  # allow forward references in type hints
 
 import json
 
-from ska_control_model import ObsState
+from ska_control_model import HealthState, ObsState
 from tango import DevState
 
 from ska_mid_cbf_tdc_mcs.commons.global_enum import freq_band_dict
@@ -41,6 +41,8 @@ class VccBandSimulator:
 
     def __init__(self: VccBandSimulator, device_name: str) -> None:
         self.device_name = device_name
+        self.health_state = HealthState.OK
+
         self._vcc_gain = []
 
         self._state = DevState.INIT
@@ -81,6 +83,11 @@ class VccBandSimulator:
     def scanID(self) -> int:
         """Return the scan ID attribute."""
         return self._scan_id
+
+    @property
+    def healthState(self) -> HealthState:
+        """Return the healthState attribute."""
+        return self.health_state
 
     # Methods that match the Tango commands in the band devices
     def On(self: VccBandSimulator) -> None:

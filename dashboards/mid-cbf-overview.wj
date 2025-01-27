@@ -1,10 +1,10 @@
 {
-  "id": "6752561aa978370012e9b4b7",
+  "id": "677ff432a978370012ea0d7a",
   "name": "Mid CBF Overview",
   "version": "2.12.1",
   "user": "CIPA",
-  "insertTime": "2024-12-06T01:40:42.538Z",
-  "updateTime": "2024-12-06T01:51:51.146Z",
+  "insertTime": "2025-01-09T16:07:14.192Z",
+  "updateTime": "2025-01-10T18:59:16.642Z",
   "group": null,
   "groupWriteAccess": false,
   "lastUpdatedBy": "CIPA",
@@ -38,7 +38,7 @@
       "x": 29,
       "y": 6,
       "canvas": "0",
-      "width": 140,
+      "width": 154,
       "height": 28,
       "type": "LABEL",
       "inputs": {
@@ -58,10 +58,10 @@
     {
       "valid": 1,
       "id": "398",
-      "x": 37,
+      "x": 39,
       "y": 7,
       "canvas": "0",
-      "width": 64,
+      "width": 71,
       "height": 26,
       "type": "LABEL",
       "inputs": {
@@ -81,11 +81,11 @@
     {
       "valid": 1,
       "id": "399",
-      "x": 38,
+      "x": 40,
       "y": 8,
       "canvas": "0",
-      "width": 62,
-      "height": 4,
+      "width": 69,
+      "height": 13,
       "type": "LABEL",
       "inputs": {
         "text": "talon-001",
@@ -103,89 +103,12 @@
     },
     {
       "valid": 1,
-      "id": "400",
-      "x": 38,
-      "y": 18,
-      "canvas": "0",
-      "width": 11,
-      "height": 2,
-      "type": "DEVICE_STATUS",
-      "inputs": {
-        "device": "taranta://mid_csp_cbf/talon_board/001",
-        "state": {
-          "device": "taranta://null",
-          "attribute": null
-        },
-        "showDeviceName": false,
-        "showStateString": true,
-        "showStateLED": true,
-        "LEDSize": 1,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "textSize": 0.9,
-        "widgetCss": "border: 1px solid gray;",
-        "showTangoDB": false,
-        "linkTo": ""
-      },
-      "order": 4
-    },
-    {
-      "valid": 1,
-      "id": "401",
-      "x": 38,
-      "y": 22,
-      "canvas": "0",
-      "width": 62,
-      "height": 10,
-      "type": "TABULAR_VIEW",
-      "inputs": {
-        "devices": [
-          {
-            "device": "taranta://mid_csp_cbf/vcc/001"
-          },
-          {
-            "device": "taranta://mid_csp_cbf/fspcorrsubarray/01_01"
-          }
-        ],
-        "precision": 2,
-        "scientificNotation": false,
-        "showDefaultAttribute": false,
-        "showEnumLabels": true,
-        "customAttributes": [
-          {
-            "attribute": {
-              "device": "taranta://mid_csp_cbf/vcc/001,taranta://mid_csp_cbf/fspcorrsubarray/01_01",
-              "attribute": "obsstate",
-              "label": "obsState"
-            }
-          },
-          {
-            "attribute": {
-              "device": "taranta://mid_csp_cbf/vcc/001,taranta://mid_csp_cbf/fspcorrsubarray/01_01",
-              "attribute": "state",
-              "label": "State"
-            }
-          }
-        ],
-        "compactTable": true,
-        "borderedTable": false,
-        "textColor": "#000000",
-        "backgroundColor": "#f2f2f2",
-        "size": 0.9,
-        "font": "Courier new",
-        "widgetCss": "",
-        "showTangoDB": false
-      },
-      "order": 5
-    },
-    {
-      "valid": 1,
       "id": "402",
-      "x": 80,
+      "x": 88,
       "y": 13,
       "canvas": "0",
       "width": 20,
-      "height": 4,
+      "height": 3,
       "type": "ATTRIBUTE_DISPLAY",
       "inputs": {
         "attribute": {
@@ -211,15 +134,15 @@
         "showTangoDB": false,
         "showUnit": true
       },
-      "order": 6
+      "order": 4
     },
     {
       "valid": 1,
       "id": "411",
-      "x": 103,
+      "x": 111,
       "y": 7,
       "canvas": "0",
-      "width": 64,
+      "width": 71,
       "height": 26,
       "type": "LABEL",
       "inputs": {
@@ -234,7 +157,7 @@
         "customCss": "border:1px solid #b3b3b3;\npadding-top:5px;\npadding-left:20px;\n",
         "automaticResize": "Disabled"
       },
-      "order": 7
+      "order": 5
     },
     {
       "valid": 1,
@@ -243,7 +166,7 @@
       "y": 6,
       "canvas": "0",
       "width": 26,
-      "height": 43,
+      "height": 47,
       "type": "LABEL",
       "inputs": {
         "text": "",
@@ -257,7 +180,7 @@
         "linkTo": "",
         "customCss": "padding-top:5px;\ntext-align: center;\nborder: 1px solid gray;"
       },
-      "order": 8
+      "order": 6
     },
     {
       "valid": 1,
@@ -280,7 +203,7 @@
         "linkTo": "",
         "customCss": "padding-top:5px;\npadding-left:5px;\ntext-align: left;\nborder: 1px solid gray;"
       },
-      "order": 9
+      "order": 7
     },
     {
       "valid": 1,
@@ -308,7 +231,7 @@
         "widgetCss": "",
         "linkTo": ""
       },
-      "order": 10
+      "order": 8
     },
     {
       "valid": 1,
@@ -317,7 +240,7 @@
       "y": 20,
       "canvas": "0",
       "width": 24,
-      "height": 28,
+      "height": 32,
       "type": "LABEL",
       "inputs": {
         "text": "Subarray 1",
@@ -331,7 +254,7 @@
         "linkTo": "",
         "customCss": "padding-top:5px;\npadding-left:5px;\ntext-align: left;\nborder: 1px solid gray;"
       },
-      "order": 11
+      "order": 9
     },
     {
       "valid": 1,
@@ -359,7 +282,7 @@
         "widgetCss": "",
         "linkTo": ""
       },
-      "order": 12
+      "order": 10
     },
     {
       "valid": 1,
@@ -394,16 +317,16 @@
         "widgetCss": "",
         "showUnit": true
       },
-      "order": 13
+      "order": 11
     },
     {
       "valid": 1,
       "id": "480",
-      "x": 63,
+      "x": 70,
       "y": 13,
       "canvas": "0",
       "width": 16,
-      "height": 4,
+      "height": 3,
       "type": "ATTRIBUTE_DISPLAY",
       "inputs": {
         "attribute": {
@@ -429,16 +352,16 @@
         "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
         "showUnit": true
       },
-      "order": 14
+      "order": 12
     },
     {
       "valid": 1,
       "id": "481",
-      "x": 49,
+      "x": 54,
       "y": 13,
       "canvas": "0",
-      "width": 13,
-      "height": 4,
+      "width": 14,
+      "height": 3,
       "type": "ATTRIBUTE_DISPLAY",
       "inputs": {
         "attribute": {
@@ -464,16 +387,16 @@
         "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
         "showUnit": true
       },
-      "order": 15
+      "order": 13
     },
     {
       "valid": 1,
       "id": "482",
-      "x": 104,
+      "x": 112,
       "y": 8,
       "canvas": "0",
-      "width": 62,
-      "height": 4,
+      "width": 69,
+      "height": 13,
       "type": "LABEL",
       "inputs": {
         "text": "talon-002",
@@ -487,19 +410,232 @@
         "customCss": "padding-top:5px;\ntext-align: center;\nborder: 1px solid gray;",
         "automaticResize": "Disabled"
       },
+      "order": 14
+    },
+    {
+      "valid": 1,
+      "id": "533",
+      "x": 44,
+      "y": 17,
+      "canvas": "0",
+      "width": 16,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/001",
+          "attribute": "adminmode",
+          "label": "adminMode"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": true,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
       "order": 16
     },
     {
       "valid": 1,
-      "id": "483",
-      "x": 104,
+      "id": "534",
+      "x": 63,
+      "y": 17,
+      "canvas": "0",
+      "width": 20,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/fsp/01",
+          "attribute": "functionmode",
+          "label": "functionMode"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": true,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 17
+    },
+    {
+      "valid": 1,
+      "id": "537",
+      "x": 39,
+      "y": 36,
+      "canvas": "0",
+      "width": 71,
+      "height": 26,
+      "type": "LABEL",
+      "inputs": {
+        "text": "",
+        "textColor": "#070a68",
+        "backgroundColor": "#f5f5f5",
+        "size": 1.5,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "linkTo": "",
+        "customCss": "border:1px solid #b3b3b3;\npadding-top:5px;\npadding-left:20px;\n",
+        "automaticResize": "Disabled"
+      },
+      "order": 18
+    },
+    {
+      "valid": 1,
+      "id": "538",
+      "x": 40,
+      "y": 37,
+      "canvas": "0",
+      "width": 69,
+      "height": 13,
+      "type": "LABEL",
+      "inputs": {
+        "text": "talon-003",
+        "textColor": "#070a68",
+        "backgroundColor": "#dcdcdc",
+        "size": 1.1,
+        "borderWidth": 0,
+        "borderColor": "#dcdcdc",
+        "font": "Helvetica",
+        "linkTo": "",
+        "customCss": "padding-top:5px;\ntext-align: center;\nborder: 1px solid gray;",
+        "automaticResize": "Disabled"
+      },
+      "order": 19
+    },
+    {
+      "valid": 1,
+      "id": "542",
+      "x": 111,
+      "y": 36,
+      "canvas": "0",
+      "width": 71,
+      "height": 26,
+      "type": "LABEL",
+      "inputs": {
+        "text": "",
+        "textColor": "#070a68",
+        "backgroundColor": "#f5f5f5",
+        "size": 1.5,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "linkTo": "",
+        "customCss": "border:1px solid #b3b3b3;\npadding-top:5px;\npadding-left:20px;\n",
+        "automaticResize": "Disabled"
+      },
+      "order": 20
+    },
+    {
+      "valid": 1,
+      "id": "545",
+      "x": 112,
+      "y": 37,
+      "canvas": "0",
+      "width": 69,
+      "height": 13,
+      "type": "LABEL",
+      "inputs": {
+        "text": "talon-004",
+        "textColor": "#070a68",
+        "backgroundColor": "#dcdcdc",
+        "size": 1.1,
+        "borderWidth": 0,
+        "borderColor": "#dcdcdc",
+        "font": "Helvetica",
+        "linkTo": "",
+        "customCss": "padding-top:5px;\ntext-align: center;\nborder: 1px solid gray;",
+        "automaticResize": "Disabled"
+      },
+      "order": 21
+    },
+    {
+      "valid": 1,
+      "id": "555",
+      "x": 29,
+      "y": 35,
+      "canvas": "0",
+      "width": 154,
+      "height": 28,
+      "type": "LABEL",
+      "inputs": {
+        "text": "LRU-002",
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "borderWidth": 0,
+        "borderColor": "#4f4f4f",
+        "font": "Helvetica",
+        "automaticResize": "Disabled",
+        "size": 1.1,
+        "linkTo": "",
+        "customCss": "padding-top:5px;\npadding-left:5px;\ntext-align: left;\nborder: 1px solid gray;"
+      },
+      "order": 15
+    },
+    {
+      "valid": 1,
+      "id": "567",
+      "x": 4,
+      "y": 33,
+      "canvas": "0",
+      "width": 22,
+      "height": 18,
+      "type": "SPECTRUM_TABLE",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/sub_elt/subarray_01",
+          "attribute": "receptors",
+          "label": "receptors"
+        },
+        "precision": 3,
+        "layout": "vertical",
+        "showDevice": false,
+        "showTangoDB": false,
+        "showAttribute": "None",
+        "showIndex": true,
+        "showLabel": false,
+        "fontSize": 14,
+        "customCss": "text-align: center;\ndisplay: flex;\nflex-direction: column;\nalign-items: center;",
+        "showSpecificIndexValue": ""
+      },
+      "order": 22
+    },
+    {
+      "valid": 1,
+      "id": "576",
+      "x": 41,
       "y": 13,
       "canvas": "0",
       "width": 11,
-      "height": 4,
+      "height": 3,
       "type": "DEVICE_STATUS",
       "inputs": {
-        "device": "taranta://mid_csp_cbf/talon_board/002",
+        "device": "taranta://mid_csp_cbf/talon_board/001",
         "state": {
           "device": "taranta://null",
           "attribute": null
@@ -511,26 +647,211 @@
         "textColor": "#000000",
         "backgroundColor": "#ffffff",
         "textSize": 0.9,
-        "widgetCss": "border: 1px solid gray;",
+        "widgetCss": "border: 1px solid gray;\nbackground-color: white;",
         "showTangoDB": false,
         "linkTo": ""
       },
-      "order": 17
+      "order": 23
     },
     {
       "valid": 1,
-      "id": "484",
-      "x": 116,
+      "id": "588",
+      "x": 30,
+      "y": 10,
+      "canvas": "0",
+      "width": 8,
+      "height": 7,
+      "type": "LED_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_lru/001",
+          "attribute": "status",
+          "label": "Status"
+        },
+        "relation": "=",
+        "compare": "The device is in ON state.",
+        "trueColor": "#3ac73a",
+        "falseColor": "#ff0000",
+        "ledSize": 2,
+        "textSize": 1,
+        "showAttributeValue": false,
+        "showDeviceName": false,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": true,
+        "alignValueRight": false,
+        "customCss": ""
+      },
+      "order": 24
+    },
+    {
+      "valid": 1,
+      "id": "589",
+      "x": 30,
+      "y": 39,
+      "canvas": "0",
+      "width": 8,
+      "height": 7,
+      "type": "LED_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_lru/002",
+          "attribute": "status",
+          "label": "Status"
+        },
+        "relation": "=",
+        "compare": "The device is in ON state.",
+        "trueColor": "#3ac73a",
+        "falseColor": "#ff0000",
+        "ledSize": 2,
+        "textSize": 1,
+        "showAttributeValue": false,
+        "showDeviceName": false,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": true,
+        "alignValueRight": false,
+        "customCss": ""
+      },
+      "order": 25
+    },
+    {
+      "valid": 1,
+      "id": "591",
+      "x": 19,
+      "y": 1,
+      "canvas": "0",
+      "width": 164,
+      "height": 4,
+      "type": "LABEL",
+      "inputs": {
+        "text": "Mid CBF Overview",
+        "textColor": "#ffffff",
+        "backgroundColor": "#070068",
+        "size": 1.3,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "linkTo": "",
+        "customCss": "text-align: center;\npadding-top:5px",
+        "automaticResize": "Disabled"
+      },
+      "order": 26
+    },
+    {
+      "valid": 1,
+      "id": "593",
+      "x": 4,
+      "y": 30,
+      "canvas": "0",
+      "width": 22,
+      "height": 2,
+      "type": "LABEL",
+      "inputs": {
+        "text": "Assigned Dishes",
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "automaticResize": "Disabled",
+        "size": 0.75,
+        "linkTo": "",
+        "customCss": "text-align:center;"
+      },
+      "order": 27
+    },
+    {
+      "valid": 1,
+      "id": "598",
+      "x": 3,
       "y": 13,
       "canvas": "0",
-      "width": 14,
-      "height": 4,
+      "width": 24,
+      "height": 6,
+      "type": "LABEL",
+      "inputs": {
+        "text": "Sim Mode",
+        "textColor": "#202027",
+        "backgroundColor": "#ffffff",
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "automaticResize": "Disabled",
+        "size": 1.2,
+        "linkTo": "",
+        "customCss": "padding-top:5px;\npadding-left:5px;\ntext-align: left;\nborder: 1px solid gray;"
+      },
+      "order": 28
+    },
+    {
+      "valid": 1,
+      "id": "599",
+      "x": 20,
+      "y": 14,
+      "canvas": "0",
+      "width": 6,
+      "height": 5,
+      "type": "LED_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/sub_elt/controller",
+          "attribute": "simulationmode",
+          "label": "simulationMode"
+        },
+        "relation": "=",
+        "compare": "1",
+        "trueColor": "#3ac73a",
+        "falseColor": "#ff0000",
+        "ledSize": 2,
+        "textSize": 1,
+        "showAttributeValue": false,
+        "showDeviceName": false,
+        "showTangoDB": false,
+        "showAttribute": "None",
+        "alignTextCenter": true,
+        "alignValueRight": false,
+        "customCss": "padding-top:5px;"
+      },
+      "order": 29
+    },
+    {
+      "valid": 1,
+      "id": "600",
+      "x": 4,
+      "y": 16,
+      "canvas": "0",
+      "width": 17,
+      "height": 2,
+      "type": "LABEL",
+      "inputs": {
+        "text": "If on, only LRU 1 will turn on",
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "automaticResize": "Disabled",
+        "size": 0.75,
+        "linkTo": "",
+        "customCss": "border: 0px;"
+      },
+      "order": 30
+    },
+    {
+      "valid": 1,
+      "id": "601",
+      "x": 86,
+      "y": 17,
+      "canvas": "0",
+      "width": 19,
+      "height": 3,
       "type": "ATTRIBUTE_DISPLAY",
       "inputs": {
         "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/002",
-          "attribute": "ipaddr",
-          "label": "IP"
+          "device": "taranta://mid_csp_cbf/talon_board/001",
+          "attribute": "healthstate",
+          "label": "healthState"
         },
         "precision": 2,
         "format": "",
@@ -541,94 +862,80 @@
         "alignTextCenter": false,
         "alignValueRight": true,
         "scientificNotation": false,
-        "showEnumLabels": false,
+        "showEnumLabels": true,
         "showAttrQuality": false,
         "textColor": "#000000",
         "backgroundColor": "#ffffff",
         "size": 0.8,
         "font": "Helvetica",
         "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
+        "showUnit": false
       },
-      "order": 18
+      "order": 31
     },
     {
       "valid": 1,
-      "id": "485",
-      "x": 131,
-      "y": 13,
+      "id": "605",
+      "x": 40,
+      "y": 23,
       "canvas": "0",
-      "width": 15,
-      "height": 4,
-      "type": "ATTRIBUTE_DISPLAY",
+      "width": 69,
+      "height": 10,
+      "type": "TABULAR_VIEW",
       "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/002",
-          "attribute": "dishid",
-          "label": "DISH ID"
-        },
+        "devices": [
+          {
+            "device": "taranta://mid_csp_cbf/vcc/001"
+          },
+          {
+            "device": "taranta://mid_csp_cbf/fspcorrsubarray/01_01"
+          }
+        ],
         "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
         "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
+        "showDefaultAttribute": false,
+        "showEnumLabels": true,
+        "customAttributes": [
+          {
+            "attribute": {
+              "device": "taranta://mid_csp_cbf/vcc/001,taranta://mid_csp_cbf/fspcorrsubarray/01_01",
+              "attribute": "healthstate",
+              "label": "healthState"
+            }
+          },
+          {
+            "attribute": {
+              "device": "taranta://mid_csp_cbf/vcc/001,taranta://mid_csp_cbf/fspcorrsubarray/01_01",
+              "attribute": "obsstate",
+              "label": "obsState"
+            }
+          },
+          {
+            "attribute": {
+              "device": "taranta://mid_csp_cbf/vcc/001,taranta://mid_csp_cbf/fspcorrsubarray/01_01",
+              "attribute": "state",
+              "label": "State"
+            }
+          }
+        ],
+        "compactTable": true,
+        "borderedTable": false,
         "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
+        "backgroundColor": "#f2f2f2",
+        "size": 0.9,
+        "font": "Courier new",
+        "widgetCss": "",
+        "showTangoDB": false
       },
-      "order": 19
+      "order": 32
     },
     {
       "valid": 1,
-      "id": "486",
-      "x": 146,
-      "y": 13,
+      "id": "610",
+      "x": 112,
+      "y": 23,
       "canvas": "0",
-      "width": 20,
-      "height": 4,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/002",
-          "attribute": "fpgadietemperature",
-          "label": "FPGA Die Temperature"
-        },
-        "precision": 1,
-        "showDevice": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "format": "",
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showUnit": true
-      },
-      "order": 20
-    },
-    {
-      "valid": 1,
-      "id": "487",
-      "x": 104,
-      "y": 22,
-      "canvas": "0",
-      "width": 62,
+      "width": 69,
       "height": 10,
       "type": "TABULAR_VIEW",
       "inputs": {
@@ -648,6 +955,13 @@
           {
             "attribute": {
               "device": "taranta://mid_csp_cbf/vcc/002,taranta://mid_csp_cbf/fspcorrsubarray/02_01",
+              "attribute": "healthstate",
+              "label": "healthState"
+            }
+          },
+          {
+            "attribute": {
+              "device": "taranta://mid_csp_cbf/vcc/002,taranta://mid_csp_cbf/fspcorrsubarray/02_01",
               "attribute": "obsstate",
               "label": "obsState"
             }
@@ -669,229 +983,15 @@
         "widgetCss": "",
         "showTangoDB": false
       },
-      "order": 21
+      "order": 33
     },
     {
       "valid": 1,
-      "id": "533",
-      "x": 38,
-      "y": 18,
+      "id": "613",
+      "x": 40,
+      "y": 52,
       "canvas": "0",
-      "width": 16,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/001",
-          "attribute": "adminmode",
-          "label": "adminMode"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 23
-    },
-    {
-      "valid": 1,
-      "id": "534",
-      "x": 55,
-      "y": 18,
-      "canvas": "0",
-      "width": 20,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/fsp/01",
-          "attribute": "functionmode",
-          "label": "Function mode"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 24
-    },
-    {
-      "valid": 1,
-      "id": "535",
-      "x": 104,
-      "y": 18,
-      "canvas": "0",
-      "width": 16,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/001",
-          "attribute": "adminmode",
-          "label": "adminMode"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 25
-    },
-    {
-      "valid": 1,
-      "id": "536",
-      "x": 121,
-      "y": 18,
-      "canvas": "0",
-      "width": 20,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/fsp/01",
-          "attribute": "functionmode",
-          "label": "Function mode"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 26
-    },
-    {
-      "valid": 1,
-      "id": "537",
-      "x": 37,
-      "y": 36,
-      "canvas": "0",
-      "width": 64,
-      "height": 26,
-      "type": "LABEL",
-      "inputs": {
-        "text": "",
-        "textColor": "#070a68",
-        "backgroundColor": "#f5f5f5",
-        "size": 1.5,
-        "borderWidth": 0,
-        "borderColor": "#000000",
-        "font": "Helvetica",
-        "linkTo": "",
-        "customCss": "border:1px solid #b3b3b3;\npadding-top:5px;\npadding-left:20px;\n",
-        "automaticResize": "Disabled"
-      },
-      "order": 27
-    },
-    {
-      "valid": 1,
-      "id": "538",
-      "x": 38,
-      "y": 37,
-      "canvas": "0",
-      "width": 62,
-      "height": 4,
-      "type": "LABEL",
-      "inputs": {
-        "text": "talon-003",
-        "textColor": "#070a68",
-        "backgroundColor": "#dcdcdc",
-        "size": 1.1,
-        "borderWidth": 0,
-        "borderColor": "#dcdcdc",
-        "font": "Helvetica",
-        "linkTo": "",
-        "customCss": "padding-top:5px;\ntext-align: center;\nborder: 1px solid gray;",
-        "automaticResize": "Disabled"
-      },
-      "order": 29
-    },
-    {
-      "valid": 1,
-      "id": "539",
-      "x": 38,
-      "y": 42,
-      "canvas": "0",
-      "width": 11,
-      "height": 4,
-      "type": "DEVICE_STATUS",
-      "inputs": {
-        "device": "taranta://mid_csp_cbf/talon_board/003",
-        "state": {
-          "device": "taranta://null",
-          "attribute": null
-        },
-        "showDeviceName": false,
-        "showStateString": true,
-        "showStateLED": true,
-        "LEDSize": 1,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "textSize": 0.9,
-        "widgetCss": "border: 1px solid gray;",
-        "showTangoDB": false,
-        "linkTo": ""
-      },
-      "order": 30
-    },
-    {
-      "valid": 1,
-      "id": "540",
-      "x": 38,
-      "y": 51,
-      "canvas": "0",
-      "width": 62,
+      "width": 69,
       "height": 10,
       "type": "TABULAR_VIEW",
       "inputs": {
@@ -903,11 +1003,18 @@
             "device": "taranta://mid_csp_cbf/fspcorrsubarray/03_01"
           }
         ],
-        "precision": 3,
+        "precision": 2,
         "scientificNotation": false,
         "showDefaultAttribute": false,
         "showEnumLabels": true,
         "customAttributes": [
+          {
+            "attribute": {
+              "device": "taranta://mid_csp_cbf/vcc/003,taranta://mid_csp_cbf/fspcorrsubarray/03_01",
+              "attribute": "healthstate",
+              "label": "healthState"
+            }
+          },
           {
             "attribute": {
               "device": "taranta://mid_csp_cbf/vcc/003,taranta://mid_csp_cbf/fspcorrsubarray/03_01",
@@ -932,135 +1039,19 @@
         "widgetCss": "",
         "showTangoDB": false
       },
-      "order": 28
-    },
-    {
-      "valid": 1,
-      "id": "541",
-      "x": 80,
-      "y": 42,
-      "canvas": "0",
-      "width": 20,
-      "height": 4,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/003",
-          "attribute": "fpgadietemperature",
-          "label": "FPGA Die Temperature"
-        },
-        "precision": 1,
-        "showDevice": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "format": "",
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showUnit": true
-      },
-      "order": 31
-    },
-    {
-      "valid": 1,
-      "id": "542",
-      "x": 103,
-      "y": 36,
-      "canvas": "0",
-      "width": 64,
-      "height": 26,
-      "type": "LABEL",
-      "inputs": {
-        "text": "",
-        "textColor": "#070a68",
-        "backgroundColor": "#f5f5f5",
-        "size": 1.5,
-        "borderWidth": 0,
-        "borderColor": "#000000",
-        "font": "Helvetica",
-        "linkTo": "",
-        "customCss": "border:1px solid #b3b3b3;\npadding-top:5px;\npadding-left:20px;\n",
-        "automaticResize": "Disabled"
-      },
-      "order": 32
-    },
-    {
-      "valid": 1,
-      "id": "544",
-      "x": 49,
-      "y": 42,
-      "canvas": "0",
-      "width": 13,
-      "height": 4,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/003",
-          "attribute": "ipaddr",
-          "label": "IP"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 33
-    },
-    {
-      "valid": 1,
-      "id": "545",
-      "x": 104,
-      "y": 37,
-      "canvas": "0",
-      "width": 62,
-      "height": 4,
-      "type": "LABEL",
-      "inputs": {
-        "text": "talon-004",
-        "textColor": "#070a68",
-        "backgroundColor": "#dcdcdc",
-        "size": 1.1,
-        "borderWidth": 0,
-        "borderColor": "#dcdcdc",
-        "font": "Helvetica",
-        "linkTo": "",
-        "customCss": "padding-top:5px;\ntext-align: center;\nborder: 1px solid gray;",
-        "automaticResize": "Disabled"
-      },
       "order": 34
     },
     {
       "valid": 1,
-      "id": "546",
-      "x": 104,
+      "id": "615",
+      "x": 41,
       "y": 42,
       "canvas": "0",
       "width": 11,
-      "height": 4,
+      "height": 3,
       "type": "DEVICE_STATUS",
       "inputs": {
-        "device": "taranta://mid_csp_cbf/talon_board/004",
+        "device": "taranta://mid_csp_cbf/talon_board/003",
         "state": {
           "device": "taranta://null",
           "attribute": null
@@ -1072,7 +1063,7 @@
         "textColor": "#000000",
         "backgroundColor": "#ffffff",
         "textSize": 0.9,
-        "widgetCss": "border: 1px solid gray;",
+        "widgetCss": "border: 1px solid gray;\nbackground-color: white;",
         "showTangoDB": false,
         "linkTo": ""
       },
@@ -1080,16 +1071,16 @@
     },
     {
       "valid": 1,
-      "id": "547",
-      "x": 115,
+      "id": "616",
+      "x": 54,
       "y": 42,
       "canvas": "0",
-      "width": 13,
-      "height": 4,
+      "width": 14,
+      "height": 3,
       "type": "ATTRIBUTE_DISPLAY",
       "inputs": {
         "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/004",
+          "device": "taranta://mid_csp_cbf/talon_board/003",
           "attribute": "ipaddr",
           "label": "IP"
         },
@@ -1115,12 +1106,523 @@
     },
     {
       "valid": 1,
-      "id": "549",
-      "x": 146,
+      "id": "617",
+      "x": 70,
+      "y": 42,
+      "canvas": "0",
+      "width": 16,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/003",
+          "attribute": "dishid",
+          "label": "Dish ID"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": false,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 37
+    },
+    {
+      "valid": 1,
+      "id": "618",
+      "x": 88,
       "y": 42,
       "canvas": "0",
       "width": 20,
-      "height": 4,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/003",
+          "attribute": "fpgadietemperature",
+          "label": "FPGA Die Temperature"
+        },
+        "precision": 1,
+        "showDevice": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": false,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "format": "",
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showUnit": true
+      },
+      "order": 38
+    },
+    {
+      "valid": 1,
+      "id": "619",
+      "x": 86,
+      "y": 46,
+      "canvas": "0",
+      "width": 19,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/003",
+          "attribute": "healthstate",
+          "label": "healthState"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": true,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": false
+      },
+      "order": 39
+    },
+    {
+      "valid": 1,
+      "id": "620",
+      "x": 63,
+      "y": 46,
+      "canvas": "0",
+      "width": 20,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/fsp/03",
+          "attribute": "functionmode",
+          "label": "functionMode"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": true,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 40
+    },
+    {
+      "valid": 1,
+      "id": "621",
+      "x": 44,
+      "y": 46,
+      "canvas": "0",
+      "width": 16,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/003",
+          "attribute": "adminmode",
+          "label": "adminMode"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": true,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 41
+    },
+    {
+      "valid": 1,
+      "id": "622",
+      "x": 113,
+      "y": 13,
+      "canvas": "0",
+      "width": 11,
+      "height": 3,
+      "type": "DEVICE_STATUS",
+      "inputs": {
+        "device": "taranta://mid_csp_cbf/talon_board/002",
+        "state": {
+          "device": "taranta://null",
+          "attribute": null
+        },
+        "showDeviceName": false,
+        "showStateString": true,
+        "showStateLED": true,
+        "LEDSize": 1,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "textSize": 0.9,
+        "widgetCss": "border: 1px solid gray;\nbackground-color: white;",
+        "showTangoDB": false,
+        "linkTo": ""
+      },
+      "order": 42
+    },
+    {
+      "valid": 1,
+      "id": "623",
+      "x": 126,
+      "y": 13,
+      "canvas": "0",
+      "width": 14,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/002",
+          "attribute": "ipaddr",
+          "label": "IP"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": false,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 43
+    },
+    {
+      "valid": 1,
+      "id": "624",
+      "x": 142,
+      "y": 13,
+      "canvas": "0",
+      "width": 16,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/002",
+          "attribute": "dishid",
+          "label": "Dish ID"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": false,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 44
+    },
+    {
+      "valid": 1,
+      "id": "625",
+      "x": 160,
+      "y": 13,
+      "canvas": "0",
+      "width": 20,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/002",
+          "attribute": "fpgadietemperature",
+          "label": "FPGA Die Temperature"
+        },
+        "precision": 1,
+        "showDevice": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": false,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "format": "",
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showUnit": true
+      },
+      "order": 45
+    },
+    {
+      "valid": 1,
+      "id": "626",
+      "x": 158,
+      "y": 17,
+      "canvas": "0",
+      "width": 19,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/002",
+          "attribute": "healthstate",
+          "label": "healthState"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": true,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": false
+      },
+      "order": 46
+    },
+    {
+      "valid": 1,
+      "id": "627",
+      "x": 135,
+      "y": 17,
+      "canvas": "0",
+      "width": 20,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/fsp/02",
+          "attribute": "functionmode",
+          "label": "functionMode"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": true,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 47
+    },
+    {
+      "valid": 1,
+      "id": "628",
+      "x": 116,
+      "y": 17,
+      "canvas": "0",
+      "width": 16,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/002",
+          "attribute": "adminmode",
+          "label": "adminMode"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": true,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 48
+    },
+    {
+      "valid": 1,
+      "id": "631",
+      "x": 113,
+      "y": 42,
+      "canvas": "0",
+      "width": 11,
+      "height": 3,
+      "type": "DEVICE_STATUS",
+      "inputs": {
+        "device": "taranta://mid_csp_cbf/talon_board/004",
+        "state": {
+          "device": "taranta://null",
+          "attribute": null
+        },
+        "showDeviceName": false,
+        "showStateString": true,
+        "showStateLED": true,
+        "LEDSize": 1,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "textSize": 0.9,
+        "widgetCss": "border: 1px solid gray;\nbackground-color: white;",
+        "showTangoDB": false,
+        "linkTo": ""
+      },
+      "order": 49
+    },
+    {
+      "valid": 1,
+      "id": "632",
+      "x": 126,
+      "y": 42,
+      "canvas": "0",
+      "width": 14,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/004",
+          "attribute": "ipaddr",
+          "label": "IP"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": false,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 50
+    },
+    {
+      "valid": 1,
+      "id": "633",
+      "x": 142,
+      "y": 42,
+      "canvas": "0",
+      "width": 16,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/004",
+          "attribute": "dishid",
+          "label": "Dish ID"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": false,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 51
+    },
+    {
+      "valid": 1,
+      "id": "634",
+      "x": 160,
+      "y": 42,
+      "canvas": "0",
+      "width": 20,
+      "height": 3,
       "type": "ATTRIBUTE_DISPLAY",
       "inputs": {
         "attribute": {
@@ -1146,15 +1648,120 @@
         "showTangoDB": false,
         "showUnit": true
       },
-      "order": 37
+      "order": 52
     },
     {
       "valid": 1,
-      "id": "550",
-      "x": 104,
-      "y": 51,
+      "id": "635",
+      "x": 158,
+      "y": 46,
       "canvas": "0",
-      "width": 62,
+      "width": 19,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/004",
+          "attribute": "healthstate",
+          "label": "healthState"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": true,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": false
+      },
+      "order": 53
+    },
+    {
+      "valid": 1,
+      "id": "636",
+      "x": 135,
+      "y": 46,
+      "canvas": "0",
+      "width": 20,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/fsp/04",
+          "attribute": "functionmode",
+          "label": "functionMode"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": true,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 54
+    },
+    {
+      "valid": 1,
+      "id": "637",
+      "x": 116,
+      "y": 46,
+      "canvas": "0",
+      "width": 16,
+      "height": 3,
+      "type": "ATTRIBUTE_DISPLAY",
+      "inputs": {
+        "attribute": {
+          "device": "taranta://mid_csp_cbf/talon_board/004",
+          "attribute": "adminmode",
+          "label": "adminMode"
+        },
+        "precision": 2,
+        "format": "",
+        "showDevice": false,
+        "jsonCollapsed": true,
+        "showTangoDB": false,
+        "showAttribute": "Label",
+        "alignTextCenter": false,
+        "alignValueRight": true,
+        "scientificNotation": false,
+        "showEnumLabels": true,
+        "showAttrQuality": false,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 0.8,
+        "font": "Helvetica",
+        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
+        "showUnit": true
+      },
+      "order": 55
+    },
+    {
+      "valid": 1,
+      "id": "638",
+      "x": 112,
+      "y": 52,
+      "canvas": "0",
+      "width": 70,
       "height": 10,
       "type": "TABULAR_VIEW",
       "inputs": {
@@ -1171,6 +1778,13 @@
         "showDefaultAttribute": false,
         "showEnumLabels": true,
         "customAttributes": [
+          {
+            "attribute": {
+              "device": "taranta://mid_csp_cbf/vcc/004,taranta://mid_csp_cbf/fspcorrsubarray/04_01",
+              "attribute": "healthstate",
+              "label": "healthState"
+            }
+          },
           {
             "attribute": {
               "device": "taranta://mid_csp_cbf/vcc/004,taranta://mid_csp_cbf/fspcorrsubarray/04_01",
@@ -1195,621 +1809,7 @@
         "widgetCss": "",
         "showTangoDB": false
       },
-      "order": 38
-    },
-    {
-      "valid": 1,
-      "id": "551",
-      "x": 38,
-      "y": 47,
-      "canvas": "0",
-      "width": 16,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/003",
-          "attribute": "adminmode",
-          "label": "adminMode"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 39
-    },
-    {
-      "valid": 1,
-      "id": "552",
-      "x": 55,
-      "y": 47,
-      "canvas": "0",
-      "width": 20,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/fsp/03",
-          "attribute": "functionmode",
-          "label": "Function mode"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 40
-    },
-    {
-      "valid": 1,
-      "id": "553",
-      "x": 104,
-      "y": 47,
-      "canvas": "0",
-      "width": 16,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/004",
-          "attribute": "adminmode",
-          "label": "adminMode"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 41
-    },
-    {
-      "valid": 1,
-      "id": "554",
-      "x": 121,
-      "y": 47,
-      "canvas": "0",
-      "width": 20,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/fsp/04",
-          "attribute": "functionmode",
-          "label": "Function mode"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 42
-    },
-    {
-      "valid": 1,
-      "id": "555",
-      "x": 29,
-      "y": 35,
-      "canvas": "0",
-      "width": 140,
-      "height": 28,
-      "type": "LABEL",
-      "inputs": {
-        "text": "LRU-002",
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "borderWidth": 0,
-        "borderColor": "#4f4f4f",
-        "font": "Helvetica",
-        "automaticResize": "Disabled",
-        "size": 1.1,
-        "linkTo": "",
-        "customCss": "padding-top:5px;\npadding-left:5px;\ntext-align: left;\nborder: 1px solid gray;"
-      },
-      "order": 22
-    },
-    {
-      "valid": 1,
-      "id": "556",
-      "x": 63,
-      "y": 42,
-      "canvas": "0",
-      "width": 16,
-      "height": 4,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/003",
-          "attribute": "dishid",
-          "label": "DISH ID"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 43
-    },
-    {
-      "valid": 1,
-      "id": "557",
-      "x": 128,
-      "y": 42,
-      "canvas": "0",
-      "width": 17,
-      "height": 4,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/004",
-          "attribute": "dishid",
-          "label": "DISH ID"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 44
-    },
-    {
-      "valid": 1,
-      "id": "567",
-      "x": 4,
-      "y": 32,
-      "canvas": "0",
-      "width": 22,
-      "height": 15,
-      "type": "SPECTRUM_TABLE",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/sub_elt/subarray_01",
-          "attribute": "receptors",
-          "label": "receptors"
-        },
-        "precision": 3,
-        "layout": "vertical",
-        "showDevice": false,
-        "showTangoDB": false,
-        "showAttribute": "None",
-        "showIndex": true,
-        "showLabel": false,
-        "fontSize": 14,
-        "customCss": "text-align: center;\ndisplay: flex;\nflex-direction: column;\nalign-items: center;",
-        "showSpecificIndexValue": ""
-      },
-      "order": 45
-    },
-    {
-      "valid": 1,
-      "id": "576",
-      "x": 38,
-      "y": 13,
-      "canvas": "0",
-      "width": 11,
-      "height": 4,
-      "type": "DEVICE_STATUS",
-      "inputs": {
-        "device": "taranta://mid_csp_cbf/talon_board/001",
-        "state": {
-          "device": "taranta://null",
-          "attribute": null
-        },
-        "showDeviceName": false,
-        "showStateString": true,
-        "showStateLED": true,
-        "LEDSize": 1,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "textSize": 0.9,
-        "widgetCss": "border: 1px solid gray;",
-        "showTangoDB": false,
-        "linkTo": ""
-      },
-      "order": 46
-    },
-    {
-      "valid": 1,
-      "id": "588",
-      "x": 29,
-      "y": 10,
-      "canvas": "0",
-      "width": 8,
-      "height": 9,
-      "type": "LED_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_lru/001",
-          "attribute": "status",
-          "label": "Status"
-        },
-        "relation": "=",
-        "compare": "The device is in ON state.",
-        "trueColor": "#3ac73a",
-        "falseColor": "#ff0000",
-        "ledSize": 2,
-        "textSize": 1,
-        "showAttributeValue": false,
-        "showDeviceName": false,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": true,
-        "alignValueRight": false,
-        "customCss": ""
-      },
-      "order": 47
-    },
-    {
-      "valid": 1,
-      "id": "589",
-      "x": 29,
-      "y": 39,
-      "canvas": "0",
-      "width": 8,
-      "height": 23,
-      "type": "LED_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_lru/002",
-          "attribute": "status",
-          "label": "Status"
-        },
-        "relation": "=",
-        "compare": "The device is in ON state.",
-        "trueColor": "#3ac73a",
-        "falseColor": "#ff0000",
-        "ledSize": 2,
-        "textSize": 1,
-        "showAttributeValue": false,
-        "showDeviceName": false,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": true,
-        "alignValueRight": false,
-        "customCss": ""
-      },
-      "order": 48
-    },
-    {
-      "valid": 1,
-      "id": "591",
-      "x": 19,
-      "y": 1,
-      "canvas": "0",
-      "width": 151,
-      "height": 4,
-      "type": "LABEL",
-      "inputs": {
-        "text": "Mid CBF Overview",
-        "textColor": "#ffffff",
-        "backgroundColor": "#070068",
-        "size": 1.3,
-        "borderWidth": 0,
-        "borderColor": "#000000",
-        "font": "Helvetica",
-        "linkTo": "",
-        "customCss": "text-align: center;\npadding-top:5px",
-        "automaticResize": "Disabled"
-      },
-      "order": 49
-    },
-    {
-      "valid": 1,
-      "id": "593",
-      "x": 4,
-      "y": 30,
-      "canvas": "0",
-      "width": 22,
-      "height": 2,
-      "type": "LABEL",
-      "inputs": {
-        "text": "Assigned Dishes",
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "borderWidth": 0,
-        "borderColor": "#000000",
-        "font": "Helvetica",
-        "automaticResize": "Disabled",
-        "size": 0.75,
-        "linkTo": "",
-        "customCss": "text-align:center;"
-      },
-      "order": 50
-    },
-    {
-      "valid": 1,
-      "id": "598",
-      "x": 3,
-      "y": 13,
-      "canvas": "0",
-      "width": 24,
-      "height": 6,
-      "type": "LABEL",
-      "inputs": {
-        "text": "Sim Mode",
-        "textColor": "#202027",
-        "backgroundColor": "#ffffff",
-        "borderWidth": 0,
-        "borderColor": "#000000",
-        "font": "Helvetica",
-        "automaticResize": "Disabled",
-        "size": 1.2,
-        "linkTo": "",
-        "customCss": "padding-top:5px;\npadding-left:5px;\ntext-align: left;\nborder: 1px solid gray;"
-      },
-      "order": 51
-    },
-    {
-      "valid": 1,
-      "id": "599",
-      "x": 21,
-      "y": 13,
-      "canvas": "0",
-      "width": 6,
-      "height": 5,
-      "type": "LED_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/sub_elt/controller",
-          "attribute": "simulationmode",
-          "label": "simulationMode"
-        },
-        "relation": "=",
-        "compare": "1",
-        "trueColor": "#3ac73a",
-        "falseColor": "#ff0000",
-        "ledSize": 2,
-        "textSize": 1,
-        "showAttributeValue": false,
-        "showDeviceName": false,
-        "showTangoDB": false,
-        "showAttribute": "None",
-        "alignTextCenter": true,
-        "alignValueRight": false,
-        "customCss": "padding-top:5px;"
-      },
-      "order": 52
-    },
-    {
-      "valid": 1,
-      "id": "600",
-      "x": 4,
-      "y": 16,
-      "canvas": "0",
-      "width": 17,
-      "height": 2,
-      "type": "LABEL",
-      "inputs": {
-        "text": "If on, only LRU 1 will turn on",
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "borderWidth": 0,
-        "borderColor": "#000000",
-        "font": "Helvetica",
-        "automaticResize": "Disabled",
-        "size": 0.75,
-        "linkTo": "",
-        "customCss": "border: 0px;"
-      },
-      "order": 53
-    },
-    {
-      "valid": 1,
-      "id": "601",
-      "x": 76,
-      "y": 18,
-      "canvas": "0",
-      "width": 20,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/001",
-          "attribute": "healthstate",
-          "label": "healthState"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 54
-    },
-    {
-      "valid": 1,
-      "id": "602",
-      "x": 142,
-      "y": 18,
-      "canvas": "0",
-      "width": 20,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/002",
-          "attribute": "healthstate",
-          "label": "healthState"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 55
-    },
-    {
-      "valid": 1,
-      "id": "603",
-      "x": 76,
-      "y": 47,
-      "canvas": "0",
-      "width": 20,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/003",
-          "attribute": "healthstate",
-          "label": "healthState"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
       "order": 56
-    },
-    {
-      "valid": 1,
-      "id": "604",
-      "x": 142,
-      "y": 47,
-      "canvas": "0",
-      "width": 20,
-      "height": 3,
-      "type": "ATTRIBUTE_DISPLAY",
-      "inputs": {
-        "attribute": {
-          "device": "taranta://mid_csp_cbf/talon_board/004",
-          "attribute": "healthstate",
-          "label": "healthState"
-        },
-        "precision": 2,
-        "format": "",
-        "showDevice": false,
-        "jsonCollapsed": true,
-        "showTangoDB": false,
-        "showAttribute": "Label",
-        "alignTextCenter": false,
-        "alignValueRight": true,
-        "scientificNotation": false,
-        "showEnumLabels": false,
-        "showAttrQuality": false,
-        "textColor": "#000000",
-        "backgroundColor": "#ffffff",
-        "size": 0.8,
-        "font": "Helvetica",
-        "widgetCss": "padding-top:5px;\nborder: 1px solid gray;",
-        "showUnit": true
-      },
-      "order": 57
     }
   ],
   "variables": [
