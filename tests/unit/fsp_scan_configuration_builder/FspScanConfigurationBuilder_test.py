@@ -19,7 +19,7 @@ import pytest
 from ska_telmodel import channel_map
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_mcs.commons.global_enum import FspModes
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
 from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.builder import (
     FspScanConfigurationBuilder as fsp_builder,
 )
@@ -231,12 +231,12 @@ class TestFspScanConfigurationBuilder:
                 ), f"There are unassigned output_ports for PR index {index}"
 
             for fsp_config in fsp_to_pr[pr_index]:
-                # Assert vcc to rdt shift values set for all subarray receptors
+                # Assert VCC to RDT shift and 16k FC gain values set for all
+                # subarray receptors
                 for receptor in subarray_dish_ids:
                     vcc_id = dish_util.dish_id_to_vcc_id[receptor]
 
-                    # Note, hps wants vcc in the vcc_id_to_rdt_freq_shifts dict
-                    # to be a string
+                    # NOTE: HPS wants the VCC ID key in the dict to be a string
                     vcc_id_str = str(vcc_id)
                     assert (
                         vcc_id_str in fsp_config["vcc_id_to_rdt_freq_shifts"]
@@ -248,6 +248,12 @@ class TestFspScanConfigurationBuilder:
                     assert "freq_align_shift" in vcc_id_shift_config
                     assert "freq_wb_shift" in vcc_id_shift_config
                     assert "freq_scfo_shift" in vcc_id_shift_config
+                    assert vcc_id_str in fsp_config["vcc_id_to_fc_gain"]
+
+                    vcc_id_gain_list = fsp_config["vcc_id_to_fc_gain"][
+                        vcc_id_str
+                    ]
+                    assert len(vcc_id_gain_list) == const.TOTAL_FINE_CHANNELS
 
                 # assert the receptors are set if they are set in the PR, else
                 # they are the subarray receptors

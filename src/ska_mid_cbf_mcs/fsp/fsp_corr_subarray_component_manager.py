@@ -18,7 +18,6 @@ import tango
 from ska_control_model import CommunicationStatus, TaskStatus
 from ska_tango_base.commands import ResultCode
 
-from ska_mid_cbf_mcs.commons.gain_utils import GAINUtils
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.fsp.fsp_mode_subarray_component_manager import (
     FspModeSubarrayComponentManager,
@@ -53,7 +52,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             [
                 int(
                     i
-                    * const.NUM_FINE_CHANNELS
+                    * const.CENTRAL_FINE_CHANNELS
                     / const.NUM_CHANNELS_PER_SPEAD_STREAM
                 )
                 + 1,
@@ -99,28 +98,15 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             "fs_sample_rates"
         ]
 
+        # append RDT frequency shift values, indexed by VCC ID
         hps_fsp_configuration["vcc_id_to_rdt_freq_shifts"] = configuration[
             "vcc_id_to_rdt_freq_shifts"
         ]
 
-        # TODO: Assume gain is an array, check with JSON Validator, consider lowering the size of the array for testing, also print on HPS side and validate
-        # For now, we will reinitialize gain as a large (32k) sized array in the component manager
-        hps_fsp_configuration["fine_channelizer"]["gain"] = [1] * (16384)
-        fsid = hps_fsp_configuration["configure_scan"]["frequency_slice_id"]
-        self.logger.info(f"Frequency slice id: {fsid}")
-        gain_corrections = GAINUtils.get_vcc_ripple_correction(
-            hps_fsp_configuration["configure_scan"]["frequency_band"],
-            self.logger,
-            fsid
-            # hps_fsp_configuration["configure_scan"]["frequency_slice_id"]
-        )
-        for gain_index, gain in enumerate(
-            hps_fsp_configuration["fine_channelizer"]["gain"]
-        ):
-            gain = gain * gain_corrections[gain_index % 16384]
-            hps_fsp_configuration["fine_channelizer"]["gain"][
-                gain_index
-            ] = gain
+        # append FC gain values, indexed by VCC ID
+        hps_fsp_configuration["vcc_id_to_fc_gain"] = configuration[
+            "vcc_id_to_fc_gain"
+        ]
 
         # TODO: zoom-factor removed from configurescan, but required by HPS, to
         # be inferred from channel_width introduced in ADR-99 when ready to
@@ -182,9 +168,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         self.frequency_band = freq_band_dict()[
             configuration["frequency_band"]
         ]["band_index"]
-        self.logger.info(
-            f"Here is the frequency band class attribute: {self.frequency_band}"
-        )
+        self.logger.debug(f"frequency band set to {self.frequency_band}")
         self.frequency_slice_id = int(configuration["frequency_slice_id"])
 
         # Assign newly specified VCCs
@@ -196,7 +180,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
-                self.logger.info("Entering HPS FSP configurescan")
+                self.logger.debug("Entering HPS FSP ConfigureScan")
                 # self.logger.info("Printing HPS ConfigScan")
                 # TODO: Validate this with JSON Validator
                 # TODO: Update: Valid if replace ' ' with " "
@@ -205,7 +189,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
                 self._proxy_hps_fsp_corr_controller.ConfigureScan(
                     hps_fsp_configuration
                 )
-                self.logger.info("Exiting HPS FSP configurescan")
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failure in issuing ConfigureScan to HPS FSP CORR; {df}"

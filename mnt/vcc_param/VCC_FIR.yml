@@ -1,3 +1,5 @@
+# VCC Finite Impulse Response data 
+# derived from https://gitlab.com/ska-telescope/ska-mid-cbf-signal-verification/-/blob/main/images/ska-mid-cbf-signal-verification/hardware_testing_notebooks/pyro_control/OS_Prototype_FIR_CH20.yml
 M: 18
 h:
 - -1.2033195580823299e-05

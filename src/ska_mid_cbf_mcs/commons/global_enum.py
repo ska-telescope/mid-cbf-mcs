@@ -16,7 +16,15 @@ class Const:
         self.FREQUENCY_BAND_5a_TUNING_BOUNDS = (5.85, 7.25)  # GHz
         self.FREQUENCY_BAND_5b_TUNING_BOUNDS = (9.55, 14.05)  # GHz
         self.BAND_5_STREAM_BANDWIDTH = 2.5  # GHz
-        self.NUM_FINE_CHANNELS = 14880
+
+        self.DEFAULT_TIMEOUT = 4
+        self.COMMON_SAMPLE_RATE = 220200960
+
+        # total number of fine channels in a frequency slice
+        self.TOTAL_FINE_CHANNELS = 16384
+        # number of central fine channels with appropriate quality for visibility output products
+        self.CENTRAL_FINE_CHANNELS = 14880
+        self.DEFAULT_FINE_CHANNEL_BW_HZ = 13440
 
         # Number of Fine channels per SPEAD stream;
         # TODO: NUM_CHANNELS_PER_SPEAD_STREAM = 20 for TDC (AA0.5, AA1) only; for Mid.CBF (AA2+) it will be set to 1
@@ -39,11 +47,6 @@ class Const:
 
         self.MAX_NUM_FS_LINKS = 16  # AA0.5
         self.MAX_NUM_VIS_LINKS = 4
-
-        self.DEFAULT_TIMEOUT = 4
-        self.COMMON_SAMPLE_RATE = 220200960
-        self.FINE_CHANNELS = 16384
-        self.FINE_SAMPLE_RATE = 13440
 
         self.BER_PASS_THRESHOLD = 8.000e-11
         self.GBPS = 25.78125 * 64 / 66
