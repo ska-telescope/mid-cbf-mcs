@@ -81,10 +81,9 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         # append all internal parameters to the configuration to pass to HPS
         # first construct HPS FSP ConfigureScan input
 
-        # Access constants for CIP-2364 through configuration[band_number] and send that to gloabl enums for values
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
-        # self.logger.info(f"{hps_fsp_configuration}")
+        self.logger.info(f"{hps_fsp_configuration}")
 
         # Get the internal parameters from file
         internal_params_file_name = FSP_CORR_PARAM_PATH
@@ -152,7 +151,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         :return: None
         """
         # Set task status in progress, check for abort event
-        self.logger.info("STARTING CONFIGSCAN")
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
             "ConfigureScan", task_callback, task_abort_event
@@ -181,11 +179,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
                 self.logger.debug("Entering HPS FSP ConfigureScan")
-                # self.logger.info("Printing HPS ConfigScan")
-                # TODO: Validate this with JSON Validator
-                # TODO: Update: Valid if replace ' ' with " "
-                # self.logger.info(f"{hps_fsp_configuration}")
-                # TODO: Error is here, does this call configurescan in DsFspCorrControllerComponentManager.cpp? Or where? Timeout happens but where is error? Can't find.
                 self._proxy_hps_fsp_corr_controller.ConfigureScan(
                     hps_fsp_configuration
                 )
