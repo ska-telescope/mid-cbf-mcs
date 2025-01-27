@@ -958,16 +958,29 @@ class TestCbfSubarray:
         result_code, off_command_id = controller.Off()
         assert result_code == [ResultCode.QUEUED]
 
-        controller.adminMode = AdminMode.OFFLINE
-
         expected_events = [
+            ("state", DevState.OFF, DevState.ON, 1),
             (
-                controller,
                 "longRunningCommandResult",
                 (f"{off_command_id[0]}", '[0, "Off completed OK"]'),
                 None,
                 1,
             ),
+        ]
+        for name, value, previous, n in expected_events:
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=controller,
+                attribute_name=name,
+                attribute_value=value,
+                previous_value=previous,
+                min_n_events=n,
+            )
+
+        controller.adminMode = AdminMode.OFFLINE
+
+        expected_events = [
             (
                 subarray[sub_id],
                 "adminMode",
@@ -976,6 +989,13 @@ class TestCbfSubarray:
                 1,
             ),
             (subarray[sub_id], "state", DevState.DISABLE, DevState.ON, 1),
+            (
+                controller,
+                "adminMode",
+                AdminMode.OFFLINE,
+                AdminMode.ONLINE,
+                1,
+            ),
         ]
 
         for device, name, value, previous, n in expected_events:

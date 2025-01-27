@@ -562,8 +562,10 @@ class ControllerComponentManager(CbfComponentManager):
 
         # We want to make the devices that we subscribe to state attribute change events
         # transition to OFF state before proceeding
-        self.wait_for_op_state_change(tango.DevState.OFF)
-
+        result_code = self.wait_for_op_state_change(tango.DevState.OFF)
+        if result_code == TaskStatus.FAILED:
+            msg = "There are devices that has not transition to DevState.Disable within the allotted time"
+            self.logger.error(msg)
         self._update_component_state(power=PowerState.OFF)
 
     def _stop_communicating(
@@ -583,6 +585,29 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
+        # Order of operations for sub devices:
+        # 1. Set the sub devices to AdminMode.OFFLINE to trigger transition to DevState.DISABLE
+        # 2. Wait for the sub devices to transition to DevState.Disable
+        # 3. Unsubscribe from the change events with the sub devices
+        # 4. Clear out the op_state devices list that
+
+        for fqdn, proxy in self._proxies.items():
+            try:
+                self.logger.info(f"Setting {fqdn} to AdminMode.OFFLINE")
+                proxy.adminMode = AdminMode.OFFLINE
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to stop communications with {fqdn}; {df}"
+                )
+                continue
+
+        # We want to make the devices that we subscribe to state attribute change events
+        # transition to DISABLE state before proceeding
+        result_code = self.wait_for_op_state_change(tango.DevState.DISABLE)
+        if result_code == TaskStatus.FAILED:
+            msg = "There are devices that has not transition to DevState.Disable within the allotted time"
+            self.logger.error(msg)
+
         for fqdn, proxy in self._proxies.items():
             try:
                 if (
@@ -597,19 +622,15 @@ class ControllerComponentManager(CbfComponentManager):
                 ):
                     self.unsubscribe_all_events(proxy)
 
-                self.logger.info(f"Setting {fqdn} to AdminMode.OFFLINE")
-                proxy.adminMode = AdminMode.OFFLINE
             except tango.DevFailed as df:
                 self.logger.error(
-                    f"Failed to stop communications with {fqdn}; {df}"
+                    f"Failed to unubscribe events with {fqdn}; {df}"
                 )
                 continue
 
-        super()._stop_communicating()
+        self._op_states = {}
 
-        # We want to make the devices that we subscribe to state attribute change events
-        # transition to DISABLE state before proceeding
-        self.wait_for_op_state_change(tango.DevState.DISABLE)
+        super()._stop_communicating()
 
     # -------------
     # Fast Commands

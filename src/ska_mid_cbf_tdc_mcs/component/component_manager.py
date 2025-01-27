@@ -673,6 +673,10 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # desired state.
         op_state_devices_fqdn = list(self._op_states.keys())
 
+        self.logger.debug(
+            f" Desired State Change: {desired_state} \nDevices Subscribed: {op_state_devices_fqdn}"
+        )
+
         while len(op_state_devices_fqdn):
             # Remove any successful results from blocking command IDs
             curr_device_fqdn = op_state_devices_fqdn.pop()
@@ -689,11 +693,9 @@ class CbfComponentManager(TaskExecutorComponentManager):
             if ticks_10ms <= 0:
                 self.logger.error(
                     f"{len(op_state_devices_fqdn)} devices has not change to desired state after {self._state_change_timeout}s.\n"
-                    f"Remaining Devices: {op_state_devices_fqdn}"
+                    f"Remaining Devices: {op_state_devices_fqdn}\n"
                     f"Desired State: {desired_state}"
                 )
-                with self._results_lock:
-                    self._received_lrc_results = {}
                 return TaskStatus.FAILED
 
         self.logger.debug(
@@ -702,12 +704,12 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         if len(op_state_devices_fqdn) == 0:
             self.logger.debug(
-                "All observing device(s) changed to desired state."
+                f"Device(s) successfully transitioned to {desired_state}."
             )
             return TaskStatus.COMPLETED
         else:
             self.logger.error(
-                "There are observing device(s) that faile dto change to desired state."
+                f"Some/all device(s) failed to transition to {desired_state}."
             )
             return TaskStatus.FAILED
 
