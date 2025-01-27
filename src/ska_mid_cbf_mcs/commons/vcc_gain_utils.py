@@ -12,7 +12,6 @@ from __future__ import annotations  # allow forward references in type hints
 import numpy as np
 import scipy
 import yaml
-
 from ska_mid_cbf_tdc_mcs.commons.global_enum import (
     calculate_dish_sample_rate,
     const,
