@@ -179,7 +179,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
                 self.logger.debug("Entering HPS FSP ConfigureScan")
-                self._proxy_hps_fsp_corr_controller.ConfigureScan(
+                self._proxy_hps_fsp_mode_controller.ConfigureScan(
                     hps_fsp_configuration
                 )
             except tango.DevFailed as df:
