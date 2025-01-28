@@ -446,7 +446,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             if self._health_state != health_state:
                 self.logger.info(f"Updating healthState to {health_state}")
                 self._health_state = health_state
-                self._push_health_state_update(health_state)
+                self._push_health_state_update(self._health_state)
 
     def _results_callback_thread(
         self: CbfComponentManager, event_data: Optional[tango.EventData]

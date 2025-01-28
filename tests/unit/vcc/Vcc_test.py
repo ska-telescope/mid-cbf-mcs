@@ -19,7 +19,13 @@ from unittest.mock import Mock
 
 import pytest
 from assertpy import assert_that
-from ska_control_model import AdminMode, ObsState, ResultCode, SimulationMode
+from ska_control_model import (
+    AdminMode,
+    HealthState,
+    ObsState,
+    ResultCode,
+    SimulationMode,
+)
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
@@ -52,12 +58,13 @@ class TestVcc:
         self: TestVcc, initial_mocks: dict[str, Mock]
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
         """
-        Fixture that creates a test context for the Vcc device.
+        Fixture that creates a test context for the Vcc tests.
 
         :param initial_mocks: A dictionary of initial mocks to be used in the test context.
         :return: A test context for the Vcc device.
         """
         harness = context.ThreadedTestTangoContextManager()
+        # This device is used for pass cases.
         harness.add_device(
             device_name="mid_csp_cbf/vcc/001",
             device_class=Vcc,
@@ -72,13 +79,29 @@ class TestVcc:
             DeviceID="1",
             LRCTimeout="3",
         )
+        # This device is used for failure cases.
+        harness.add_device(
+            device_name="mid_csp_cbf/vcc/002",
+            device_class=Vcc,
+            TalonLRUAddress="mid_csp_cbf/talon_lru/002",
+            VccControllerAddress="talondx-002/vcc-app/vcc-controller",
+            Band1And2Address="talondx-002/vcc-app/vcc-band-1-and-2",
+            Band3Address="talondx-002/vcc-app/vcc-band-3",
+            Band4Address="talondx-002/vcc-app/vcc-band-4",
+            Band5Address="talondx-002/vcc-app/vcc-band-5",
+            SW1Address="mid_csp_cbf/vcc_sw1/002",
+            SW2Address="mid_csp_cbf/vcc_sw2/002",
+            DeviceID="1",
+            LRCTimeout="3",
+        )
+
         for name, mock in initial_mocks.items():
             harness.add_mock_device(device_name=name, device_mock=mock)
 
         with harness as test_context:
             yield test_context
 
-    def device_online(
+    def device_online_and_on(
         self: TestVcc,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
@@ -91,6 +114,7 @@ class TestVcc:
         # Set a given device to AdminMode.ONLINE and DevState.ON
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -98,6 +122,15 @@ class TestVcc:
             attribute_name="adminMode",
             attribute_value=AdminMode.ONLINE,
         )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.ON,
+        )
+
         return device_under_test.adminMode == AdminMode.ONLINE
 
     def test_State(
@@ -167,24 +200,54 @@ class TestVcc:
         :param event_tracer: A TangoEventTracer used to recieve subscribed change
                              events from the device under test.
         """
-        # Set a given device to AdminMode.ONLINE and DevState.ON
-        device_under_test.simulationMode = SimulationMode.FALSE
-        device_under_test.adminMode = AdminMode.ONLINE
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
+    def test_healthState_pass(
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test the rollup of healthState from HPS mocks; pass case.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        """
+        # Prepare device for observation
+        assert device_under_test.healthState == HealthState.UNKNOWN
+        assert self.device_online_and_on(device_under_test, event_tracer)
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="adminMode",
-            attribute_value=AdminMode.ONLINE,
+            attribute_name="healthState",
+            attribute_value=HealthState.OK,
         )
 
-        assert_that(event_tracer).within_timeout(
+    def test_healthState_fail(
+        self: TestVcc,
+        device_under_test_unhealthy: context.DeviceProxy,
+        event_tracer_unhealthy: TangoEventTracer,
+    ) -> None:
+        """
+        Test the rollup of healthState from HPS mocks; failure case.
+
+        :param device_under_test_unhealthy: DeviceProxy to the device under test.
+        :param event_tracer_unhealthy: A TangoEventTracer used to recieve
+                            subscribed change events from the device under test.
+        """
+        # Prepare device for observation
+        assert device_under_test_unhealthy.healthState == HealthState.UNKNOWN
+        assert self.device_online_and_on(
+            device_under_test_unhealthy, event_tracer_unhealthy
+        )
+        assert_that(event_tracer_unhealthy).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
-            device_name=device_under_test,
-            attribute_name="state",
-            attribute_value=DevState.ON,
+            device_name=device_under_test_unhealthy,
+            attribute_name="healthState",
+            attribute_value=HealthState.FAILED,
         )
 
     @pytest.mark.parametrize(
@@ -217,7 +280,7 @@ class TestVcc:
         :param success: A parameterized value used to test success and failure conditions.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # Setting band configuration with invalid frequency band
 
@@ -290,7 +353,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -423,7 +486,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -583,7 +646,7 @@ class TestVcc:
         :param config_file_name: file name for the configuration.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -734,7 +797,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
-        assert self.device_online(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
