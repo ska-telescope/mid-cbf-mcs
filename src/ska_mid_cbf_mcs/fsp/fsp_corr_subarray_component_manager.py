@@ -83,7 +83,9 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
-        self.logger.info(f"{hps_fsp_configuration}")
+        self.logger.debug(
+            f"Config JSON before appending HPS parameters: {hps_fsp_configuration}"
+        )
 
         # Get the internal parameters from file
         internal_params_file_name = FSP_CORR_PARAM_PATH
@@ -112,8 +114,8 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         # implement zoom
         hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
 
-        self.logger.info(
-            f"HPS FSP Corr configuration: {hps_fsp_configuration}."
+        self.logger.debug(
+            f"Config JSON after appending HPS parameters: {hps_fsp_configuration}"
         )
 
         return json.dumps(hps_fsp_configuration)
