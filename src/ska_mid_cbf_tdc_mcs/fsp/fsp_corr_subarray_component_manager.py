@@ -83,7 +83,9 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
-        self.logger.debug(f"{hps_fsp_configuration}")
+        self.logger.debug(
+            f"Config JSON before appending HPS parameters: {hps_fsp_configuration}"
+        )
 
         # Get the internal parameters from file
         internal_params_file_name = FSP_CORR_PARAM_PATH
@@ -113,7 +115,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
 
         self.logger.debug(
-            f"HPS FSP Corr configuration: {hps_fsp_configuration}."
+            f"Config JSON after appending HPS parameters: {hps_fsp_configuration}"
         )
 
         return json.dumps(hps_fsp_configuration)
@@ -177,10 +179,10 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
+                self.logger.debug("Entering HPS FSP ConfigureScan")
                 self._proxy_hps_fsp_mode_controller.ConfigureScan(
                     hps_fsp_configuration
                 )
-                self.logger.info("Exiting HPS FSP configurescan")
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failure in issuing ConfigureScan to HPS FSP CORR; {df}"

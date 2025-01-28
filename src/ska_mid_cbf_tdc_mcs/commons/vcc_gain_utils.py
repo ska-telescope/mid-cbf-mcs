@@ -73,12 +73,9 @@ def get_vcc_ripple_correction(
     )
 
     # Calculate 16k fine-channelizer gain correction factors
-    gain_factors = np.clip(
+    vcc_gain_corrections = np.clip(
         DEFAULT_GAIN / abs(fr_values), a_min=MIN_GAIN, a_max=MAX_GAIN
-    )
-
-    # Initialize the Imaging Channel gain array with length of TOTAL_FINE_CHANNELS
-    vcc_gain_corrections = [DEFAULT_GAIN * factor for factor in gain_factors]
+    ).tolist()
 
     # FFT-shift to match registers.
     vcc_gains_copy = list(vcc_gain_corrections)
