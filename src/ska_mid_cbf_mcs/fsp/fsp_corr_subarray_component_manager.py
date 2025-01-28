@@ -176,7 +176,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         # Issue ConfigureScan to HPS FSP Corr controller
         if not self.simulation_mode:
-            self.logger.info("Building hps")
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
