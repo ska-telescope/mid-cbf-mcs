@@ -179,7 +179,6 @@ class VisibilityTransport:
             self._dp_spead_desc.baseline_count = [n_baselines]
             self._dp_spead_desc.region_port_count = ports_per_region[0]
 
-
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
                 self._dp_host_lut_s1, self._host_lut_channel_offsets
