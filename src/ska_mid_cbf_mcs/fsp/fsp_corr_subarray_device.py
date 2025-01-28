@@ -92,6 +92,7 @@ class FspCorrSubarray(FspModeSubarray):
         :return: a component manager for this device.
         """
 
+        self.logger.debug(f"self.LRCTimeout: {self.LRCTimeout}")
         return FspCorrSubarrayComponentManager(
             hps_fsp_mode_controller_fqdn=self.HpsFspCorrControllerAddress,
             lrc_timeout=int(self.LRCTimeout),
