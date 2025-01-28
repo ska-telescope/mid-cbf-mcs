@@ -52,7 +52,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             [
                 int(
                     i
-                    * const.NUM_FINE_CHANNELS
+                    * const.CENTRAL_FINE_CHANNELS
                     / const.NUM_CHANNELS_PER_SPEAD_STREAM
                 )
                 + 1,
@@ -80,9 +80,12 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         """
         # append all internal parameters to the configuration to pass to HPS
         # first construct HPS FSP ConfigureScan input
+
         hps_fsp_configuration = dict({"configure_scan": configuration})
 
-        self.logger.debug(f"{hps_fsp_configuration}")
+        self.logger.debug(
+            f"Config JSON before appending HPS parameters: {hps_fsp_configuration}"
+        )
 
         # Get the internal parameters from file
         internal_params_file_name = FSP_CORR_PARAM_PATH
@@ -96,8 +99,14 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             "fs_sample_rates"
         ]
 
+        # append RDT frequency shift values, indexed by VCC ID
         hps_fsp_configuration["vcc_id_to_rdt_freq_shifts"] = configuration[
             "vcc_id_to_rdt_freq_shifts"
+        ]
+
+        # append FC gain values, indexed by VCC ID
+        hps_fsp_configuration["vcc_id_to_fc_gain"] = configuration[
+            "vcc_id_to_fc_gain"
         ]
 
         # TODO: zoom-factor removed from configurescan, but required by HPS, to
@@ -106,7 +115,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
 
         self.logger.debug(
-            f"HPS FSP Corr configuration: {hps_fsp_configuration}."
+            f"Config JSON after appending HPS parameters: {hps_fsp_configuration}"
         )
 
         return json.dumps(hps_fsp_configuration)
@@ -159,6 +168,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         self.frequency_band = freq_band_dict()[
             configuration["frequency_band"]
         ]["band_index"]
+        self.logger.debug(f"frequency band set to {self.frequency_band}")
         self.frequency_slice_id = int(configuration["frequency_slice_id"])
 
         # Assign newly specified VCCs
@@ -169,6 +179,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
+                self.logger.debug("Entering HPS FSP ConfigureScan")
                 self._proxy_hps_fsp_mode_controller.ConfigureScan(
                     hps_fsp_configuration
                 )
