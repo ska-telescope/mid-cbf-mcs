@@ -19,7 +19,13 @@ from unittest.mock import Mock
 
 import pytest
 from assertpy import assert_that
-from ska_control_model import AdminMode, ObsState, ResultCode, SimulationMode
+from ska_control_model import (
+    AdminMode,
+    HealthState,
+    ObsState,
+    ResultCode,
+    SimulationMode,
+)
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
@@ -53,10 +59,20 @@ class TestFspPstSubarray:
         :return: A test context for the FspPstSubarray.
         """
         harness = context.ThreadedTestTangoContextManager()
+        # This device is used for pass cases.
         harness.add_device(
             device_name="mid_csp_cbf/fspPstSubarray/01_01",
             device_class=FspPstSubarray,
             HpsFspPstControllerAddress="talondx-001/fsp-app/fsp-pst-controller",
+            DeviceID="1",
+            LRCTimeout="15",
+        )
+
+        # This device is used for failure cases.
+        harness.add_device(
+            device_name="mid_csp_cbf/fspPstSubarray/02_01",
+            device_class=FspPstSubarray,
+            HpsFspPstControllerAddress="talondx-002/fsp-app/fsp-pst-controller",
             DeviceID="1",
             LRCTimeout="15",
         )
@@ -128,6 +144,54 @@ class TestFspPstSubarray:
         )
 
         return device_under_test.adminMode == AdminMode.ONLINE
+
+    def test_healthState_pass(
+        self: TestFspPstSubarray,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test the rollup of healthState from HPS mocks; pass case.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        """
+        # Prepare device for observation
+        assert device_under_test.healthState == HealthState.UNKNOWN
+        assert self.device_online_and_on(device_under_test, event_tracer)
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="healthState",
+            attribute_value=HealthState.OK,
+        )
+
+    def test_healthState_fail(
+        self: TestFspPstSubarray,
+        device_under_test_unhealthy: context.DeviceProxy,
+        event_tracer_unhealthy: TangoEventTracer,
+    ) -> None:
+        """
+        Test the rollup of healthState from HPS mocks; failure case.
+
+        :param device_under_test_unhealthy: DeviceProxy to the device under test.
+        :param event_tracer_unhealthy: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        """
+        # Prepare device for observation
+        assert device_under_test_unhealthy.healthState == HealthState.UNKNOWN
+        assert self.device_online_and_on(
+            device_under_test_unhealthy, event_tracer_unhealthy
+        )
+        assert_that(event_tracer_unhealthy).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test_unhealthy,
+            attribute_name="healthState",
+            attribute_value=HealthState.FAILED,
+        )
 
     @pytest.mark.parametrize(
         "config_file_name, scan_id",
