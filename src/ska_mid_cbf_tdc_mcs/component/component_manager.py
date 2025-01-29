@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from threading import Event, Lock, Thread
@@ -669,31 +670,35 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         ticks_10ms = int(self._state_change_timeout / TIMEOUT_RESOLUTION)
 
-        # Used as a stack to keep track of devices that has not change to the
+        # Used as a queue to keep track of devices that has not change to the
         # desired state.
         op_state_devices_fqdn = list(self._op_states.keys())
+        op_state_queue = deque(op_state_devices_fqdn)
 
         self.logger.debug(
-            f" Desired State Change: {desired_state} \nDevices Subscribed: {op_state_devices_fqdn}"
+            f" Desired State Change: {desired_state} \nDevices Subscribed: {op_state_queue}"
         )
 
-        while len(op_state_devices_fqdn):
+        while len(op_state_queue):
             # Remove any successful results from blocking command IDs
-            curr_device_fqdn = op_state_devices_fqdn.pop()
+            curr_device_fqdn = op_state_queue.popleft()
 
             with self._attr_event_lock:
                 state = self._op_states[curr_device_fqdn]
 
             # Add the devices back to the stack if the desired state has not been reached
             if state != desired_state:
-                op_state_devices_fqdn.append(curr_device_fqdn)
+                self.logger.debug(
+                    f"{curr_device_fqdn} Current State: {state}  Desired State: {desired_state}"
+                )
+                op_state_queue.append(curr_device_fqdn)
 
             sleep(TIMEOUT_RESOLUTION)
             ticks_10ms -= 1
             if ticks_10ms <= 0:
                 self.logger.error(
-                    f"{len(op_state_devices_fqdn)} devices has not change to desired state after {self._state_change_timeout}s.\n"
-                    f"Remaining Devices: {op_state_devices_fqdn}\n"
+                    f"{len(op_state_queue)} devices has not change to desired state after {self._state_change_timeout}s.\n"
+                    f"Remaining Devices: {op_state_queue}\n"
                     f"Desired State: {desired_state}"
                 )
                 return TaskStatus.FAILED
@@ -702,7 +707,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             f"Waited for {self._state_change_timeout - ticks_10ms * TIMEOUT_RESOLUTION:.3f} seconds"
         )
 
-        if len(op_state_devices_fqdn) == 0:
+        if len(op_state_queue) == 0:
             self.logger.debug(
                 f"Device(s) successfully transitioned to {desired_state}."
             )
