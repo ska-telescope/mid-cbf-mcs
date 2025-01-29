@@ -17,6 +17,7 @@ from ska_telmodel import channel_map
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
+from ska_mid_cbf_mcs.commons.vcc_gain_utils import get_vcc_ripple_correction
 from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.fine_channel_partitioner import (
     partition_spectrum_to_frequency_slices,
 )
@@ -91,7 +92,7 @@ class FspScanConfigurationBuilder:
         # the Host-LUT channel offset is based on the number of fine channels
         # in the FSP, as well as the number of FSP in the configuration
         host_lut_channel_offsets = [
-            index * const.NUM_FINE_CHANNELS
+            index * const.CENTRAL_FINE_CHANNELS
             for index in range(0, len(fsp_configurations))
         ]
         for host_lut_channel_offset, fsp_config in zip(
@@ -154,13 +155,19 @@ class FspScanConfigurationBuilder:
 
         calculated_fsp_ids = list(calculated_fsp_infos.keys())
 
+        # Calculate vcc_id_to_fc_gain and vcc_id_to_rdt_freq_shifts values
+        #
+        # vcc_id_to_fc_gain is the gain values needed by the 16k fine channelizer
+        # to correct for ripple in the signal created by VCC frequency response
+        #
         # vcc_id_to_rdt_freq_shifts are the shift values needed by the
         # Resampler Delay Tracker (rdt) for each vcc of the FSP:
         # freq_down_shift  - the the shift to move the FS into the center of the
         #                    digitized frequency (Hz)
         # freq_align_shift - the shift to align channels between FSs (Hz)
         # freq_wb_shift    - the wideband shift (Hz)
-        # freq_scfo_shift  - the frequency shift required due to SCFO sampling (Hz)
+        # freq_scfo_shift  - the frequency shift required due to Sample Clock
+        #                    Frequency Offset (SCFO) sampling (Hz)
         #
         # See CIP-2622, or parent epic CIP-2145
         #
@@ -193,8 +200,10 @@ class FspScanConfigurationBuilder:
         #          shift values D
 
         vcc_id_to_rdt_freq_shifts = {}
+        vcc_id_to_fc_gain = {}
         for fsp_id in calculated_fsp_ids:
             vcc_id_to_rdt_freq_shifts[fsp_id] = {}
+            vcc_id_to_fc_gain[fsp_id] = {}
             for vcc_id in vcc_to_fs_infos.keys():
                 # HPS wants vcc id to be a string value, not int
                 vcc_id_str = str(vcc_id)
@@ -208,9 +217,24 @@ class FspScanConfigurationBuilder:
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
                     "freq_wb_shift"
                 ] = self._wideband_shift
+
+                # SCFO shift is needed by both the RDT and FC
+                scfo_fsft = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
                 vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
                     "freq_scfo_shift"
-                ] = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
+                ] = scfo_fsft
+
+                # k value needed to calculate gain
+                dish_id = self._dish_utils.vcc_id_to_dish_id[vcc_id]
+                freq_offset_k = self._dish_utils.dish_id_to_k[dish_id]
+                vcc_id_to_fc_gain[fsp_id][vcc_id_str] = {}
+                vcc_id_to_fc_gain[fsp_id][
+                    vcc_id_str
+                ] = get_vcc_ripple_correction(
+                    freq_band=self._frequency_band,
+                    scfo_fsft=scfo_fsft,
+                    freq_offset_k=freq_offset_k,
+                )
 
         # fsp_info["sdp_start_channel_id"] is the continuous start channel
         # id of the fsp's in a processing region
@@ -405,6 +429,8 @@ class FspScanConfigurationBuilder:
             fsp_config[
                 "vcc_id_to_rdt_freq_shifts"
             ] = vcc_id_to_rdt_freq_shifts[fsp_id]
+
+            fsp_config["vcc_id_to_fc_gain"] = vcc_id_to_fc_gain[fsp_id]
 
             fsp_config["output_link_map"] = fsp_to_output_link_map[fsp_id]
 

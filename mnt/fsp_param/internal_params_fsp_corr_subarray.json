@@ -6,9 +6,6 @@
         "fo_low_threshold": 512,
         "output_sample_rate": 220200960
     },
-    "fine_channelizer":{
-        "gain": 1
-    },
     "ddr4_corner_turner":{
         "min_integration_time_num_samps": 1904,
         "read_threshold" : 3808,

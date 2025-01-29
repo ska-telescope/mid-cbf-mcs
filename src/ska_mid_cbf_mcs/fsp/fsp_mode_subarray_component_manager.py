@@ -93,6 +93,9 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
                 self._proxy_hps_fsp_mode_controller = context.DeviceProxy(
                     device_name=self._hps_fsp_mode_controller_fqdn
                 )
+                self.logger.debug(
+                    f"Setting {self._hps_fsp_mode_controller_fqdn} timeout to {self._lrc_timeout}s"
+                )
                 self._proxy_hps_fsp_mode_controller.set_timeout_millis(
                     self._lrc_timeout * 1000
                 )
