@@ -11,8 +11,9 @@
 
 from __future__ import annotations
 
-# Tango imports
 import tango
+
+# Tango imports
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango.server import attribute, command, device_property
@@ -179,9 +180,9 @@ class Vcc(CbfObsDevice):
             admin_mode_callback=self._admin_mode_perform_action,
         )
 
-    # --------
-    # Commands
-    # --------
+    # -------------
+    # Fast Commands
+    # -------------
 
     class InitCommand(CbfObsDevice.InitCommand):
         """

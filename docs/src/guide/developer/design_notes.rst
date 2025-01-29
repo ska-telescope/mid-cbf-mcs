@@ -46,6 +46,11 @@ used by MCS, and some terminology, are listed here:
     * Note that subarray resources such as VCC and FSP do not implement EMPTY, RESOURCING and RESTARTING
       states, nor resourcing commands, as they do not require resource allocation before scan configuration.
 
+* **HealthState**: used to assess the ability of a device to perform its function. Reading a device's ``healthState`` attribute 
+  performs specific checks for different devices, and is generally used by higher-level "parent" devices to summarize (or "roll-up") 
+  the health the lower-level "child" devices they control. The devices that use the healthState attribute each have a 
+  description in the next section detailing their particular implmenentation.
+
 Devices and Component Managers
 ======================================================
 
@@ -148,7 +153,40 @@ FSP Function Mode Subarray devices:
 * Pulsar Timing Beamforming (PST-BF): ``FspPstSubarray``
 * VLBI Beamforming (VLBI): ``FspVlbiSubarray``
 
-Mid.Cbf VCC Device Server (Vcc)
+HealthState
+^^^^^^^^^^^
+In MCS ``FspCorrSubarray``, the ``healthState`` attribute mirrors the ``healthState`` attribute from the HPS device that it controls;
+the HPS ``FspCorrController`` device will implicitly perform the following checks when MCS ``FspCorrSubarray`` reads its ``healthState``:
+
+* ``ResamplerDelayTracker`` (RDT):
+
+  Each FSP can process ``NUM_VCC_LANES`` (defined in boardmap) receptors. 
+  There exists one RDT per VCC lane, and each RDT contains the following attributes:
+
+  * ``rdt_state``, an array with two values:
+
+    * [0] A boolean flag that indicates if the RDT is in a RUNNING state, and 
+    * [1] A boolean flag that indicates if a significant gap (> 1s) exists between the end timestamp of the current delay 
+      model and the starting timestamp of the next received delay model.
+
+  * ``input_buffer_overflowed``: A boolean flag that indicates that an overflow condition was detected on the input buffer.
+  * ``output_buffer_overflow_polx``: A boolean flag that indicates that an overflow condition was detected on the X-polarization output fifo.
+  * ``output_buffer_overflow_poly``: A boolean flag that indicates that an overflow condition was detected on the Y-polarization output fifo.
+
+* DDR4 Corner Turner (``DCT``):
+
+  Instead of deploying one DCT device per VCC lane, as is done with the RDT, there is a single DCT instance for each FSP, 
+  but each of its attributes are arrays indexed to represent individual VCC lanes. Each DCT contains the following attribtes:
+  
+  * ``antenna_status``: Boolean flags that indicate whether data is flowing through each VCC lane and into the DCT.
+  * ``under_run_status``: Boolean flags that indicate whether the read timestamp is ahead of the write timestamp.
+  * ``wr_stop_seen``: Boolean flags that indicate whether reverse flow control has exceeded buffering for each VCC lane.
+
+When ``FspCorrController``'s' ``healthState`` attribute is read, each of the above attributes are read for each VCC lane, 
+and if any of them do not report nominal values, ``FspCorrController`` logs the issue and updates its ``healthState`` accordingly;
+this gets rolled up to MCS ``FspCorrSubarray``'s ``healthState``.
+
+Very-Coarse Channelizer (Vcc)
 ===========================================
 
 VCC Device
@@ -167,6 +205,36 @@ any connection to the hardware.
    :align: center
    
    MCS Vcc Device
+
+HealthState
+^^^^^^^^^^^
+In MCS ``Vcc``, the ``healthState`` attribute mirrors the ``healthState`` attribute from the HPS device that it controls;
+the HPS ``VccBand1And2`` device will implicitly perform the following checks when MCS ``Vcc`` reads its ``healthState``:
+
+* ``WidebandInputBuffer`` (WIB):
+
+  * Dish IDs
+  
+    The MCS configuration includes the dish ID that each ``Vcc`` is programmed to process, which get passed down to the WIB's ``ExpectedDishID`` attribute.
+    Additionally, each data packet that flows through the WIB references the dish ID that captured the packet, which sets WIB's ``DishID`` attribute.
+    
+    If the ``ExpectedDishID`` does not match the ``DishID``:
+    
+      * The WIB updates ``DishID``'s ``attr_quality`` to ALARM, and 
+      * ``VccBand1And2`` logs the issue and updates its ``healthState`` accordingly.
+
+  * Sample Rates
+
+    Similar to ``DishID``, the MCS configuration contains the target sample rate for each VCC, which gets passed down to HPS ``VccBand1And2``.
+    The header of each data packet also references the sample rate used to capture the data; ``RxSampleRate``.
+    Each WIB contains an additonal sample rate attribute that reads the sample rate programmed into the ``SPFRX`` unit; ``MetaTransportSampleRate``.
+
+    If any of the three sample rates do not match the others:
+
+    * ``VccBand1And2`` logs the specific mismatch and updates its ``healthState`` accordingly.
+
+When ``VccBand1And2``'s' ``healthState`` attribute is read, each of the above checks are performed, 
+and the final ``healthState`` value gets rolled up to MCS ``Vcc``'s ``healthState``.
 
 
 Serial Lightweight Interconnect Mesh (SLIM) Design
@@ -193,6 +261,13 @@ is set globally within a mesh and cannot be toggled per link.
    
    MCS Slim Device
 
+HealthState
+^^^^^^^^^^^
+MCS ``Slim``'s ``healthState`` attribute rolls up all of its subordinate ``SlimLink`` ``healthState`` attributes.
+
+``Slim`` maintains a list of all the individual ``SlimLink`` ``healthState`` values, and if any of them are not 
+``HealthState.OK``, then ``Slim``'s ``healthState`` transitions to ``HealthState.FAILED``.
+
 SlimLink
 --------
 The ``SlimLink`` Tango device configures a pair of proxies to ``slim-tx`` and ``slim-rx`` HPS devices 
@@ -211,6 +286,16 @@ any connection to the hardware.
    :align: center
    
    MCS SlimLink Device
+
+HealthState
+^^^^^^^^^^^
+MCS ``SlimLink``'s ``healthState`` attribute performs checks on its subordinate HPS ``ds-slim-tx-rx`` counterparts.
+If any of the following checks fail, then an error is logged and ``SlimLink``'s ``healthState`` attribute is set to ``HealthState.FAILED``:
+
+* ``slim-rx``'s ``IdleCtrlWord`` does not match ``slim-tx``'s ``IdleCtrlWord``.
+* ``slim-rx``'s ``block_lost_count`` attribute is not 0.
+* ``slim-rx``'s ``cdr_lost_count`` attribute is not 0.
+* ``slim-rx``'s ``bit_error_rate`` attribute exceeds the ``BER_PASS_THRESHOLD`` constant defined in MCS.
 
 
 Talon LRU

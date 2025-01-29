@@ -634,6 +634,22 @@ class TestCbfSubarray:
 
         for fsp_id, fsp_mode in subarray_params["fsp_modes"].items():
             expected_events = [
+                ("obsState", ObsState.IDLE, ObsState.READY, 1),
+                ("state", DevState.DISABLE, DevState.ON, 1),
+                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
+            ]
+            for name, value, previous, n in expected_events:
+                assert_that(event_tracer).within_timeout(
+                    test_utils.EVENT_TIMEOUT
+                ).has_change_event_occurred(
+                    device_name=fsp_corr[fsp_id],
+                    attribute_name=name,
+                    attribute_value=value,
+                    previous_value=previous,
+                    min_n_events=n,
+                )
+
+            expected_events = [
                 (
                     "subarrayMembership",
                     lambda e: list(e.attribute_value) == [],
@@ -651,22 +667,6 @@ class TestCbfSubarray:
                 ).has_change_event_occurred(
                     device_name=fsp[fsp_id],
                     custom_matcher=custom,
-                    attribute_name=name,
-                    attribute_value=value,
-                    previous_value=previous,
-                    min_n_events=n,
-                )
-
-            expected_events = [
-                ("obsState", ObsState.IDLE, ObsState.READY, 1),
-                ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),
-                ("state", DevState.DISABLE, DevState.ON, 1),
-            ]
-            for name, value, previous, n in expected_events:
-                assert_that(event_tracer).within_timeout(
-                    test_utils.EVENT_TIMEOUT
-                ).has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
