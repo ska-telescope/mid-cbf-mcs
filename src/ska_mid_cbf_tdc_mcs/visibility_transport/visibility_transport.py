@@ -159,7 +159,7 @@ class VisibilityTransport:
             # SPEAD descriptor expects 0 based subarray ID
             sub_id = subarray_id - 1
             for region_id in range(number_of_regions):
-                n_vcc = len(receptors_per_region[region_id])
+                n_vcc = receptors_per_region[region_id]
                 n_baselines = n_vcc * (n_vcc + 1) // 2
                 self._dp_spead_desc.baseline_count = [n_baselines]
                 self._dp_spead_desc.channel_count = [20]
