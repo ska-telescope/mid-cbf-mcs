@@ -46,10 +46,10 @@ def _find_fine_channel(
     channel = None
     last = None
     for n in range(
-        0, const.NUM_FINE_CHANNELS // const.NUM_CHANNELS_PER_SPEAD_STREAM
+        0, const.CENTRAL_FINE_CHANNELS // const.NUM_CHANNELS_PER_SPEAD_STREAM
     ):  # == 0 to 744
         n2 = (
-            -const.NUM_FINE_CHANNELS // 2
+            -const.CENTRAL_FINE_CHANNELS // 2
             + const.NUM_CHANNELS_PER_SPEAD_STREAM * n
         )
         center_f = _nominal_fs_center_freq(fs) + channel_width * n2
@@ -332,10 +332,10 @@ def partition_spectrum_to_frequency_slices(
         fsp_info["sdp_end_channel_id"] = first_sdp_channel_id - 1
 
         fsp_info["fsp_start_ch"] = (
-            fsp_info["start_ch"] + const.NUM_FINE_CHANNELS // 2
+            fsp_info["start_ch"] + const.CENTRAL_FINE_CHANNELS // 2
         )
         fsp_info["fsp_end_ch"] = (
-            fsp_info["end_ch"] + const.NUM_FINE_CHANNELS // 2
+            fsp_info["end_ch"] + const.CENTRAL_FINE_CHANNELS // 2
         )
 
         # freq_scfo_shift  - the frequency shift required due to SCFO sampling
