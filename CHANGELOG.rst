@@ -12,6 +12,7 @@ UNRELEASED CHANGES
 * CIP-2790: Added error handling for CbfFastCommands processed within MCS
 * CIP-3092: Scaled Up VCC Devices Deployed By MCS to 8 and SLIM Devices Needed to Support The Additional VCC
 * CIP-3344: Added State Attribute Wait Loop to Monitor State Change to Desired State; Added State Monitor in Controller's Start and Stop Communicating Functions.
+* CIP-2364: Calculate and append VCC ripple correction gains to the HPS FSP configuration for the 16k fine channelizers
 * CIP-3213: Rolled up healthState from HPS VCC Band 1/2 and FSP Corr into MCS VCC and FspModeSubarray, respectively
 
 
