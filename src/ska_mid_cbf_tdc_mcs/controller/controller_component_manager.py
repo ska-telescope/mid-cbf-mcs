@@ -566,8 +566,8 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        self._update_component_state(power=PowerState.OFF)
         super()._start_communicating()
+        self._update_component_state(power=PowerState.OFF)
 
     def _stop_communicating(
         self: ControllerComponentManager, *args, **kwargs
