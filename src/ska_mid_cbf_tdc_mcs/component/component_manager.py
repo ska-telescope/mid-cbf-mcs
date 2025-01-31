@@ -82,7 +82,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         :param lrc_timeout: timeout (in seconds) per LRC when waiting for blocking results;
             defaults to 15.0 seconds
-        :param state_change_timeout: timeout (in seconds) when waiting for Devices state attrigute change;
+        :param state_change_timeout: timeout (in seconds) when waiting for Devices state attribute change;
             defaults to 15.0 seconds
         :param attr_change_callback: callback to be called when
             an attribute change event needs to be pushed from the component manager
@@ -658,7 +658,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager, desired_state: tango.DevState
     ) -> TaskStatus:
         """
-        Wait for subordinate devices' state attribute to change to the given desired_state.
+        Wait for subordinate devices state attribute to change to the given desired_state.
         Only check for devices that are subscribed in self._op_state.
 
         :param desired_state: The desired_state that we want to observe with the devices of interest
@@ -670,7 +670,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         ticks_10ms = int(self._state_change_timeout / TIMEOUT_RESOLUTION)
 
-        # Used as a queue to keep track of devices that has not change to the
+        # A queue to keep track of devices that have not changed to the
         # desired state.
         op_state_devices_fqdn = list(self._op_states.keys())
         op_state_queue = deque(op_state_devices_fqdn)
@@ -697,7 +697,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
             ticks_10ms -= 1
             if ticks_10ms <= 0:
                 self.logger.error(
-                    f"{len(op_state_queue)} devices has not change to desired state after {self._state_change_timeout}s.\n"
+                    f"{len(op_state_queue)} device(s) have not changed to desired state after {self._state_change_timeout}s.\n"
                     f"Remaining Devices: {op_state_queue}\n"
                     f"Desired State: {desired_state}"
                 )

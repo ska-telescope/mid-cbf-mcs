@@ -558,15 +558,16 @@ class ControllerComponentManager(CbfComponentManager):
             )
             return
 
-        super()._start_communicating()
+        # Waits for subscribed sub devices transition to DevState.OFF before proceeding.
+        task_status = self.wait_for_op_state_change(tango.DevState.OFF)
+        if task_status == TaskStatus.FAILED:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return
 
-        # We want to make the devices that we subscribe to state attribute change events
-        # transition to OFF state before proceeding
-        result_code = self.wait_for_op_state_change(tango.DevState.OFF)
-        if result_code == TaskStatus.FAILED:
-            msg = "There are devices that has not transition to DevState.Disable within the allotted time"
-            self.logger.error(msg)
         self._update_component_state(power=PowerState.OFF)
+        super()._start_communicating()
 
     def _stop_communicating(
         self: ControllerComponentManager, *args, **kwargs
@@ -602,11 +603,13 @@ class ControllerComponentManager(CbfComponentManager):
                 continue
 
         # We want to make the devices that we subscribe to state attribute change events
-        # transition to DISABLE state before proceeding
-        result_code = self.wait_for_op_state_change(tango.DevState.DISABLE)
-        if result_code == TaskStatus.FAILED:
-            msg = "There are devices that has not transition to DevState.Disable within the allotted time"
-            self.logger.error(msg)
+        # transition to DISABLE state before proceeding.
+        task_status = self.wait_for_op_state_change(tango.DevState.DISABLE)
+        if task_status == TaskStatus.FAILED:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return
 
         for fqdn, proxy in self._proxies.items():
             try:
