@@ -1,0 +1,60 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+    ParticipantBorderColor DodgerBlue
+    ParticipantBackgroundColor DeepSkyBlue
+    ActorBorderColor DarkGreen
+    ActorBackgroundColor Green
+    BoxBorderColor LightBlue
+    BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+    BackGroundColor LightBlue
+    BorderColor DodgerBlue
+}
+
+title HPS Configure FSP for PST Beamforming Scan\n
+
+box "MCS"
+    participant "Fsp PST\nSubarray" as fsppst
+end box
+
+box "HPS"
+    participant "FSP PST\nController\n" as hpsfsppst
+    collections "PST 4K\nChannelizer" as channelizer
+    collections "Packet Stream\nRepair" as psr
+    collections "Resampler\nDelay Tracker" as rdt
+    collections "Beam\nSummer" as summer
+    collections "PST\nPacketizer" as packetizer
+    collections "Sync Buffer" as syncbuffer
+end box
+
+group #LightCyan For each FSP in use:
+    fsppst     -> hpsfsppst   : ConfigureScan(json_str)
+    note over hpsfsppst       : ObsState: CONFIGURING
+
+    group #LightCyan For each assigned receptor:
+        hpsfsppst  -> psr         : write packet rate
+        hpsfsppst  -> rdt         : stop
+        hpsfsppst  -> rdt         : write attributes
+        hpsfsppst  -> rdt         : set input sample rate
+        hpsfsppst  -> rdt         : set frequency shifts
+        hpsfsppst  -> rdt         : start
+        hpsfsppst  -> channelizer : write gain([..])
+        hpsfsppst  -> summer      : write enable([..])
+        hpsfsppst  -> packetizer  : reset_packetizer
+        hpsfsppst  -> packetizer  : write attributes
+    end group
+
+    group #LightCyan For each sync buffer:
+        hpsfsppst  -> syncbuffer  : Write various attributes
+        hpsfsppst  -> syncbuffer  : Subscribe to antenna_status
+    end group
+
+    note over hpsfsppst        : ObsState: READY
+    hpsfsppst  --> fsppst     : Success
+end group
+
+@enduml
