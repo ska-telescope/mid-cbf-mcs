@@ -19,7 +19,7 @@ import pytest
 from ska_tango_base.control_model import AdminMode
 from tango import DevState
 
-from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

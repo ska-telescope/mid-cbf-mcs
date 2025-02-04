@@ -1,5 +1,5 @@
 from inspect import cleandoc
-from ska_mid_cbf_tdc_mcs.commons.validate_interface import supported_interfaces
+from ska_mid_cbf_mcs.commons.validate_interface import supported_interfaces
 
 subscription_commands_data = {
     "headers": [

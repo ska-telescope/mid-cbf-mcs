@@ -1,6 +1,6 @@
 CbfComponentManager Class
 ---------------------------------
-.. autoclass:: ska_mid_cbf_tdc_mcs.component.component_manager.CbfComponentManager
+.. autoclass:: ska_mid_cbf_mcs.component.component_manager.CbfComponentManager
    :members:
    :undoc-members:
    :show-inheritance:

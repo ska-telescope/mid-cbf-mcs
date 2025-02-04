@@ -24,8 +24,8 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_tdc_mcs.talon_board.talon_board_device import TalonBoard
-from ska_mid_cbf_tdc_mcs.testing.mock.mock_dependency import MockDependency
+from ska_mid_cbf_mcs.talon_board.talon_board_device import TalonBoard
+from ska_mid_cbf_mcs.testing.mock.mock_dependency import MockDependency
 
 from ... import test_utils
 
