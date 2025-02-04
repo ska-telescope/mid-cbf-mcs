@@ -349,3 +349,4 @@ image:
   image: "{{.Values.midcbf.image.image}}"
   tag: "{{.Values.midcbf.image.tag}}"
   pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+  

@@ -350,23 +350,6 @@ class ControllerComponentManager(CbfComponentManager):
                 return False
             self._proxies[fqdn] = dp
 
-        proxy = self._proxies[fqdn]
-
-        if subscribe_results:
-            self.attr_event_subscribe(
-                proxy=proxy,
-                attr_name="longRunningCommandResult",
-                callback=self.results_callback,
-            )
-
-        if subscribe_state:
-            # Set latest stored sub-device state values to UNKNOWN prior to subscription
-            with self._attr_event_lock:
-                self._op_states[fqdn] = tango.DevState.UNKNOWN
-            self.attr_event_subscribe(
-                proxy=proxy, attr_name="state", callback=self.op_state_callback
-            )
-
         if hw_device_type is not None:
             if not self._write_hw_config(fqdn, hw_device_type):
                 return False
@@ -381,7 +364,26 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
         if fqdn in used_fqdns:
+            proxy = self._proxies[fqdn]
+            if subscribe_results:
+                self.attr_event_subscribe(
+                    proxy=proxy,
+                    attr_name="longRunningCommandResult",
+                    callback=self.results_callback,
+                )
+
+            if subscribe_state:
+                # Set latest stored sub-device state values to UNKNOWN prior to subscription
+                with self._attr_event_lock:
+                    self._op_states[fqdn] = tango.DevState.UNKNOWN
+                self.attr_event_subscribe(
+                    proxy=proxy,
+                    attr_name="state",
+                    callback=self.op_state_callback,
+                )
+
             return self._set_proxy_online(fqdn)
+
         else:
             return self._set_proxy_not_fitted(fqdn)
 
