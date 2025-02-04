@@ -11,12 +11,12 @@ dependencies:
 - name: ska-tango-base
   version: 0.4.13
   repository: https://artefact.skao.int/repository/helm-internal
-- name: ska-mid-cbf-tdc-mcs
+- name: ska-mid-cbf-mcs
   version: 1.1.1
-  repository: "file://../ska-mid-cbf-tdc-mcs"
-- name: ska-mid-cbf-tdc-tmleafnode
+  repository: "file://../ska-mid-cbf-mcs"
+- name: ska-mid-cbf-tmleafnode
   version: 1.1.1
-  repository: "file://../ska-mid-cbf-tdc-tmleafnode"
+  repository: "file://../ska-mid-cbf-tmleafnode"
 - name: ska-mid-cbf-engineering-console
   version: 1.0.1
   repository: https://artefact.skao.int/repository/helm-internal

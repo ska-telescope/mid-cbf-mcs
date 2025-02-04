@@ -90,7 +90,7 @@ Note that there also exists a RemoveAllReceptors command, which has the same
 code flow; the only difference is that it takes no argument and instead submits 
 a full copy of the current assigned receptors to the loop that resets the subdevices.
 
-.. uml:: ../../diagrams/remove-receptors.puml
+.. uml:: ../diagrams/remove-receptors.puml
 
 .. _config_scan:
 Configure Scan Sequence

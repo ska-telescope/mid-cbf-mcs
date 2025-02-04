@@ -26,6 +26,13 @@ from ska_control_model import (
     ResultCode,
     SimulationMode,
 )
+from ska_control_model import (
+    AdminMode,
+    HealthState,
+    ObsState,
+    ResultCode,
+    SimulationMode,
+)
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
@@ -59,11 +66,13 @@ class TestVcc:
     ) -> Iterator[context.ThreadedTestTangoContextManager._TangoContext]:
         """
         Fixture that creates a test context for the Vcc tests.
+        Fixture that creates a test context for the Vcc tests.
 
         :param initial_mocks: A dictionary of initial mocks to be used in the test context.
         :return: A test context for the Vcc device.
         """
         harness = context.ThreadedTestTangoContextManager()
+        # This device is used for pass cases.
         # This device is used for pass cases.
         harness.add_device(
             device_name="mid_csp_cbf/vcc/001",
@@ -102,6 +111,7 @@ class TestVcc:
             yield test_context
 
     def device_online_and_on(
+    def device_online_and_on(
         self: TestVcc,
         device_under_test: context.DeviceProxy,
         event_tracer: TangoEventTracer,
@@ -115,6 +125,7 @@ class TestVcc:
         device_under_test.simulationMode = SimulationMode.FALSE
         device_under_test.adminMode = AdminMode.ONLINE
 
+
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -122,6 +133,15 @@ class TestVcc:
             attribute_name="adminMode",
             attribute_value=AdminMode.ONLINE,
         )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.ON,
+        )
+
 
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
@@ -217,6 +237,23 @@ class TestVcc:
         # Prepare device for observation
         assert device_under_test.healthState == HealthState.UNKNOWN
         assert self.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
+
+    def test_healthState_pass(
+        self: TestVcc,
+        device_under_test: context.DeviceProxy,
+        event_tracer: TangoEventTracer,
+    ) -> None:
+        """
+        Test the rollup of healthState from HPS mocks; pass case.
+
+        :param device_under_test: DeviceProxy to the device under test.
+        :param event_tracer: A TangoEventTracer used to recieve subscribed change
+                             events from the device under test.
+        """
+        # Prepare device for observation
+        assert device_under_test.healthState == HealthState.UNKNOWN
+        assert self.device_online_and_on(device_under_test, event_tracer)
         assert_that(event_tracer).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
@@ -241,10 +278,34 @@ class TestVcc:
         assert device_under_test_unhealthy.healthState == HealthState.UNKNOWN
         assert self.device_online_and_on(
             device_under_test_unhealthy, event_tracer_unhealthy
+            attribute_name="healthState",
+            attribute_value=HealthState.OK,
         )
+
+    def test_healthState_fail(
+        self: TestVcc,
+        device_under_test_unhealthy: context.DeviceProxy,
+        event_tracer_unhealthy: TangoEventTracer,
+    ) -> None:
+        """
+        Test the rollup of healthState from HPS mocks; failure case.
+
+        :param device_under_test_unhealthy: DeviceProxy to the device under test.
+        :param event_tracer_unhealthy: A TangoEventTracer used to recieve
+                            subscribed change events from the device under test.
+        """
+        # Prepare device for observation
+        assert device_under_test_unhealthy.healthState == HealthState.UNKNOWN
+        assert self.device_online_and_on(
+            device_under_test_unhealthy, event_tracer_unhealthy
+        )
+        assert_that(event_tracer_unhealthy).within_timeout(
         assert_that(event_tracer_unhealthy).within_timeout(
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
+            device_name=device_under_test_unhealthy,
+            attribute_name="healthState",
+            attribute_value=HealthState.FAILED,
             device_name=device_under_test_unhealthy,
             attribute_name="healthState",
             attribute_value=HealthState.FAILED,
@@ -280,6 +341,7 @@ class TestVcc:
         :param success: A parameterized value used to test success and failure conditions.
         """
         # Prepare device for observation
+        assert self.device_online_and_on(device_under_test, event_tracer)
         assert self.device_online_and_on(device_under_test, event_tracer)
 
         # Setting band configuration with invalid frequency band
@@ -353,6 +415,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
+        assert self.device_online_and_on(device_under_test, event_tracer)
         assert self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data
@@ -486,6 +549,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
+        assert self.device_online_and_on(device_under_test, event_tracer)
         assert self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data
@@ -647,6 +711,7 @@ class TestVcc:
         """
         # Prepare device for observation
         assert self.device_online_and_on(device_under_test, event_tracer)
+        assert self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data
         with open(test_data_path + config_file_name) as f:
@@ -797,6 +862,7 @@ class TestVcc:
         :param scan_id: An identifier for the scan operation.
         """
         # Prepare device for observation
+        assert self.device_online_and_on(device_under_test, event_tracer)
         assert self.device_online_and_on(device_under_test, event_tracer)
 
         # Prepare input data

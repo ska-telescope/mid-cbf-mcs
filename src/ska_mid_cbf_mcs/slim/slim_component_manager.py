@@ -526,6 +526,7 @@ class SlimComponentManager(CbfComponentManager):
                         )
                         return ResultCode.FAILED, msg
                     self._dp_links[idx].poll_command("VerifyConnection", 20000)
+
                 except tango.DevFailed as df:
                     message = f"Failed to initialize SLIM links: {df}"
                     self.logger.error(message)

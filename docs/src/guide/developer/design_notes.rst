@@ -51,6 +51,11 @@ used by MCS, and some terminology, are listed here:
   the health the lower-level "child" devices they control. The devices that use the healthState attribute each have a 
   description in the next section detailing their particular implmenentation.
 
+* **HealthState**: used to assess the ability of a device to perform its function. Reading a device's ``healthState`` attribute 
+  performs specific checks for different devices, and is generally used by higher-level "parent" devices to summarize (or "roll-up") 
+  the health the lower-level "child" devices they control. The devices that use the healthState attribute each have a 
+  description in the next section detailing their particular implmenentation.
+
 Devices and Component Managers
 ======================================================
 

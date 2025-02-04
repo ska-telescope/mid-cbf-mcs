@@ -33,7 +33,7 @@ global:
 midcbf:
   image:
     registry: artefact.skao.int
-    image: ska-mid-cbf-tdc-mcs
+    image: ska-mid-cbf-mcs
     tag: 1.1.1
     pullPolicy: IfNotPresent
 

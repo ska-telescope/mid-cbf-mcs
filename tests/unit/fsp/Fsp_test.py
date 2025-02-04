@@ -326,9 +326,7 @@ class TestFsp:
         :param fsp_mode: FspMode to be set for the device
         """
         # set device ONLINE, ON and set function mode to CORR
-        self.test_SetFunctionMode(
-            device_under_test, event_tracer, FspModes.CORR
-        )
+        self.test_SetFunctionMode(device_under_test, event_tracer, fsp_mode)
 
         # set device ONLINE and ON
         self.device_online_and_on(device_under_test, event_tracer)

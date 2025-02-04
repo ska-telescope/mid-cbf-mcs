@@ -248,6 +248,12 @@ class TestFspScanConfigurationBuilder:
                     assert "freq_align_shift" in vcc_id_shift_config
                     assert "freq_wb_shift" in vcc_id_shift_config
                     assert "freq_scfo_shift" in vcc_id_shift_config
+                    assert vcc_id_str in fsp_config["vcc_id_to_fc_gain"]
+
+                    vcc_id_gain_list = fsp_config["vcc_id_to_fc_gain"][
+                        vcc_id_str
+                    ]
+                    assert len(vcc_id_gain_list) == const.TOTAL_FINE_CHANNELS
 
                     assert vcc_id_str in fsp_config["vcc_id_to_fc_gain"]
                     vcc_id_gain_list = fsp_config["vcc_id_to_fc_gain"][
