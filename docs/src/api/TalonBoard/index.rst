@@ -2,7 +2,7 @@
 TalonBoard
 ==================
 
-.. automodule:: ska_mid_cbf_tdc_mcs.talon_board
+.. automodule:: ska_mid_cbf_mcs.talon_board
 
 
 .. toctree::

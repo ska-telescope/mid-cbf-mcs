@@ -23,8 +23,8 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_tdc_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes
+from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 from ... import test_utils
 

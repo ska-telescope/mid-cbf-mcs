@@ -30,7 +30,7 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_tdc_mcs.fsp.fsp_corr_subarray_device import FspCorrSubarray
+from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_device import FspCorrSubarray
 
 from ... import test_utils
 

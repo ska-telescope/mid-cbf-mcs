@@ -30,8 +30,8 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_tdc_mcs.commons.global_enum import freq_band_dict
-from ska_mid_cbf_tdc_mcs.vcc.vcc_device import Vcc
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 
 from ... import test_utils
 
