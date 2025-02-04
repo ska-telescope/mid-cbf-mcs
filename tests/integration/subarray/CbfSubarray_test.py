@@ -51,7 +51,7 @@ class TestCbfSubarray:
         """
         sub_id = subarray_params["sub_id"]
 
-        with open(test_data_path + "sys_param_4_boards.json") as f:
+        with open(test_data_path + "sys_param_8_boards.json") as f:
             sys_param_str = f.read()
 
         controller.adminMode = AdminMode.ONLINE
@@ -961,6 +961,7 @@ class TestCbfSubarray:
         controller.adminMode = AdminMode.OFFLINE
 
         expected_events = [
+            (controller, "state", DevState.OFF, DevState.ON, 1),
             (
                 controller,
                 "longRunningCommandResult",
@@ -976,6 +977,13 @@ class TestCbfSubarray:
                 1,
             ),
             (subarray[sub_id], "state", DevState.DISABLE, DevState.ON, 1),
+            (
+                controller,
+                "adminMode",
+                AdminMode.OFFLINE,
+                AdminMode.ONLINE,
+                1,
+            ),
         ]
 
         for device, name, value, previous, n in expected_events:

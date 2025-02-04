@@ -104,6 +104,246 @@ server:
           - name: "LRCTimeout"
             values:
             - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/016"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"      
+      - name: "mid_csp_cbf/fs_links/017"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"     
+      - name: "mid_csp_cbf/fs_links/018"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"      
+      - name: "mid_csp_cbf/fs_links/019"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"      
+      - name: "mid_csp_cbf/fs_links/020"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"     
+      - name: "mid_csp_cbf/fs_links/021"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/022"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/023"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/024"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/025"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/026"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/027"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/028"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/029"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/030"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/031"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/032"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/033"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/034"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/035"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/036"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/037"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/038"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/039"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/040"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/041"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/042"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/043"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/044"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/045"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/046"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/047"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/048"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/049"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/050"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/051"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/052"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/053"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/054"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/055"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/056"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/057"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/058"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/059"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/060"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/061"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/062"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/fs_links/063"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
   - name: "vis-links"
     classes:
     - name: "SlimLink"
@@ -128,6 +368,27 @@ server:
           - name: "LRCTimeout"
             values:
             - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/vis_links/004"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/vis_links/005"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/vis_links/006"
+        properties:
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.slimLinkTimeout }}"
+      - name: "mid_csp_cbf/vis_links/007"
+        properties:
+        - name: "LRCTimeout"
+          values:
+          - "{{ .Values.slimLinkTimeout }}"
+
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

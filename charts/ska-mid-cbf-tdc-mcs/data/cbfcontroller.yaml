@@ -39,7 +39,7 @@ server:
             - "mid_csp_cbf/fsp/04"
           - name: "MaxCapabilities"
             values:
-            - "VCC:4"
+            - "VCC:8"
             - "FSP:4"
             - "Subarray:1"
           - name: "VCC"
@@ -48,6 +48,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "TalonLRU"
             values:
             - "mid_csp_cbf/talon_lru/001"
