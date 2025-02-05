@@ -7,8 +7,8 @@ supporting up to 8 boards.
 """
 
 import ctypes
-import logging
 import json
+import logging
 
 from ska_tango_testing import context
 from tango import DevFailed, Except
@@ -163,13 +163,17 @@ class VisibilityTransport:
                 processing_region["baseline_count"] = n_baselines
                 processing_region["channel_count"] = 20
                 processing_region["port_count"] = ports_per_region[region_id]
-                create_descriptor_config["processing_regions"].append(processing_region)
-
-            self.logger.info(
-                    f"creating SPEAD Descriptor with parameters = {json.dumps(create_descriptor_config)}"
+                create_descriptor_config["processing_regions"].append(
+                    processing_region
                 )
 
-            self._dp_spead_desc.command_inout("CreateDescriptor", json.dumps(create_descriptor_config))
+            self.logger.info(
+                f"creating SPEAD Descriptor with parameters = {json.dumps(create_descriptor_config)}"
+            )
+
+            self._dp_spead_desc.command_inout(
+                "CreateDescriptor", json.dumps(create_descriptor_config)
+            )
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
                 self._dp_host_lut_s1, self._host_lut_channel_offsets
