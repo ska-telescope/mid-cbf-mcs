@@ -122,6 +122,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # dict and lock to store latest sub-device state attribute values
         self._op_states = {}
         self._attr_event_lock = Lock()
+        self._state_change_timeout = state_change_timeout
 
         # NOTE: currently all devices are using constructor default
         # simulation_mode == SimulationMode.TRUE

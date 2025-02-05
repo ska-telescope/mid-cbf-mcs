@@ -31,7 +31,7 @@ DEFAULT_COUNT_VCC = 8
     scope="module",
     params=[
         {
-            "sys_param_file": "sys_param_4_boards.json",
+            "sys_param_file": "sys_param_8_boards.json",
             "sys_param_from_file": True,
             "hw_config_file": "mnt/hw_config/hw_config.yaml",
         },
