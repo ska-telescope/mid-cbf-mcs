@@ -20,7 +20,7 @@ from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes
 
 # TODO: Update constants for AA2+
 
-DEFAULT_COUNT_VCC = 4
+DEFAULT_COUNT_VCC = 8
 DEFAULT_COUNT_FSP = 4
 DEFAULT_COUNT_SUBARRAY = 1
 
@@ -30,7 +30,7 @@ DEFAULT_COUNT_SUBARRAY = 1
     scope="module",
     params=[
         {
-            "sys_param_file": "sys_param_4_boards.json",
+            "sys_param_file": "sys_param_8_boards.json",
             "configure_scan_file": "ConfigureScan_basic_CORR.json",
             "delay_model_file": "delay_model_1_receptor.json",
             "scan_file": "Scan1_basic.json",
@@ -55,7 +55,7 @@ DEFAULT_COUNT_SUBARRAY = 1
             },
         },
         {
-            "sys_param_file": "sys_param_4_boards.json",
+            "sys_param_file": "sys_param_8_boards.json",
             "configure_scan_file": "ConfigureScan_CORR_4_receptor_1_FSP.json",
             "delay_model_file": "delay_model_4_receptor.json",
             "scan_file": "Scan1_basic.json",
@@ -73,7 +73,7 @@ DEFAULT_COUNT_SUBARRAY = 1
             },  # must be FSP IDs and FspMode values in ConfigureScan JSON
         },
         {
-            "sys_param_file": "sys_param_4_boards.json",
+            "sys_param_file": "sys_param_8_boards.json",
             "configure_scan_file": "ConfigureScan_CORR_4_receptor_4_FSP.json",
             "delay_model_file": "delay_model_4_receptor.json",
             "scan_file": "Scan1_basic.json",
