@@ -15,7 +15,7 @@ from typing import Generator
 
 import pytest
 import tango
-from ska_control_model import ObsState
+from ska_control_model import ObsState, SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState
 from ska_tango_testing import context
@@ -70,10 +70,8 @@ def mock_vcc() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("obsState", ObsState.IDLE)
     builder.add_attribute("subarrayMembership", 0)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
     builder.add_property("DeviceID", {"DeviceID": ["1"]})
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -84,9 +82,14 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
     builder.add_attribute("longRunningCommandResult", ("", ""))
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
-    return builder()
+    builder.add_attribute("functionMode", 1)
+    builder.add_lrc(
+        name="SetFunctionMode",
+        result_code=ResultCode.OK,
+        message="SetFunctionMode completed OK",
+        queued=True,
+    )
+    return builder
 
 
 @pytest.fixture()
@@ -94,6 +97,7 @@ def mock_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("obsState", ObsState.EMPTY)
     json_file_path = (
@@ -106,9 +110,7 @@ def mock_subarray() -> unittest.mock.Mock:
         sp = f.read()
     builder.add_attribute("sourceSysParam", sp)
     builder.add_attribute("longRunningCommandResult", ("", ""))
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -116,11 +118,24 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("longRunningCommandResult", ("", ""))
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
-    return builder()
+    builder.add_lrc(
+        name="On",
+        result_code=ResultCode.OK,
+        message="On completed OK",
+        queued=True,
+        attr_values={"state": tango.DevState.ON},
+    )
+    builder.add_lrc(
+        name="Off",
+        result_code=ResultCode.OK,
+        message="Off completed OK",
+        queued=True,
+        attr_values={"state": tango.DevState.OFF},
+    )
+    return builder
 
 
 @pytest.fixture()
@@ -128,11 +143,12 @@ def mock_talon_board() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_property(
         "TalonDxBoardAddress", {"TalonDxBoardAddress": ["192.168.6.2"]}
     )
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -140,8 +156,9 @@ def mock_power_switch() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -149,12 +166,30 @@ def mock_slim_mesh() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("longRunningCommandResult", ("", ""))
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
-    builder.add_result_command("Configure", ResultCode.OK)
-    return builder()
+    builder.add_lrc(
+        name="On",
+        result_code=ResultCode.OK,
+        message="On completed OK",
+        queued=True,
+        attr_values={"state": tango.DevState.ON},
+    )
+    builder.add_lrc(
+        name="Off",
+        result_code=ResultCode.OK,
+        message="Off completed OK",
+        queued=True,
+        attr_values={"state": tango.DevState.OFF},
+    )
+    builder.add_lrc(
+        name="Configure",
+        result_code=ResultCode.OK,
+        message="Configure completed OK",
+        queued=True,
+    )
+    return builder
 
 
 @pytest.fixture()
@@ -183,10 +218,18 @@ def initial_mocks(
         "mid_csp_cbf/vcc/002": mock_vcc,
         "mid_csp_cbf/vcc/003": mock_vcc,
         "mid_csp_cbf/vcc/004": mock_vcc,
+        "mid_csp_cbf/vcc/005": mock_vcc,
+        "mid_csp_cbf/vcc/006": mock_vcc,
+        "mid_csp_cbf/vcc/007": mock_vcc,
+        "mid_csp_cbf/vcc/008": mock_vcc,
         "mid_csp_cbf/fsp/01": mock_fsp,
         "mid_csp_cbf/fsp/02": mock_fsp,
         "mid_csp_cbf/fsp/03": mock_fsp,
         "mid_csp_cbf/fsp/04": mock_fsp,
+        "mid_csp_cbf/fsp/05": mock_fsp,
+        "mid_csp_cbf/fsp/06": mock_fsp,
+        "mid_csp_cbf/fsp/07": mock_fsp,
+        "mid_csp_cbf/fsp/08": mock_fsp,
         "mid_csp_cbf/sub_elt/subarray_01": mock_subarray,
         "mid_csp_cbf/sub_elt/subarray_02": mock_subarray,
         "mid_csp_cbf/sub_elt/subarray_03": mock_subarray,
