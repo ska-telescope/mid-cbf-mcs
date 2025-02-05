@@ -8,6 +8,7 @@ supporting up to 8 boards.
 
 import ctypes
 import logging
+import json
 
 from ska_tango_testing import context
 from tango import DevFailed, Except
@@ -149,36 +150,26 @@ class VisibilityTransport:
             self._create_device_proxies(vis_out_map)
 
             # Create the SPEAD descriptor to be sent at start of scan
-            #
-            # Subarray sets some SPEAD attributes here only for use in CreateDescriptor,
-            # they are not to be written to the descriptor registers using Configure
-            #
-            # This supports the case where an FSP might not be used for processing,
-            # but is still used to output visibilities
-            #
+            create_descriptor_config = {}
             # SPEAD descriptor expects 0 based subarray ID
-            sub_id = subarray_id - 1
+            create_descriptor_config["subarray_id"] = subarray_id - 1
+
+            create_descriptor_config["processing_regions"] = []
             for region_id in range(number_of_regions):
+                processing_region = {}
+                processing_region["region_id"] = region_id
                 n_vcc = receptors_per_region[region_id]
                 n_baselines = n_vcc * (n_vcc + 1) // 2
-                self._dp_spead_desc.baseline_count = [n_baselines]
-                self._dp_spead_desc.channel_count = [20]
-                self._dp_spead_desc.region_id = region_id
-                self.logger.info(
-                    f"creating SPEAD Descriptor with sub_id = {sub_id}, "
-                    f"region_id = {region_id}, "
-                    f"baseline_count = {n_baselines}, "
-                    f"channel_count = 20, "
-                    f"region_port_count = {ports_per_region[region_id]}"
+                processing_region["baseline_count"] = n_baselines
+                processing_region["channel_count"] = 20
+                processing_region["port_count"] = ports_per_region[region_id]
+                create_descriptor_config["processing_regions"].append(processing_region)
+
+            self.logger.info(
+                    f"creating SPEAD Descriptor with parameters = {json.dumps(create_descriptor_config)}"
                 )
-                self._dp_spead_desc.command_inout("CreateDescriptor", sub_id)
 
-            # reset attributes for first spead descriptor
-            n_vcc = len(fsp_config[0]["corr_vcc_ids"])
-            n_baselines = n_vcc * (n_vcc + 1) // 2
-            self._dp_spead_desc.baseline_count = [n_baselines]
-            self._dp_spead_desc.region_port_count = ports_per_region[0]
-
+            self._dp_spead_desc.command_inout("CreateDescriptor", json.dumps(create_descriptor_config))
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
                 self._dp_host_lut_s1, self._host_lut_channel_offsets
