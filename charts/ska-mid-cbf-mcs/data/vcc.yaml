@@ -128,6 +128,110 @@ server:
           - name: "LRCTimeout"
             values:
             - "{{ .Values.vccTimeout }}"
+      - name: "mid_csp_cbf/vcc/005"
+        properties:
+          - name: "TalonLRUAddress"
+            values:
+            - "mid_csp_cbf/talon_lru/003"
+          - name: "VccControllerAddress"
+            values:
+            - "talondx-005/vcc-app/vcc-controller"
+          - name: "Band1And2Address"
+            values:
+            - "talondx-005/vcc-app/vcc-band-1-and-2"
+          - name: "Band3Address"
+            values:
+            - "talondx-005/vcc-app/vcc-band-3"
+          - name: "Band4Address"
+            values:
+            - "talondx-005/vcc-app/vcc-band-4"
+          - name: "Band5Address"
+            values:
+            - "talondx-005/vcc-app/vcc-band-5"
+          - name: "DeviceID"
+            values:
+            - "5"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.vccTimeout }}"
+      - name: "mid_csp_cbf/vcc/006"
+        properties:
+          - name: "TalonLRUAddress"
+            values:
+            - "mid_csp_cbf/talon_lru/003"
+          - name: "VccControllerAddress"
+            values:
+            - "talondx-006/vcc-app/vcc-controller"
+          - name: "Band1And2Address"
+            values:
+            - "talondx-006/vcc-app/vcc-band-1-and-2"
+          - name: "Band3Address"
+            values:
+            - "talondx-006/vcc-app/vcc-band-3"
+          - name: "Band4Address"
+            values:
+            - "talondx-006/vcc-app/vcc-band-4"
+          - name: "Band5Address"
+            values:
+            - "talondx-006/vcc-app/vcc-band-5"
+          - name: "DeviceID"
+            values:
+            - "6"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.vccTimeout }}"
+      - name: "mid_csp_cbf/vcc/007"
+        properties:
+          - name: "TalonLRUAddress"
+            values:
+            - "mid_csp_cbf/talon_lru/004"
+          - name: "VccControllerAddress"
+            values:
+            - "talondx-007/vcc-app/vcc-controller"
+          - name: "Band1And2Address"
+            values:
+            - "talondx-007/vcc-app/vcc-band-1-and-2"
+          - name: "Band3Address"
+            values:
+            - "talondx-007/vcc-app/vcc-band-3"
+          - name: "Band4Address"
+            values:
+            - "talondx-007/vcc-app/vcc-band-4"
+          - name: "Band5Address"
+            values:
+            - "talondx-007/vcc-app/vcc-band-5"
+          - name: "DeviceID"
+            values:
+            - "7"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.vccTimeout }}"
+      - name: "mid_csp_cbf/vcc/008"
+        properties:
+          - name: "TalonLRUAddress"
+            values:
+            - "mid_csp_cbf/talon_lru/004"
+          - name: "VccControllerAddress"
+            values:
+            - "talondx-008/vcc-app/vcc-controller"
+          - name: "Band1And2Address"
+            values:
+            - "talondx-008/vcc-app/vcc-band-1-and-2"
+          - name: "Band3Address"
+            values:
+            - "talondx-008/vcc-app/vcc-band-3"
+          - name: "Band4Address"
+            values:
+            - "talondx-008/vcc-app/vcc-band-4"
+          - name: "Band5Address"
+            values:
+            - "talondx-008/vcc-app/vcc-band-5"
+          - name: "DeviceID"
+            values:
+            - "8"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.vccTimeout }}"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

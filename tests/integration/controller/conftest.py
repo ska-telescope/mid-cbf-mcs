@@ -23,7 +23,7 @@ from ska_mid_cbf_mcs.commons.global_enum import const
 # TODO: Update constants for AA2+
 
 DEFAULT_COUNT_SUBARRAY = 1
-DEFAULT_COUNT_VCC = 4
+DEFAULT_COUNT_VCC = 8
 
 
 @pytest.fixture(
@@ -31,7 +31,7 @@ DEFAULT_COUNT_VCC = 4
     scope="module",
     params=[
         {
-            "sys_param_file": "sys_param_4_boards.json",
+            "sys_param_file": "sys_param_8_boards.json",
             "sys_param_from_file": True,
             "hw_config_file": "mnt/hw_config/hw_config.yaml",
         },

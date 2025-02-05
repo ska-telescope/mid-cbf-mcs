@@ -350,23 +350,6 @@ class ControllerComponentManager(CbfComponentManager):
                 return False
             self._proxies[fqdn] = dp
 
-        proxy = self._proxies[fqdn]
-
-        if subscribe_results:
-            self.attr_event_subscribe(
-                proxy=proxy,
-                attr_name="longRunningCommandResult",
-                callback=self.results_callback,
-            )
-
-        if subscribe_state:
-            # Set latest stored sub-device state values to UNKNOWN prior to subscription
-            with self._attr_event_lock:
-                self._op_states[fqdn] = tango.DevState.UNKNOWN
-            self.attr_event_subscribe(
-                proxy=proxy, attr_name="state", callback=self.op_state_callback
-            )
-
         if hw_device_type is not None:
             if not self._write_hw_config(fqdn, hw_device_type):
                 return False
@@ -381,7 +364,26 @@ class ControllerComponentManager(CbfComponentManager):
         )
 
         if fqdn in used_fqdns:
+            proxy = self._proxies[fqdn]
+            if subscribe_results:
+                self.attr_event_subscribe(
+                    proxy=proxy,
+                    attr_name="longRunningCommandResult",
+                    callback=self.results_callback,
+                )
+
+            if subscribe_state:
+                # Set latest stored sub-device state values to UNKNOWN prior to subscription
+                with self._attr_event_lock:
+                    self._op_states[fqdn] = tango.DevState.UNKNOWN
+                self.attr_event_subscribe(
+                    proxy=proxy,
+                    attr_name="state",
+                    callback=self.op_state_callback,
+                )
+
             return self._set_proxy_online(fqdn)
+
         else:
             return self._set_proxy_not_fitted(fqdn)
 
@@ -490,6 +492,14 @@ class ControllerComponentManager(CbfComponentManager):
             f"event_ids after subscribing = {len(self.event_ids)}"
         )
 
+        # Waits for subscribed sub devices transition to DevState.OFF before proceeding.
+        task_status = self.wait_for_op_state_change(tango.DevState.OFF)
+        if task_status == TaskStatus.FAILED:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return
+
         super()._start_communicating()
         self._update_component_state(power=PowerState.OFF)
 
@@ -503,14 +513,14 @@ class ControllerComponentManager(CbfComponentManager):
             "Entering ControllerComponentManager._stop_communicating"
         )
 
+        # Order of operations for sub devices:
+        # 1. Set the sub devices to AdminMode.OFFLINE to trigger transition to DevState.DISABLE
+        # 2. Wait for the sub devices to transition to DevState.Disable
+        # 3. Unsubscribe from the change events with the sub devices
+        # 4. Clear out the op_state devices list that
+
         for fqdn, proxy in self._proxies.items():
             try:
-                if fqdn in self._subarray_fqdn | self._talon_lru_fqdn | {
-                    self._fs_slim_fqdn,
-                    self._vis_slim_fqdn,
-                }:
-                    self.unsubscribe_all_events(proxy)
-
                 self.logger.info(f"Setting {fqdn} to AdminMode.OFFLINE")
                 proxy.adminMode = AdminMode.OFFLINE
             except tango.DevFailed as df:
@@ -518,6 +528,37 @@ class ControllerComponentManager(CbfComponentManager):
                     f"Failed to stop communications with {fqdn}; {df}"
                 )
                 continue
+
+        # We want to make the devices that we subscribe to state attribute change events
+        # transition to DISABLE state before proceeding.
+        task_status = self.wait_for_op_state_change(tango.DevState.DISABLE)
+        if task_status == TaskStatus.FAILED:
+            self._update_communication_state(
+                communication_state=CommunicationStatus.NOT_ESTABLISHED
+            )
+            return
+
+        for fqdn, proxy in self._proxies.items():
+            try:
+                if (
+                    fqdn
+                    in self._subarray_fqdn
+                    | self._fsp_fqdn
+                    | self._talon_lru_fqdn
+                    | {
+                        self._fs_slim_fqdn,
+                        self._vis_slim_fqdn,
+                    }
+                ):
+                    self.unsubscribe_all_events(proxy)
+
+            except tango.DevFailed as df:
+                self.logger.error(
+                    f"Failed to unubscribe events with {fqdn}; {df}"
+                )
+                continue
+
+        self._op_states = {}
 
         super()._stop_communicating()
 

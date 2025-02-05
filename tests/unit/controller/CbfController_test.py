@@ -67,12 +67,20 @@ class TestCbfController:
                 "mid_csp_cbf/vcc/002",
                 "mid_csp_cbf/vcc/003",
                 "mid_csp_cbf/vcc/004",
+                "mid_csp_cbf/vcc/005",
+                "mid_csp_cbf/vcc/006",
+                "mid_csp_cbf/vcc/007",
+                "mid_csp_cbf/vcc/008",
             ],
             FSP=[
                 "mid_csp_cbf/fsp/01",
                 "mid_csp_cbf/fsp/02",
                 "mid_csp_cbf/fsp/03",
                 "mid_csp_cbf/fsp/04",
+                "mid_csp_cbf/fsp/05",
+                "mid_csp_cbf/fsp/06",
+                "mid_csp_cbf/fsp/07",
+                "mid_csp_cbf/fsp/08",
             ],
             TalonLRU=[
                 "mid_csp_cbf/talon_lru/001",
@@ -101,11 +109,11 @@ class TestCbfController:
             FsSLIMConfigPath="mnt/slim/fs/slim_config.yaml",
             VisSLIMConfigPath="mnt/slim/vis/slim_config.yaml",
             LRCTimeout="30",
-            MaxCapabilities=["VCC:8", "FSP:4", "Subarray:1"],
+            MaxCapabilities=["VCC:8", "FSP:8", "Subarray:1"],
         )
 
         for name, mock in initial_mocks.items():
-            harness.add_mock_device(device_name=name, device_mock=mock)
+            harness.add_mock_device(device_name=name, device_mock=mock(name))
 
         with harness as test_context:
             yield test_context
