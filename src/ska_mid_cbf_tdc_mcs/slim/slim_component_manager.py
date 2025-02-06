@@ -713,6 +713,11 @@ class SlimComponentManager(CbfComponentManager):
                 "No active links are defined in the SlimLink configuration"
             )
             return ResultCode.OK, "_disconnect_links completed OK"
+        if not self.mesh_configured:
+            self.logger.info(
+                "Mesh was not configured, skipping disconnect_links"
+            )
+            return ResultCode.OK, "_disconnect_links completed OK"
 
         self.blocking_command_ids = set()
         for idx in range(len(self._active_links)):
