@@ -627,7 +627,7 @@ class ControllerComponentManager(CbfComponentManager):
 
             except tango.DevFailed as df:
                 self.logger.error(
-                    f"Failed to unubscribe events with {fqdn}; {df}"
+                    f"Failed to unsubscribe events with {fqdn}; {df}"
                 )
                 continue
 
