@@ -6,6 +6,7 @@ It is assumed that TalonDX boards will only be used in Mid-CBF up to AA1,
 supporting up to 8 boards.
 """
 import ctypes
+import json
 import logging
 
 from ska_tango_testing import context
@@ -110,6 +111,10 @@ class VisibilityTransport:
         subarray_id: int,
         fsp_config: list,
         vis_slim_yaml: str,
+        number_of_regions: int,
+        ports_per_region: list[int],
+        receptors_per_region: list[int],
+
     ) -> None:
         """
         Configure the visibility transport devices.
@@ -122,6 +127,9 @@ class VisibilityTransport:
         :param subarray_id: the subarray ID
         :param fsp_config: FSP part of the scan configuration json object
         :param vis_slim_yaml: the visibility mesh config yaml
+        :param number_of_regions: number of processing regions
+        :param ports_per_region: array of number of outputs assigned to each region
+        :param receptors_per_region: array of number of receptors selected for each region
         """
         self.logger.info("Configuring visibility transport devices")
 
@@ -143,15 +151,33 @@ class VisibilityTransport:
 
         try:
             self._create_device_proxies(vis_out_map)
+            create_descriptor_config = {}
 
             # Create the SPEAD descriptor to be sent at start of scan
             # SPEAD descriptor expects 0 based subarray ID
-            sub_id = subarray_id - 1
-            n_vcc = len(fsp_config[0]["corr_vcc_ids"])
-            n_baselines = n_vcc * (n_vcc + 1) // 2
-            self._dp_spead_desc.baseline_count = [n_baselines]
-            self._dp_spead_desc.channel_count = [20]
-            self._dp_spead_desc.command_inout("CreateDescriptor", sub_id)
+            create_descriptor_config["subarray_id"] = subarray_id - 1
+
+            create_descriptor_config["processing_regions"] = []
+            for region_id in range(number_of_regions):
+                processing_region = {}
+                processing_region["region_id"] = region_id
+                n_vcc = receptors_per_region[region_id]
+                n_baselines = n_vcc * (n_vcc + 1) // 2
+                processing_region["baseline_count"] = n_baselines
+                processing_region["channel_count"] = 20
+                processing_region["port_count"] = ports_per_region[region_id]
+                create_descriptor_config["processing_regions"].append(
+                    processing_region
+                )
+
+            self.logger.info(
+                f"creating SPEAD Descriptor with parameters = {json.dumps(create_descriptor_config)}"
+            )
+
+            self._dp_spead_desc.command_inout(
+                "CreateDescriptor", json.dumps(create_descriptor_config)
+            )
+
 
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
