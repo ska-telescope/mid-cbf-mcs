@@ -109,9 +109,6 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         configuration = json.loads(argin)
 
-        # TODO: Assign newly specified VCCs when 5.0 ScanConfiguration Added In
-        # self._assign_vcc(configuration["corr_vcc_ids"])
-
         # Assign newly specified VCCs
         self._assign_vcc(configuration["bf_vcc_ids"])
 
