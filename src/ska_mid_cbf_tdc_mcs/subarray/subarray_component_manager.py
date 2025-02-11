@@ -1858,7 +1858,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 configuration["correlation"]["processing_regions"]
             )
             for region in configuration["correlation"]["processing_regions"]:
-                ports_per_region.append(len(region["output_port"]))
+                if "output_port" in region:
+                    ports_per_region.append(len(region["output_port"]))
+                else:
+                    # No output ports means no output visibilities for this region
+                    ports_per_region.append(0)
                 if "receptors" in region:
                     receptors_per_region.append(len(region["receptors"]))
                 else:
