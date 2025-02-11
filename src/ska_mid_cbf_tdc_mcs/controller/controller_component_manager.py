@@ -921,6 +921,12 @@ class ControllerComponentManager(CbfComponentManager):
                 ):
                     lru_to_power.append(fqdn)
 
+        if len(lru_to_power) == 0:
+            self.logger.info(
+                "All Talon LRUs already powered on; skipping _turn_on_lrus"
+            )
+            return True
+
         self.blocking_command_ids = set()
         for fqdn in lru_to_power:
             self.logger.info(f"Turning on LRU {fqdn}")
@@ -1345,6 +1351,12 @@ class ControllerComponentManager(CbfComponentManager):
             for fqdn, state in self._op_states.items():
                 if fqdn in self._talon_lru_fqdn and state == tango.DevState.ON:
                     lru_to_power.append(fqdn)
+
+        if len(lru_to_power) == 0:
+            self.logger.info(
+                "All Talon LRUs already powered off; skipping _turn_off_lrus"
+            )
+            return True
 
         self.blocking_command_ids = set()
         for fqdn in lru_to_power:
