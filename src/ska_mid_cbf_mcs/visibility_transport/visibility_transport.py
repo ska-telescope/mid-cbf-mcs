@@ -114,7 +114,6 @@ class VisibilityTransport:
         number_of_regions: int,
         ports_per_region: list[int],
         receptors_per_region: list[int],
-
     ) -> None:
         """
         Configure the visibility transport devices.
@@ -177,7 +176,6 @@ class VisibilityTransport:
             self._dp_spead_desc.command_inout(
                 "CreateDescriptor", json.dumps(create_descriptor_config)
             )
-
 
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(

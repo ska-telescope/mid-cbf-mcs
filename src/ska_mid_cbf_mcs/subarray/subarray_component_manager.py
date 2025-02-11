@@ -1879,7 +1879,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 else:
                     receptors_per_region.append(len(self.dish_ids))
 
-
         # TODO
         # Route visibilities from each FSP to the outputting board
         if not self.simulation_mode:
