@@ -18,6 +18,7 @@ from ska_tango_base.commands import ResultCode
 from tango import (
     AttrQuality,
     DevBoolean,
+    DevString,
     DevVarBooleanArray,
     DevVarFloatArray,
     DevVarShortArray,
@@ -1257,6 +1258,20 @@ class TalonBoard(CbfDevice):
         :return: the full list of rx counters at the 100g ethernet output
         """
         return self.component_manager.eth100g_1_all_rx_counters()
+
+    @attribute(
+        dtype=str,
+        label="healthState report",
+        doc="the HPS Master latest polled healthStateReport value",
+    )
+    def healthStateReport(self: TalonBoard) -> DevString:
+        """
+        Returns the latest polled value of the HPS Master healthStateReport attribute
+        as a JSON-formatted string.
+
+        :return: JSON-formatted health state report string
+        """
+        return self.component_manager.health_state_report
 
     # --------------
     # Initialization
