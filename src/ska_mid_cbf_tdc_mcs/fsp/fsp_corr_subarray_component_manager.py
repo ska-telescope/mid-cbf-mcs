@@ -53,7 +53,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             [
                 int(
                     i
-                    * const.NUM_FINE_CHANNELS
+                    * const.CENTRAL_FINE_CHANNELS
                     / const.NUM_CHANNELS_PER_SPEAD_STREAM
                 )
                 + 1,
@@ -140,6 +140,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         self.frequency_band = freq_band_dict()[
             configuration["frequency_band"]
         ]["band_index"]
+        self.logger.debug(f"frequency band set to {self.frequency_band}")
         self.frequency_slice_id = int(configuration["frequency_slice_id"])
 
         # Assign newly specified VCCs
@@ -150,6 +151,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
             hps_fsp_configuration = self._build_hps_fsp_config(configuration)
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
+                self.logger.debug("Entering HPS FSP ConfigureScan")
                 self._proxy_hps_fsp_mode_controller.ConfigureScan(
                     hps_fsp_configuration
                 )

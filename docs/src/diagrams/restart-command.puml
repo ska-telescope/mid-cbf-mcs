@@ -19,7 +19,7 @@ skinparam database {
   BorderColor DarkGreen
 }
 
-title Restart Command Sequence - Correlation\n
+title Restart Command Sequence\n
 
 participant "TMC\n" as tmc #Gold
 participant "CSP_Mid\n.LMC" as lmc #Thistle
@@ -28,14 +28,14 @@ box "\nMCS\n"
   collections "Talon\nBoard" as talonboard
   collections "VCC\n" as vcc
   collections "FSP\n" as fsp
-  collections "FSP Corr\nSubarray" as fspsubarray
+  collections "FSP Mode\nSubarray" as fspsubarray
   
 end box
 box "\nHPS\n"
   participant "VCC\nController" as hpsvcc
   participant "VCC\nBand1&2" as hpsvccband
   participant "FSP\nController" as hpsfsp
-  participant "FSP Corr\nController" as hpsfsp_corr
+  participant "FSP Mode\nController" as hpsfsp_mode
 end box
 
 lmc         ->  subarray      : Restart

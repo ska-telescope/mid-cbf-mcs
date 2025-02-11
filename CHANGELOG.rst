@@ -7,9 +7,14 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
-* CIP-2550 Migrated FSP SetFuntionMode from subarray to controller
-* CIP-2660 Added back FspPstSubarray to MCS
+* CIP-2550: Migrated FSP SetFuntionMode from subarray to controller
+* CIP-2660: Added back FspPstSubarray to MCS
 * CIP-2790: Added error handling for CbfFastCommands processed within MCS
+* CIP-3092: Scaled Up VCC Devices Deployed By MCS to 8 and SLIM Devices Needed to Support The Additional VCC
+* CIP-3344: Added State Attribute Wait Loop to Monitor State Change to Desired State; Added State Monitor in Controller's Start and Stop Communicating Functions.
+* CIP-2364: Calculate and append VCC ripple correction gains to the HPS FSP configuration for the 16k fine channelizers
+* CIP-3213: Rolled up healthState from HPS VCC Band 1/2 and FSP Corr into MCS VCC and FspModeSubarray, respectively
+
 
 1.1.1
 *****
@@ -19,7 +24,7 @@ UNRELEASED CHANGES
   * Controller OpState is ON if one or more LRUs are powered on, and only OFF once all LRUs are powered off and Off command is fully successful
   * wait_for_blocking_results allows partial success of blocking LRCs
   * Configurable HPS device timeouts in charts: CbfController, FspCorrSubarray, SlimLink, Vcc
-* CIP-2828 Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
+* CIP-2828: Added attribute lastHpsScanConfiguration for output configuration string and validation tests.
 * CIP-2899: Refactored adminMode push event to be changed after communication has been established
 * 19-11-2024: Added attribute change event mocking for unit tests to MockDeviceBuilder, MockCommand
 * CIP-2816: Removed global constants for default max capabilities, throw error when not defined
