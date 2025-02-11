@@ -1117,7 +1117,17 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.error("Failed to configure Talon boards")
 
         # Start monitoring talon board telemetries and fault status
+        # Turn OFFLINE first in case of repeated On command attempts
+        # NOTE: failure here won't cause On command failure
         for fqdn in self._talon_board_fqdn:
+            try:
+                self._proxies[fqdn].adminMode = AdminMode.OFFLINE
+            except tango.DevFailed as df:
+                # Log a warning, but continue when the talon board fails to turn off
+                self.logger.warning(
+                    f"Failed to initialize Talon proxy {self._talon_board_fqdn}; {df}"
+                )
+                continue
             self._init_device_proxy(
                 fqdn=fqdn,
                 hw_device_type="talon_board",
