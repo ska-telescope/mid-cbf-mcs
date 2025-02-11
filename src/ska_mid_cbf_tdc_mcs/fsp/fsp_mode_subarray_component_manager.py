@@ -41,7 +41,8 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         Initialise a new instance.
 
         :param hps_fsp_mode_controller_fqdn: FQDN of the HPS FSP controller device for a given FSP Mode
-        :param internal_parameter_path: Path of the internal parameter JSON file for the FPS Subarray Device
+        :param internal_parameter_path: Path of the internal parameter JSON file.
+                                        Contains parameters that is used to build the HPS FSP Configuration for a specific FSP Mode
 
         TODO: for Mid.CBF, param hps_fsp_hsp_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         :param hps_fsp_corr_controller_fqdn: FQDN of the HPS FSP Correlator controller device
@@ -147,8 +148,9 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
     ) -> str:
         """
         Builds the input JSON string for the HPS FSP controller ConfigureScan command.
-        Helper functions to be overrided in specific function mode Child Classes
-        for building HPS FSP config for specific function modes.
+        This is the common base class implementations.
+        Override the _build_hps_fsp_config_mode_specific function in the child
+        classes for FSP mode specific requirements.
 
         :param configuration: A FSP scan configuration, refer to
                               CbfSubarrayComponentManager._fsp_configure_scan
@@ -214,9 +216,9 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         Helper function for _build_hps_fsp_config.
 
         Builds the parameters for HPS FSP configuration that is specific for a
-        function modes.
+        function mode.
 
-        Abstract function; To be implemented in Child Classes
+        Abstract function; To be implemented in specific FSP Mode classes.
 
         :raises NotImplementedError: Not implemented in abstract class
 

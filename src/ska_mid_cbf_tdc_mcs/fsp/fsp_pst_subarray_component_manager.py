@@ -59,12 +59,10 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
         """
         Helper function for _build_hps_fsp_config in base class.
 
-        Builds the parameters for HPS FSP configuration that is specific for PST
-        function modes.
+        Builds the parameters that are specific to PST HPS FSP configuration.
 
-        Also sets the timingBeamID attribute from the timing beam provided in the
-        configuration.
-
+        Sets the timingBeamID attribute from the timing beam provided in the
+        configuration pass down by the Subarray Devices.
 
         :param configuration: A FSP scan configuration, refer to
                               CbfSubarrayComponentManager._fsp_configure_scan

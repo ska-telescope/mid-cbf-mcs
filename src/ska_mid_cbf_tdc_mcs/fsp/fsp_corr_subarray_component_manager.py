@@ -73,45 +73,6 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
     # Class Helpers
     # -------------
 
-    # def _build_hps_fsp_config(
-    #     self: FspCorrSubarrayComponentManager, configuration: dict
-    # ) -> str:
-    #     """
-    #     Build the input JSON string for the HPS FSP Corr controller ConfigureScan command
-    #     """
-    #     # append all internal parameters to the configuration to pass to HPS
-    #     # first construct HPS FSP ConfigureScan input
-    #     hps_fsp_configuration = dict({"configure_scan": configuration})
-
-    #     self.logger.debug(f"{hps_fsp_configuration}")
-
-    #     # Get the internal parameters from file
-    #     internal_params_file_name = FSP_CORR_PARAM_PATH
-    #     with open(internal_params_file_name) as f:
-    #         hps_fsp_configuration.update(
-    #             json.loads(f.read().replace("\n", ""))
-    #         )
-
-    #     # append the fs_sample_rates to the configuration
-    #     hps_fsp_configuration["fs_sample_rates"] = configuration[
-    #         "fs_sample_rates"
-    #     ]
-
-    #     hps_fsp_configuration["vcc_id_to_rdt_freq_shifts"] = configuration[
-    #         "vcc_id_to_rdt_freq_shifts"
-    #     ]
-
-    #     # TODO: zoom-factor removed from configurescan, but required by HPS, to
-    #     # be inferred from channel_width introduced in ADR-99 when ready to
-    #     # implement zoom
-    #     hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
-
-    #     self.logger.debug(
-    #         f"HPS FSP Corr configuration: {hps_fsp_configuration}."
-    #     )
-
-    #     return json.dumps(hps_fsp_configuration)
-
     def _build_hps_fsp_config_mode_specific(
         self: FspCorrSubarrayComponentManager,
         configuration: dict,
@@ -120,8 +81,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         """
         Helper function for _build_hps_fsp_config in base class.
 
-        Builds the parameters for HPS FSP configuration that is specific for Corr
-        function modes.
+        Builds the parameters that are specific to CORR HPS FSP configuration.
 
         :param hps_fsp_configuration: A work in progress HPS FSP configuration
 
