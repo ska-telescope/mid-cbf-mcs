@@ -305,7 +305,7 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         """
 
         raise NotImplementedError(
-            "_build_hps_fsp_config_mode_specific needs to be implemented in child class."
+            "_build_hps_fsp_config_mode_specific is an abstract function to be implemented in the FSP Mode child classes."
         )
 
     # -------------
