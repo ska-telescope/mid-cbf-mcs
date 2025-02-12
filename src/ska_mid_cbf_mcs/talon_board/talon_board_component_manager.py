@@ -242,6 +242,8 @@ class TalonBoardComponentManager(CbfComponentManager):
         self._poll_thread = None
         self.ping_ok = False
 
+        self.health_state_report = ""
+
     # -------------
     # Communication
     # -------------
@@ -350,6 +352,9 @@ class TalonBoardComponentManager(CbfComponentManager):
             self.update_device_health_state(
                 self._proxies[self._hps_master_fqdn].healthState
             )
+            self.health_state_report = self._proxies[
+                self._hps_master_fqdn
+            ].healthStateReport
         self.logger.info("Stopped polling")
 
     def _start_communicating(
@@ -444,6 +449,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             self._eth_100g_0_client = None
             self._eth_100g_1_client = None
             self.update_device_health_state(HealthState.UNKNOWN)
+            self.health_state_report = ""
 
         self._proxies = {}
         self._talon_sysid_attrs = {}

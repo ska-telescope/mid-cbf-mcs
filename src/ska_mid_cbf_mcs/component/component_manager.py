@@ -614,6 +614,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
                         f"Blocking command failure; {command_id}: {result}"
                     )
                     successes.append(False)
+                    self.blocking_command_ids.remove(command_id)
                     continue
 
                 self.logger.debug(
