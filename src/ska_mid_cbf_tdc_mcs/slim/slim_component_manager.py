@@ -592,20 +592,20 @@ class SlimComponentManager(CbfComponentManager):
                 dp.simulationMode = self.simulation_mode
                 dp.adminMode = AdminMode.ONLINE
 
-            if self.mesh_configured:
-                self.logger.debug(
-                    "SLIM was previously configured. Disconnecting links before re-initializing."
+            self.logger.debug(
+                "SLIM may be previously configured; attempting to disconnect links before re-initializing."
+            )
+            result_code, msg = self._disconnect_links(task_abort_event)
+            if result_code is not ResultCode.OK:
+                task_callback(
+                    status=TaskStatus.FAILED,
+                    result=(
+                        result_code,
+                        msg,
+                    ),
                 )
-                result_code, msg = self._disconnect_links(task_abort_event)
-                if result_code is not ResultCode.OK:
-                    task_callback(
-                        status=TaskStatus.FAILED,
-                        result=(
-                            result_code,
-                            msg,
-                        ),
-                    )
-                    return
+                return
+
             self.logger.debug("Initializing SLIM Links")
             result_code, msg = self._initialize_links(task_abort_event)
             if result_code is not ResultCode.OK:
@@ -711,6 +711,11 @@ class SlimComponentManager(CbfComponentManager):
         if len(self._active_links) == 0:
             self.logger.info(
                 "No active links are defined in the SlimLink configuration"
+            )
+            return ResultCode.OK, "_disconnect_links completed OK"
+        if not self.mesh_configured:
+            self.logger.info(
+                "Mesh was not configured, skipping disconnect_links"
             )
             return ResultCode.OK, "_disconnect_links completed OK"
 
