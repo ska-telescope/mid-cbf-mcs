@@ -1268,6 +1268,10 @@ class TalonBoard(CbfDevice):
         """
         Returns the latest polled value of the HPS Master healthStateReport attribute
         as a JSON-formatted string.
+        HPS Master healthState will report FAILED in the following cases:
+        - Child processes (low-level device servers started by HPS Master) are not all running
+        - Bitstream was not programmed successfully
+        - DDR4 calibration checks are unsuccessful
 
         :return: JSON-formatted health state report string
         """
