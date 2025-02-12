@@ -1,6 +1,6 @@
 {
     "resampler_delay_tracker":{
-        "fo_validity_interval": 0.01,
+        "fo_validity_interval": 0.0078125,
         "num_lsq_points": 10,
         "fo_fill_threshold": 3000,
         "fo_low_threshold": 512,
