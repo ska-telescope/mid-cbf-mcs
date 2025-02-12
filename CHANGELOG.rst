@@ -14,7 +14,12 @@ UNRELEASED CHANGES
 * CIP-3344: Added State Attribute Wait Loop to Monitor State Change to Desired State; Added State Monitor in Controller's Start and Stop Communicating Functions.
 * CIP-2364: Calculate and append VCC ripple correction gains to the HPS FSP configuration for the 16k fine channelizers
 * CIP-3213: Rolled up healthState from HPS VCC Band 1/2 and FSP Corr into MCS VCC and FspModeSubarray, respectively
-
+* SKB-729: Fix Off command and TalonBoard healthState monitoring
+  * Fixed SLIM Off not working if Configure previously failed
+  * Fix TalonBoard not properly updating healthState when redeploying/reconnecting HPS Master
+  * Fixed wait_for_blocking_commands not returning immediately if failures detected
+  * Fixed On/Off command failure if all LRUs are already ON/OFF
+  * Added HPS master healthStateReport attr to TalonBoard
 
 1.1.1
 *****
