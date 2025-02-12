@@ -92,6 +92,10 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         # implement zoom
         hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
 
+        hps_fsp_configuration["vcc_id_to_fc_gain"] = configuration[
+            "vcc_id_to_fc_gain"
+        ]
+
     def _deconfigure(
         self: FspCorrSubarrayComponentManager,
     ) -> None:
