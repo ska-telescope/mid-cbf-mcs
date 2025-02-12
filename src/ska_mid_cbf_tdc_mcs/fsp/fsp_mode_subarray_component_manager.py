@@ -171,9 +171,6 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         else:
             self.update_device_health_state(HealthState.UNKNOWN)
 
-    # TODO: See if _build_hps_fsp_config can be abstracted out when we implement it
-    # for PST
-
     def _assign_vcc(
         self: FspModeSubarrayComponentManager, argin: list[int]
     ) -> None:
