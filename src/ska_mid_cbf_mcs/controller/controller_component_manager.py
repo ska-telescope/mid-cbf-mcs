@@ -290,6 +290,12 @@ class ControllerComponentManager(CbfComponentManager):
             return False
 
         try:
+            # SKB-729
+            # Some proxies are set ONLINE during the On command, which can be re-tried
+            # in case of partial failure. Here we re-trigger start_communicating
+            # in these devices to ensure set-up flow is maintained.
+            if self._proxies[fqdn].adminMode == AdminMode.ONLINE:
+                self._proxies[fqdn].adminMode = AdminMode.OFFLINE
             self._proxies[fqdn].adminMode = AdminMode.ONLINE
         except tango.DevFailed as df:
             self.logger.error(
@@ -554,7 +560,7 @@ class ControllerComponentManager(CbfComponentManager):
 
             except tango.DevFailed as df:
                 self.logger.error(
-                    f"Failed to unubscribe events with {fqdn}; {df}"
+                    f"Failed to unsubscribe events with {fqdn}; {df}"
                 )
                 continue
 
@@ -833,7 +839,8 @@ class ControllerComponentManager(CbfComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, str]:
         """
-        Turn on the Talon LRUs
+        Turn on the Talon LRUs; will only power ON LRU devices that are currently OFF.
+        This method will succeed if at least 1 LRU is powered ON.
 
         :param task_abort_event: Event to signal task abort.
         :return: True if any LRUs were successfully turned on, otherwise False
@@ -847,6 +854,14 @@ class ControllerComponentManager(CbfComponentManager):
                     and state == tango.DevState.OFF
                 ):
                     lru_to_power.append(fqdn)
+
+        # If we do not return immediately when there are no devices to power,
+        # this method will fail.
+        if len(lru_to_power) == 0:
+            self.logger.info(
+                "All Talon LRUs already powered on; skipping _turn_on_lrus"
+            )
+            return True
 
         self.blocking_command_ids = set()
         for fqdn in lru_to_power:
@@ -893,7 +908,8 @@ class ControllerComponentManager(CbfComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        Configure the SLIM devices
+        Configure the SLIM devices.
+        This method will succeed if at least 1 SLIM is powered ON and configured.
 
         :param task_abort_event: Event to signal task abort.
         """
@@ -985,7 +1001,9 @@ class ControllerComponentManager(CbfComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        Turn on the controller and its subordinate devices
+        Turn on the controller and its subordinate devices.
+        This command will succeed and set controller operational state to ON if
+        at least 1 LRU is successfully powered ON.
 
         :param task_callback: Callback function to update task status.
         :param task_abort_event: Event to signal task abort.
@@ -1038,6 +1056,7 @@ class ControllerComponentManager(CbfComponentManager):
             self.logger.error("Failed to configure Talon boards")
 
         # Start monitoring talon board telemetries and fault status
+        # NOTE: failure here won't cause On command failure
         for fqdn in self._talon_board_fqdn:
             self._init_device_proxy(
                 fqdn=fqdn,
@@ -1261,7 +1280,8 @@ class ControllerComponentManager(CbfComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> tuple[bool, str]:
         """
-        Turn off a given list of Talon LRUs
+        Turn off the Talon LRUs; will only power OFF LRU devices that are currently ON.
+        This method will succeed if at least 1 LRU is powered OFF.
 
         :param task_abort_event: Event to signal task abort.
         :return: True if any LRUs were successfully turned off, otherwise False
@@ -1272,6 +1292,14 @@ class ControllerComponentManager(CbfComponentManager):
             for fqdn, state in self._op_states.items():
                 if fqdn in self._talon_lru_fqdn and state == tango.DevState.ON:
                     lru_to_power.append(fqdn)
+
+        # If we do not return immediately when there are no devices to power,
+        # this method will fail.
+        if len(lru_to_power) == 0:
+            self.logger.info(
+                "All Talon LRUs already powered off; skipping _turn_off_lrus"
+            )
+            return True
 
         self.blocking_command_ids = set()
         for fqdn in lru_to_power:
@@ -1336,7 +1364,9 @@ class ControllerComponentManager(CbfComponentManager):
         task_abort_event: Optional[Event] = None,
     ) -> None:
         """
-        Turn off the controller and its subordinate devices
+        Turn off the controller and its subordinate devices.
+        This command will succeed and set controller operational state to OFF only
+        if the entire subordinate system is returned to OFF state.
 
         :param task_callback: Callback function to update task status
         :param task_abort_event: Event to signal task abort.

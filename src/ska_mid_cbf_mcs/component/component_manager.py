@@ -592,7 +592,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
                     self._received_lrc_results = {}
                 return TaskStatus.ABORTED
 
-            # Remove any successful results from blocking command IDs
+            # Remove any successfully parsed results from received events
             command_id_list = list(self.blocking_command_ids)
             for command_id in command_id_list:
                 with self._results_lock:
@@ -614,6 +614,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
                         f"Blocking command failure; {command_id}: {result}"
                     )
                     successes.append(False)
+                    self.blocking_command_ids.remove(command_id)
                     continue
 
                 self.logger.debug(
