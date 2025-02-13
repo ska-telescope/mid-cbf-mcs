@@ -169,7 +169,9 @@ class VisibilityTransport:
                     processing_region
                 )
 
-            create_descriptor_config_string = json.dumps(create_descriptor_config)
+            create_descriptor_config_string = json.dumps(
+                create_descriptor_config
+            )
 
             self.logger.info(
                 f"creating SPEAD Descriptor with parameters = {create_descriptor_config_string}"
