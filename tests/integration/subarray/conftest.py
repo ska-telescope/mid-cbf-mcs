@@ -21,7 +21,7 @@ from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes
 # TODO: Update constants for AA2+
 
 DEFAULT_COUNT_VCC = 8
-DEFAULT_COUNT_FSP = 4
+DEFAULT_COUNT_FSP = 8
 DEFAULT_COUNT_SUBARRAY = 1
 
 
@@ -93,6 +93,7 @@ DEFAULT_COUNT_SUBARRAY = 1
                 4: FspModes.CORR.value,
             },  # must be FSP IDs and FspMode values in ConfigureScan JSON
         },
+        # TODO: Add CORR PST mix when CIP-2813 is ready
     ],
 )
 def subarray_test_parameters(request: pytest.FixtureRequest) -> dict[any]:

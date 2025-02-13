@@ -15,6 +15,8 @@ from __future__ import annotations  # allow forward references in type hints
 # Additional import
 import os
 
+from ska_control_model import SimulationMode
+
 # PyTango imports
 from tango.server import attribute, device_property, run
 
@@ -58,6 +60,37 @@ class FspPstSubarray(FspModeSubarray):
         """
 
         return self.component_manager._timing_beam_id
+
+    # TODO: SimulationMode override to be removed once MCS PST Function Mode is fully implemented
+    # Currently setting FSP PST Subarray to SimulationMode.TRUE to allow 8 VCC
+    # 4 FSP configurations (CIP-2815 Part 1)
+    @attribute(
+        dtype=SimulationMode,
+        memorized=True,
+        hw_memorized=True,
+        doc="Reports the simulation mode of the device. \nSome devices may implement "
+        "both modes, while others will have simulators that set simulationMode "
+        "to True while the real devices always set simulationMode to False.",
+    )
+    def simulationMode(self: FspPstSubarray) -> SimulationMode:
+        """
+        :return: the current simulation mode
+        """
+        return self._simulation_mode
+
+    @simulationMode.write
+    def simulationMode(self: FspPstSubarray, value: SimulationMode) -> None:
+        """
+        Set the Simulation Mode of the device.
+
+        :param value: SimulationMode
+        """
+        self.logger.info(
+            "MCS FSP PST Subarray Current Only Allowed in SimulationMode.TRUE"
+        )
+        value = SimulationMode.TRUE
+        self._simulation_mode = value
+        self.component_manager.simulation_mode = value
 
     # --------------
     # Initialization

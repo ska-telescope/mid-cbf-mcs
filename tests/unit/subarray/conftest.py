@@ -86,10 +86,10 @@ def mock_controller() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.ON)
     builder.add_attribute("validateSupportedConfiguration", True)
     builder.add_attribute("receptorToVcc", ["1:1", "36:2", "63:3", "100:4"])
-    builder.add_attribute("maxCapabilities", ["VCC:4", "FSP:4", "Subarray:1"])
+    builder.add_attribute("maxCapabilities", ["VCC:8", "FSP:8", "Subarray:1"])
     builder.add_property(
         "MaxCapabilities",
-        {"MaxCapabilities": ["VCC:4", "FSP:4", "Subarray:1"]},
+        {"MaxCapabilities": ["VCC:8", "FSP:8", "Subarray:1"]},
     )
     return builder
 
@@ -306,7 +306,7 @@ def initial_mocks(
     :param mock_controller: a mock CbfController.
     :param mock_vcc_builder: a mock Vcc builder.
     :param mock_fsp: a mock Fsp.
-    :param mock_fsp_subarray: a mock FspCorrSubarray.
+    :param mock_fsp_subarray: a mock FspCorrSubarray/FspPstSubarray.
     :param mock_talon_board: a mock TalonBoard.
     :param mock_vis_mesh: a mock SlimMesh.
     :param mock_host_lut_s1: a mock HostLutStage1.
@@ -322,23 +322,43 @@ def initial_mocks(
         "mid_csp_cbf/vcc/002": mock_vcc_builder,
         "mid_csp_cbf/vcc/003": mock_vcc_builder,
         "mid_csp_cbf/vcc/004": mock_vcc_builder,
+        "mid_csp_cbf/vcc/005": mock_vcc_builder,
+        "mid_csp_cbf/vcc/006": mock_vcc_builder,
+        "mid_csp_cbf/vcc/007": mock_vcc_builder,
+        "mid_csp_cbf/vcc/008": mock_vcc_builder,
         "mid_csp_cbf/fsp/01": mock_fsp,
         "mid_csp_cbf/fsp/02": mock_fsp,
         "mid_csp_cbf/fsp/03": mock_fsp,
         "mid_csp_cbf/fsp/04": mock_fsp,
+        "mid_csp_cbf/fsp/05": mock_fsp,
+        "mid_csp_cbf/fsp/06": mock_fsp,
+        "mid_csp_cbf/fsp/07": mock_fsp,
+        "mid_csp_cbf/fsp/08": mock_fsp,
         "mid_csp_cbf/fspCorrSubarray/01_01": mock_fsp_subarray,
         "mid_csp_cbf/fspCorrSubarray/02_01": mock_fsp_subarray,
         "mid_csp_cbf/fspCorrSubarray/03_01": mock_fsp_subarray,
         "mid_csp_cbf/fspCorrSubarray/04_01": mock_fsp_subarray,
+        "mid_csp_cbf/fspPstSubarray/01_01": mock_fsp_subarray,
+        "mid_csp_cbf/fspPstSubarray/02_01": mock_fsp_subarray,
+        "mid_csp_cbf/fspPstSubarray/03_01": mock_fsp_subarray,
+        "mid_csp_cbf/fspPstSubarray/04_01": mock_fsp_subarray,
         "mid_csp_cbf/talon_board/001": mock_talon_board,
         "mid_csp_cbf/talon_board/002": mock_talon_board,
         "mid_csp_cbf/talon_board/003": mock_talon_board,
         "mid_csp_cbf/talon_board/004": mock_talon_board,
+        "mid_csp_cbf/talon_board/005": mock_talon_board,
+        "mid_csp_cbf/talon_board/006": mock_talon_board,
+        "mid_csp_cbf/talon_board/007": mock_talon_board,
+        "mid_csp_cbf/talon_board/008": mock_talon_board,
         "mid_csp_cbf/slim/slim-vis": mock_vis_mesh,
         "talondx-001/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
         "talondx-002/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
         "talondx-003/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
         "talondx-004/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
         "talondx-001/dshostlutstage2/host_lut_s2": mock_host_lut_s2,
+        "talondx-005/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
+        "talondx-006/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
+        "talondx-007/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
+        "talondx-008/dshostlutstage1/host_lut_s1": mock_host_lut_s1,
         "talondx-001/dsspeaddescriptor/spead": mock_spead_desc,
     }

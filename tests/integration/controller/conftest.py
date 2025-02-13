@@ -24,8 +24,8 @@ from ska_mid_cbf_tdc_mcs.commons.global_enum import const
 
 DEFAULT_COUNT_SUBARRAY = 1
 DEFAULT_COUNT_VCC = 8
-DEFAULT_COUNT_FSP = 4
-DEFAULT_COUNT_LRU = 2
+DEFAULT_COUNT_FSP = 8
+DEFAULT_COUNT_LRU = 4
 
 
 @pytest.fixture(
@@ -33,7 +33,7 @@ DEFAULT_COUNT_LRU = 2
     scope="module",
     params=[
         {
-            "sys_param_file": "sys_param_4_boards.json",
+            "sys_param_file": "sys_param_8_boards.json",
             "sys_param_from_file": True,
             "hw_config_file": "mnt/hw_config/hw_config.yaml",
             "num_board": DEFAULT_COUNT_LRU * 2,

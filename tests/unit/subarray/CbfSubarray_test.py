@@ -58,12 +58,20 @@ class TestCbfSubarray:
                 "mid_csp_cbf/vcc/002",
                 "mid_csp_cbf/vcc/003",
                 "mid_csp_cbf/vcc/004",
+                "mid_csp_cbf/vcc/005",
+                "mid_csp_cbf/vcc/006",
+                "mid_csp_cbf/vcc/007",
+                "mid_csp_cbf/vcc/008",
             ],
             FSP=[
                 "mid_csp_cbf/fsp/01",
                 "mid_csp_cbf/fsp/02",
                 "mid_csp_cbf/fsp/03",
                 "mid_csp_cbf/fsp/04",
+                "mid_csp_cbf/fsp/05",
+                "mid_csp_cbf/fsp/06",
+                "mid_csp_cbf/fsp/07",
+                "mid_csp_cbf/fsp/08",
             ],
             FspCorrSubarray=[
                 "mid_csp_cbf/fspCorrSubarray/01_01",
@@ -71,11 +79,21 @@ class TestCbfSubarray:
                 "mid_csp_cbf/fspCorrSubarray/03_01",
                 "mid_csp_cbf/fspCorrSubarray/04_01",
             ],
+            FspPstSubarray=[
+                "mid_csp_cbf/fspPstSubarray/01_01",
+                "mid_csp_cbf/fspPstSubarray/02_01",
+                "mid_csp_cbf/fspPstSubarray/03_01",
+                "mid_csp_cbf/fspPstSubarray/04_01",
+            ],
             TalonBoard=[
                 "mid_csp_cbf/talon_board/001",
                 "mid_csp_cbf/talon_board/002",
                 "mid_csp_cbf/talon_board/003",
                 "mid_csp_cbf/talon_board/004",
+                "mid_csp_cbf/talon_board/005",
+                "mid_csp_cbf/talon_board/006",
+                "mid_csp_cbf/talon_board/007",
+                "mid_csp_cbf/talon_board/008",
             ],
             VisSLIM=["mid_csp_cbf/slim/slim-vis"],
             DeviceID="1",
@@ -148,7 +166,7 @@ class TestCbfSubarray:
             attribute_value=DevState.ON,
         )
 
-        with open(test_data_path + "sys_param_4_boards.json") as f:
+        with open(test_data_path + "sys_param_8_boards.json") as f:
             sys_param = f.read()
         device_under_test.sysParam = sys_param
 

@@ -71,6 +71,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         vcc: list[str],
         fsp: list[str],
         fsp_corr_sub: list[str],
+        fsp_pst_sub: list[str],
         talon_board: list[str],
         vis_slim: str,
         **kwargs: any,
@@ -99,6 +100,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fqdn_vcc_all = vcc
         self._fqdn_fsp_all = fsp
         self._fqdn_fsp_corr_all = fsp_corr_sub
+        self._fqdn_fsp_pst_all = fsp_pst_sub
         self._fqdn_vcc = []
         self._fqdn_fsp = []
         self._fqdn_fsp_corr = []
@@ -144,6 +146,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fsp_ids = set()
         self._all_fsp_proxies = {}
         self._all_fsp_corr_proxies = {}
+        self._all_fsp_pst_proxies = {}
         self._assigned_fsp_proxies = set()
         self._assigned_fsp_corr_proxies = set()
 
@@ -211,11 +214,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self._fqdn_vcc = self._fqdn_vcc_all[: self._max_count_vcc]
         self._fqdn_fsp = self._fqdn_fsp_all[: self._max_count_fsp]
-        self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[: self._max_count_fsp]
+
+        # AA1.0: Max FSP Count is 8 with
+        #     - Max 4 CORR FSP
+        #     - Max 4 PST FSP
+        self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[
+            : self._max_count_fsp // 2
+        ]
+        self._fqdn_fsp_pst = self._fqdn_fsp_pst_all[: self._max_count_fsp // 2]
 
         self.logger.debug(f"Active VCC FQDNs: {self._fqdn_vcc}")
         self.logger.debug(f"Active FSP FQDNs: {self._fqdn_fsp}")
         self.logger.debug(f"Active FSP CORR FQDNs: {self._fqdn_fsp_corr}")
+        self.logger.debug(f"Active FSP PST FQDNs: {self._fqdn_fsp_pst}")
 
         return True
 
@@ -231,15 +242,43 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self._all_vcc_proxies[vcc_id] = context.DeviceProxy(
                     device_name=fqdn
                 )
+            fsp_mode_count = self._max_count_fsp // 2
 
+            fqdn_fsp_lower = [
+                self._fqdn_fsp[i] for i in range(0, fsp_mode_count)
+            ]
             for fsp_id, (fsp_fqdn, fsp_corr_fqdn) in enumerate(
-                zip(self._fqdn_fsp, self._fqdn_fsp_corr), 1
+                zip(
+                    fqdn_fsp_lower,
+                    self._fqdn_fsp_corr,
+                ),
+                1,
             ):
                 self._all_fsp_proxies[fsp_id] = context.DeviceProxy(
                     device_name=fsp_fqdn
                 )
                 self._all_fsp_corr_proxies[fsp_id] = context.DeviceProxy(
                     device_name=fsp_corr_fqdn
+                )
+
+            # Need to create a sub-array for the FSP Controllers that will be assigned to
+            # PST mode as there is linting issue when sub-arraying directly
+            fqdn_fsp_upper = [
+                self._fqdn_fsp[i]
+                for i in range(fsp_mode_count, self._max_count_fsp)
+            ]
+            for fsp_id, (fsp_fqdn, fsp_pst_fqdn) in enumerate(
+                zip(
+                    fqdn_fsp_upper,
+                    self._fqdn_fsp_pst,
+                ),
+                5,
+            ):
+                self._all_fsp_proxies[fsp_id] = context.DeviceProxy(
+                    device_name=fsp_fqdn
+                )
+                self._all_fsp_corr_proxies[fsp_id] = context.DeviceProxy(
+                    device_name=fsp_pst_fqdn
                 )
 
             for fqdn in self._fqdn_talon_board_device:
@@ -267,11 +306,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.error(
                 "Failed to initialize max capabilities from controller."
             )
+
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
             return
-
+        self.logger.info("_init_controller_proxy Exit")
         subelement_success = self._init_subelement_proxies()
         if not subelement_success:
             self.logger.error("Failed to initialize subelement proxies.")
@@ -279,7 +319,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
             return
-
+        self.logger.info("_init_subelement_proxies Exit")
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
 
@@ -951,6 +991,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             f"Issuing {command_name} command to all assigned resources..."
         )
         # TODO: support more function modes
+        # CIP 2815: 8 VCC supported.  PST FSP not supported
         assigned_resources = (
             self._assigned_vcc_proxies | self._assigned_fsp_corr_proxies
         )
@@ -1323,6 +1364,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             all_fsp_configs.extend(corr_fsp_configs)
 
         # TODO: build PST fsp configs and add to all_fsp_configs
+        # PST
+        elif "pst_bf" in configuration:
+            self.logger.warning(
+                "Currently Scan Configuration for PST Beamforming is not supported"
+            )
 
         return all_fsp_configs
 
@@ -1494,6 +1540,54 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
                     # Store FSP parameters to configure visibility transport
                     self._vis_fsp_config.append(fsp_config)
+
+                case "PST":
+                    # # set function mode and add subarray membership
+                    # fsp_proxy = self._all_fsp_proxies[fsp_id]
+                    # self.attr_event_subscribe(
+                    #     proxy=fsp_proxy,
+                    #     attr_name="longRunningCommandResult",
+                    #     callback=self.results_callback,
+                    # )
+                    # self._assigned_fsp_proxies.add(fsp_proxy)
+                    # self._fsp_ids.add(fsp_id)
+
+                    # fsp_success = self._assign_fsp(fsp_proxy, "PST")
+                    # if not fsp_success:
+                    #     return False
+
+                    # # Parameter named "bf_vcc_ids" used by HPS contains the
+                    # # subset of the subarray VCCs for which the correlation
+                    # # results are requested to be used in Mid.CBF output
+                    # # products (visibilities); dishes may not be specified in
+                    # # the configuration at all, or the list may be empty
+                    # fsp_config["bf_vcc_ids"] = []
+                    # if (
+                    #     "receptors" not in fsp_config
+                    #     or len(fsp_config["receptors"]) == 0
+                    # ):
+                    #     # In this case by the ICD, all subarray allocated
+                    #     # resources should be used.
+                    #     fsp_config["bf_vcc_ids"] = fsp_config[
+                    #         "subarray_vcc_ids"
+                    #     ].copy()
+                    # else:
+                    #     for dish in sorted(fsp_config["receptors"]):
+                    #         fsp_config["bf_vcc_ids"].append(
+                    #             self._dish_utils.dish_id_to_vcc_id[dish]
+                    #         )
+
+                    # # Prepare PST proxy and its configuration
+                    # fsp_pst_proxy = self._all_fsp_pst_proxies[fsp_id]
+                    # all_fsp_config.append(
+                    #     (fsp_pst_proxy, json.dumps(fsp_config))
+                    # )
+
+                    # # Store FSP parameters to configure visibility transport
+                    # self._vis_fsp_config.append(fsp_config)
+                    self.logger.warning(
+                        "Currently PST FSP Mode is not supported"
+                    )
                 case _:
                     self.logger.error(
                         f"Function mode {fsp_config['function_mode']} currently unsupported."
