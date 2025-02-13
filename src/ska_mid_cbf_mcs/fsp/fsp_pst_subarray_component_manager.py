@@ -22,6 +22,8 @@ from ska_mid_cbf_mcs.fsp.fsp_mode_subarray_component_manager import (
     FspModeSubarrayComponentManager,
 )
 
+FSP_PST_PARAM_PATH = "mnt/fsp_param/internal_params_fsp_pst_subarray.json"
+
 
 class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
     """A component manager for the FspPstSubarray device."""
@@ -38,6 +40,7 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
         """
 
         super().__init__(
+            internal_parameter_path=FSP_PST_PARAM_PATH,
             *args,
             **kwargs,
         )
@@ -48,15 +51,27 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
     # Class Helpers
     # -------------
 
-    # TODO: Implement _build_hps_fsp_config when ScanConfiguration 5.0 is ready
-    def _build_hps_fsp_config(
-        self: FspPstSubarrayComponentManager, configuration: dict
-    ) -> str:
+    def _build_hps_fsp_config_mode_specific(
+        self: FspPstSubarrayComponentManager,
+        configuration: dict,
+        hps_fsp_configuration: dict,
+    ) -> None:
         """
-        Build the input JSON string for the HPS FSP Corr controller ConfigureScan command
-        """
+        Helper function for _build_hps_fsp_config in base class.
 
-        return ""
+        Builds the parameters that are specific to PST HPS FSP configuration.
+
+        Sets the timingBeamID attribute from the timing beam provided in the
+        configuration pass down by the Subarray Devices.
+
+        :param configuration: A FSP scan configuration, refer to
+                              CbfSubarrayComponentManager._fsp_configure_scan
+        :param hps_fsp_configuration: A work in progress HPS FSP configuration
+        """
+        hps_fsp_configuration["timing_beams"] = configuration["timing_beams"]
+
+        for timing_beam in hps_fsp_configuration["timing_beams"]:
+            self._timing_beam_id.append(timing_beam["timing_beam_id"])
 
     # -------------
     # Fast Commands
@@ -94,8 +109,8 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         configuration = json.loads(argin)
 
-        # TODO: Assign newly specified VCCs when 5.0 ScanConfiguration Added In
-        # self._assign_vcc(configuration["corr_vcc_ids"])
+        # Assign newly specified VCCs
+        self._assign_vcc(configuration["bf_vcc_ids"])
 
         # Issue ConfigureScan to HPS FSP PST controller
         if not self.simulation_mode:
@@ -103,7 +118,7 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
             self.last_hps_scan_configuration = hps_fsp_configuration
             try:
                 self._proxy_hps_fsp_mode_controller.ConfigureScan(
-                    configuration
+                    hps_fsp_configuration
                 )
             except tango.DevFailed as df:
                 self.logger.error(

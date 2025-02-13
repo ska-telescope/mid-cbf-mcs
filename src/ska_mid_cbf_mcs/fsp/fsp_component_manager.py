@@ -341,7 +341,7 @@ class FspComponentManager(CbfComponentManager):
                     f"Error in adding subarray {subarray_id}; PSS-BF not currently implemented"
                 )
 
-            case FspModes.PST_BF.value:
+            case FspModes.PST.value:
                 fqdn = self._all_fsp_pst_subarray_fqdn[subarray_id - 1]
                 try:
                     proxy = self._function_mode_proxies[fqdn]
@@ -504,7 +504,7 @@ class FspComponentManager(CbfComponentManager):
                     f"Error in removing subarray {subarray_id}; PSS-BF not currently implemented"
                 )
 
-            case FspModes.PST_BF.value:
+            case FspModes.PST.value:
                 fqdn = self._all_fsp_pst_subarray_fqdn[subarray_id - 1]
                 try:
                     proxy = self._function_mode_proxies[fqdn]
