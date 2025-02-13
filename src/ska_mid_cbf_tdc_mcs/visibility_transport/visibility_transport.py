@@ -167,12 +167,16 @@ class VisibilityTransport:
                     processing_region
                 )
 
+            create_descriptor_config_string = json.dumps(
+                create_descriptor_config
+            )
+
             self.logger.info(
-                f"creating SPEAD Descriptor with parameters = {json.dumps(create_descriptor_config)}"
+                f"creating SPEAD Descriptor with parameters = {create_descriptor_config_string}"
             )
 
             self._dp_spead_desc.command_inout(
-                "CreateDescriptor", json.dumps(create_descriptor_config)
+                "CreateDescriptor", create_descriptor_config_string
             )
             # connect the host lut s1 devices to the host lut s2
             for s1_dp, ch_offset in zip(
