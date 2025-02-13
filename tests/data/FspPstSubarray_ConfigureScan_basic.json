@@ -4,7 +4,8 @@
     "frequency_band": "1",
     "fsp_id": 1,
     "function_mode": "PST",
-    "subarray_vcc_ids": [1],
+    "subarray_vcc_ids": [1,2,4],
+    "bf_vcc_ids": [1,4],
     "frequency_slice_id": 1,
     "fsp_start_channel_id": 5522,
     "frequency_band_offset_stream1": 0,
@@ -23,115 +24,43 @@
             [5522, 20000]
         ]
     }],
-    "resampler_delay_tracker":{
-        "fo_validity_interval": 0.001,
-        "num_lsq_points": 10,
-        "fo_fill_threshold": 3000,
-        "fo_low_threshold": 512,
-        "output_sample_rate": 220200960
-    },
-    "fourk_channelizer":{
-        "gain": 1
-    },
-
-    "packetizer":{
-        "meta_first_channel_frequency": 0,
-        "meta_beam_number": 0,
-        "meta_magic_word": 3199074029,
-        "meta_scan_id": 11578966645329141936,
-        "test_sample_limit": 20
-    },
-    "beam_summer":{
-        "enable": [true,true,true,true,false,false,false,false]
-    },
-    "sync_buffer":{
-        "snapshot_timestamps": false,
-        "read_threshold": 32,
-        "read_timeout_threshold": 61440,
-        "test_register": false
-    },
-    "fs_sample_rates":[
-        {
-            "vcc_id": 1,
-            "fs_sample_rate": 220011300
-        }
-    ],
-    "vcc_id_to_rdt_freq_shifts":
+"resampler_delay_tracker":{
+    "fo_validity_interval": 0.001,
+    "num_lsq_points": 10,
+    "fo_fill_threshold": 3000,
+    "fo_low_threshold": 512,
+    "output_sample_rate": 220200960
+},
+"fourk_channelizer":{
+    "gain": 1
+},
+"sync_buffer":{
+    "read_threshold": 32,
+    "read_timeout_threshold": 61440
+},
+"fs_sample_rates":[
     {
-        "1":
-        {
-            "freq_down_shift": 10.10,
-            "freq_align_shift": 20.10,
-            "freq_wb_shift": 30.10,
-            "freq_scfo_shift": 40.10
-        },
-        "3":
-        {
-            "freq_down_shift": 10.30,
-            "freq_align_shift": 20.30,
-            "freq_wb_shift": 30.30,
-            "freq_scfo_shift": 40.30
-        }
+        "vcc_id": 1,
+        "fs_sample_rate": 220011300
     },
-    "vcc_id_to_fc_gain": {
-        "1": [1.0]
+    {
+        "vcc_id": 2,
+        "fs_sample_rate": 220011300
     },
-    "test_vector_gen":[
-        {
-            "vcc": 1,
-            "delay": 7,
-            "real":
-            {
-                "initial_value": 8,
-                "increment": 4
-            },
-            "imaginary":
-            {
-                "initial_value": 8,
-                "increment": 4
-            }
-        },
-        {
-            "vcc": 2,
-            "delay": 16,
-            "real":
-            {
-                "initial_value": 8,
-                "increment": 4
-            },
-            "imaginary":
-            {
-                "initial_value": 4,
-                "increment": 4
-            }
-        },
-        {
-            "vcc": 3,
-            "delay": 16,
-            "real":
-            {
-                "initial_value": 16,
-                "increment": 4
-            },
-            "imaginary":
-            {
-                "initial_value": 4,
-                "increment": 4
-            }
-        },
-        {
-            "vcc": 4,
-            "delay": 16,
-            "real":
-            {
-                "initial_value": 32,
-                "increment": 4
-            },
-            "imaginary":
-            {
-                "initial_value": 6,
-                "increment": 4
-            }
-        }
-    ]
+    {
+        "vcc_id": 4,
+        "fs_sample_rate": 220011300
+    }
+],
+"vcc_id_to_rdt_freq_shifts": {
+    "1": {
+        "freq_down_shift": 10.10,
+        "freq_align_shift": 20.10,
+        "freq_wb_shift": 30.10,
+        "freq_scfo_shift": 40.10
+    }
+},
+"vcc_id_to_fc_gain": {
+    "1": [1.0]
+}
 }
