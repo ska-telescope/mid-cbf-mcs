@@ -941,7 +941,7 @@ class SubarrayScanConfigurationValidator:
                 or len(processing_region["fsp_ids"]) < fsp_ids_range[0]
             ):
                 msg = (
-                    f"AA 0.5 only support fsp_ids with array length of 1-4,"
+                    f"AA 1.0 only support fsp_ids with array length of 1-8,"
                     f"size of the fsp_ids given: {len(processing_region['fsp_ids'])}"
                 )
                 self.logger.error(msg)

@@ -157,7 +157,7 @@ def scan_configuration_supported_value(parameter: str) -> any:
         "frequency": (0, 1981808640),
         "function_modes": {FspModes.IDLE, FspModes.CORR},
         "subarray_id": [1],
-        "fsp_ids": (1, 4),
+        "fsp_ids": (1, 8),
         "band_5_tuning": False,
         "frequency_band": {"1", "2"},
         "frequency_band_offset_stream1": False,
