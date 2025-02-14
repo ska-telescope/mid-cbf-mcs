@@ -1,0 +1,16 @@
+{
+    "resampler_delay_tracker":{
+        "fo_validity_interval": 0.001,
+        "num_lsq_points": 10,
+        "fo_fill_threshold": 3000,
+        "fo_low_threshold": 512,
+        "output_sample_rate": 220200960
+    },
+    "fourk_channelizer":{
+        "gain": 1
+    },
+    "sync_buffer":{
+        "read_threshold": 32,
+        "read_timeout_threshold": 61440
+    }
+}
