@@ -235,23 +235,7 @@ class SubarrayScanConfigurationValidator:
 
     # TODO: 5.0 Scan Configuration will change PST to be used as Processing Regions
 
-    def _validate_pst_function_mode(
-        self: SubarrayScanConfigurationValidator, pst: dict
-    ) -> tuple[bool, str]:
-        """
-        Validates that the Configuration for PST Function Mode is within
-        Scan Configuration specification (post 4.0)
 
-        :param pst: A PST Configuration defined by Scan Configurations
-
-        :return: tuple with:
-                    bool to indicate if the configuration is valid or not
-                    str message about the configuration
-        :rtype: tuple[bool, str]
-        """
-        msg = "MCS Current Does not Support PST Configurations, Skipping"
-        self.logger.warning(msg)
-        return (True, msg)
 
     # --- Common --- #
 
@@ -558,7 +542,7 @@ class SubarrayScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
 
-    def _validate_corr_function_mode(
+    def _validate_corr_function_mode_pr(
         self: SubarrayScanConfigurationValidator, processing_region: dict
     ) -> tuple[bool, str]:
         """
@@ -573,6 +557,25 @@ class SubarrayScanConfigurationValidator:
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
+        sdp_start_channel_id = int(processing_region["sdp_start_channel_id"])
+        channel_count = int(processing_region["channel_count"])
+        output_host = processing_region["output_host"]
+        output_port = processing_region["output_port"]
+        fsp_mode = FspModes.CORR
+
+        (
+            success,
+            msg,
+        ) = self._validate_max_channel_to_same_port_per_host(
+            fsp_mode,
+            output_host,
+            output_port,
+            sdp_start_channel_id,
+            channel_count,
+        )
+        if success is False:
+            return (False, msg)
+
         success, msg = self._validate_receptors(processing_region)
         if success is False:
             return (False, msg)
@@ -590,18 +593,23 @@ class SubarrayScanConfigurationValidator:
         msg = "FSP CORR Validation Complete"
         self.logger.debug(msg)
         return (True, msg)
-
-    def _validate_max_20_channel_to_same_port_per_host(
+    
+    def _validate_max_channel_to_same_port_per_host(
         self: SubarrayScanConfigurationValidator,
+        fsp_mode: FspModes,
         output_host_map: dict,
         output_port_map: dict,
         sdp_start_channel_id: int,
         channel_count: int,
     ) -> tuple[bool, str]:
         """
-        Validates that we are sending only at most 20 channels to a single port per host
+        Validates that we are sending only at most n channels to a single port per host.
+        
+        Value for n for the specific FSP Mode can be found in scan_configuration_supported_value in global_enum.
+        
         This assumes that both output_host and output_port are valid
 
+        :param fsp_mode: The FSP Mode requested by the configuration
         :param output_host_map: A valid output_host channel map from a processing region
         :param output_port_map: A valid output_port channel map from a processing region
         :param sdp_start_channel_id: The first channel in the processing region
@@ -618,6 +626,10 @@ class SubarrayScanConfigurationValidator:
         output_port_dict = {key: value for key, value in output_port_map}
         current_host = output_host_dict[sdp_start_channel_id]
         current_port = output_port_dict[sdp_start_channel_id]
+        
+        max_channel_count = scan_configuration_supported_value(
+            "processing_region"
+        )[fsp_mode]["output_port"]["max_channel_per"]
 
         for channel in range(
             sdp_start_channel_id, sdp_start_channel_id + channel_count
@@ -629,15 +641,15 @@ class SubarrayScanConfigurationValidator:
 
             host_port_channel_count[current_host][current_port] += 1
 
-            if host_port_channel_count[current_host][current_port] > 20:
+            if host_port_channel_count[current_host][current_port] > max_channel_count:
                 msg = (
-                    "There are over 20 channels assigned to a specific port within a single host "
+                    f"There are over {max_channel_count} channels assigned to a specific port within a single host "
                     f"Host:{current_host} Port:{current_port} Channel:{channel}"
                 )
                 self.logger.error(msg)
                 return (False, msg)
 
-        msg = "20 Max Channel To Same Port Within a Host: Complete"
+        msg = f"{fsp_mode} Max Channel To Same Port Within a Host: Complete"
         self.logger.debug(msg)
         return (True, msg)
 
@@ -947,7 +959,8 @@ class SubarrayScanConfigurationValidator:
             # is done in _validate_fsp_id below
             if (
                 len(processing_region["fsp_ids"]) > self.supported_fsp_id_upper
-                or len(processing_region["fsp_ids"]) < self.supported_fsp_id_lower
+                or len(processing_region["fsp_ids"])
+                < self.supported_fsp_id_lower
             ):
                 msg = (
                     f"AA 1.0 only support fsp_ids with array length of 1-8,"
@@ -968,6 +981,7 @@ class SubarrayScanConfigurationValidator:
             if success is False:
                 return (False, msg)
 
+            # TODO: Change this to more general name, as PST has a different name
             sdp_start_channel_id = int(
                 processing_region["sdp_start_channel_id"]
             )
@@ -1002,15 +1016,6 @@ class SubarrayScanConfigurationValidator:
                 sdp_start_channel_id,
                 channel_count,
                 FspModes(function_mode_value),
-            )
-            if success is False:
-                return (False, msg)
-
-            (
-                success,
-                msg,
-            ) = self._validate_max_20_channel_to_same_port_per_host(
-                output_host, output_port, sdp_start_channel_id, channel_count
             )
             if success is False:
                 return (False, msg)
