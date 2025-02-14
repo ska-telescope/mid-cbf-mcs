@@ -99,7 +99,7 @@ class TestScanConfigurationValidator:
         assert f"subarray_id {subarray_id} not supported." in msg
         assert success is False
 
-    @pytest.mark.parametrize("fsp_ids", [[], [1, 2, 3, 4, 5]])
+    @pytest.mark.parametrize("fsp_ids", [[], [1, 2, 3, 4, 5, 6, 7, 8, 9]])
     def test_Invalid_FSP_IDs(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
@@ -122,7 +122,7 @@ class TestScanConfigurationValidator:
         success, msg = validator.validate_input()
         print(msg)
         assert (
-            f"AA 0.5 only support fsp_ids with array length of 1-4,size of the fsp_ids given: {len(fsp_ids)}"
+            f"AA 1.0 only support fsp_ids with array length of 1-8,size of the fsp_ids given: {len(fsp_ids)}"
             in msg
         )
         assert success is False

@@ -442,19 +442,14 @@ class SubarrayScanConfigurationValidator:
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
-
-        channel_width = int(processing_region["channel_width"])
-
         if fsp_mode == FspModes.CORR:
             start_channel_id_name = "sdp_start_channel_id"
             channel_width = int(processing_region["channel_width"])
-
         elif fsp_mode == FspModes.PST:
             start_channel_id_name = "pst_start_channel_id"
             # As of Scan Configuration 6.0, PST only support one channel width
             # Hence this value won't be in the Scan Configuration
             channel_width = 53760
-
         else:
             msg = f"_validate_processing_region_channel_values for {fsp_mode} has not been implemented"
             self.logger.error(msg)
@@ -950,10 +945,9 @@ class SubarrayScanConfigurationValidator:
 
             # Validations that the fps_id inside the the fsp_ids are valid values
             # is done in _validate_fsp_id below
-            fsp_ids_range = scan_configuration_supported_value("fsp_ids")
             if (
-                len(processing_region["fsp_ids"]) > fsp_ids_range[1]
-                or len(processing_region["fsp_ids"]) < fsp_ids_range[0]
+                len(processing_region["fsp_ids"]) > self.supported_fsp_id_upper
+                or len(processing_region["fsp_ids"]) < self.supported_fsp_id_lower
             ):
                 msg = (
                     f"AA 1.0 only support fsp_ids with array length of 1-8,"
