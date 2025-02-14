@@ -180,7 +180,22 @@ def scan_configuration_supported_value(parameter: str) -> any:
                     "max_channel_per": 20,
                     "values": [1],
                 },
-            }
+            },
+            FspModes.PST: {
+                "fsp_id": [5, 6, 7, 8],
+                "channel_width": {53760},
+                "channel_count": {"range": (3700, 3700), "multiple": 1},
+                "output_host": {
+                    "difference_multiple": 185,
+                    "max_channel_per": 3700,
+                },
+                "output_port": {"increment": 185, "max_channel_per": 3700},
+                "output_link_map": {
+                    "difference_multiple": 185,
+                    "max_channel_per": 3700,
+                    "values": [1],
+                },
+            },
         },
     }
 

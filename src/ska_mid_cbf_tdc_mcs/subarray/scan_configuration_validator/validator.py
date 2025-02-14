@@ -444,9 +444,24 @@ class SubarrayScanConfigurationValidator:
         """
 
         channel_width = int(processing_region["channel_width"])
-        channel_count = int(processing_region["channel_count"])
-        sdp_start_channel_id = int(processing_region["sdp_start_channel_id"])
 
+        if fsp_mode == FspModes.CORR:
+            start_channel_id_name = "sdp_start_channel_id"
+            channel_width = int(processing_region["channel_width"])
+
+        elif fsp_mode == FspModes.PST:
+            start_channel_id_name = "pst_start_channel_id"
+            # As of Scan Configuration 6.0, PST only support one channel width
+            # Hence this value won't be in the Scan Configuration
+            channel_width = 53760
+
+        else:
+            msg = f"_validate_processing_region_channel_values for {fsp_mode} has not been implemented"
+            self.logger.error(msg)
+            return (False, msg)
+
+        start_channel_id = int(processing_region[start_channel_id_name])
+        channel_count = int(processing_region["channel_count"])
         valid_channel_width = scan_configuration_supported_value(
             "processing_region"
         )[fsp_mode]["channel_width"]
@@ -476,8 +491,8 @@ class SubarrayScanConfigurationValidator:
             self.logger.error(msg)
             return (False, msg)
 
-        if sdp_start_channel_id < 0:
-            msg = f"Invalid value for sdp_start_channel_id, must be a positive integer: {sdp_start_channel_id}"
+        if start_channel_id < 0:
+            msg = f"Invalid value for {start_channel_id_name}, must be a positive integer: {start_channel_id}"
             self.logger.error(msg)
             return (False, msg)
 
