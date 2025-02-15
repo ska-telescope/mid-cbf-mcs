@@ -184,17 +184,38 @@ def scan_configuration_supported_value(parameter: str) -> any:
             FspModes.PST: {
                 "fsp_id": [5, 6, 7, 8],
                 "channel_width": {53760},
-                "channel_count": {"range": (3700, 3700), "multiple": 1},
+                "channel_count": {"range": (3700, 3700), 
+                                  "multiple": 1,
+                                  "max_entry": 1},
                 "output_host": {
                     "difference_multiple": 185,
                     "max_channel_per": 3700,
                 },
-                "output_port": {"increment": 185, "max_channel_per": 3700},
+                "output_port": {"increment": 185, 
+                                "max_channel_per": 3700,
+                                "max_entry": 1},
                 "output_link_map": {
                     "difference_multiple": 185,
                     "max_channel_per": 3700,
                     "values": [1],
                 },
+                "max_timing_beams":1,
+                "timing_beam_id_supported_range":(1,16),
+                "support_start_frequency_by_band": {
+                    "1":{   296862720,
+                            495075840,
+                            693235200,
+                            891448320,
+                        },
+                    "2":{
+                            891448320,
+                            1089607680,
+                            1287767040,
+                            1485980160,
+                            1684139520,
+                        }
+                }
+                }
             },
         },
     }
