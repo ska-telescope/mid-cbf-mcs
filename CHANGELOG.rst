@@ -22,6 +22,7 @@ UNRELEASED CHANGES
   * Controller skips attempting to power ON/OFF LRUs if they are all already in the correct state
   * Added HPS master healthStateReport attr to TalonBoard
 * CIP-3612: CreateDescriptor command input changed to JSON string input for Spead-Descriptor v1.7.0
+* CIP-3312: Reduce FODM interval to 1/128 seconds
 
 1.1.1
 *****
