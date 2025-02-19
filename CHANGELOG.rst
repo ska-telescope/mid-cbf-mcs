@@ -13,12 +13,14 @@ UNRELEASED CHANGES
 * CIP-2364: Calculate and append VCC ripple correction gains to the HPS FSP configuration for the 16k fine channelizers
 * CIP-3092: Scaled Up VCC Devices Deployed By MCS to 8 and SLIM Devices Needed to Support The Additional VCC
 * CIP-3344: Added State Attribute Wait Loop to Monitor State Change to Desired State; Added State Monitor in Controller's Start and Stop Communicating Functions.
+* CIP-2814: Implement FspPstSubarray for scan configuration and refactoring shared CORR and PST FSP Subarray code
 * SKB-729: Fix Off command and TalonBoard healthState monitoring
   * SLIM Off command can run if SLIM was powered ON but failed configuration
   * Controller re-tries TalonBoard start_communicating when re-trying On command to restart InfluxDB and HPS Master polling loop
   * wait_for_blocking_results removes FAILED return codes as soon as they are received
   * Controller skips attempting to power ON/OFF LRUs if they are all already in the correct state
   * Added HPS master healthStateReport attr to TalonBoard
+* CIP-3612: CreateDescriptor command input changed to JSON string input for Spead-Descriptor v1.7.0
 
 1.1.1
 **********
@@ -32,7 +34,7 @@ UNRELEASED CHANGES
 * CIP-2899: Refactored adminMode push event to be changed after communication has been established
 * 19-11-2024: Added attribute change event mocking for unit tests to MockDeviceBuilder, MockCommand
 * CIP-2816: Removed global constants for default max capabilities, throw error when not defined
-* CIP-3048: 
+* CIP-3048:
   * renamed "channel_offset" param to more explicit "spead_channel_offset", and forced uint32 underflow before writing to SPEAD descriptor; previously we were relying on the Tango attribute write value in the FSP Corr app to underflow
   * added double scan with same config integration test
   * fixed controller On/Off command always calling every SLIM regardless of previous partial success
@@ -124,7 +126,7 @@ UNRELEASED CHANGES
   * Added validation for supported schema versions specified in the interface parameter for commands in MCS.
   * Added sphinx directive to generate tables for documentation
 * CIP-2616 MCS ADR-99 Scan Configuration Validation Updates
-  * Abstracted out the Scan Configuration Validation in Subarray into a separate class  
+  * Abstracted out the Scan Configuration Validation in Subarray into a separate class
   * Updated the Validations and added new validations to support ADR-99/v4.1 Interface Changes
   * Refer to new MCS restrictions here: https://confluence.skatelescope.org/display/SE/Validation+of+Scan+Configuration+against+Supported+Configurations
 
@@ -138,12 +140,12 @@ UNRELEASED CHANGES
     * Removed from telescope model
     * Class properties remain, to be removed in base class update
     * zoom_factor set to 0 for downstream HPS config, this will be set later
-      when zoom is implemented from the channel_width parameter introduced in 
+      when zoom is implemented from the channel_width parameter introduced in
       ADR-99
 
   * Added cross validation for cbf.fsp.output_port for the incoming ConfigureScan
   * Removed setting fsp subarray values from parameters removed from schema
-  * Updated ConfigureScan unit test data to interface 3.0 
+  * Updated ConfigureScan unit test data to interface 3.0
   * Updated output_port default value to expanded 2-tuple format
 
 0.15.2
@@ -169,7 +171,7 @@ UNRELEASED CHANGES
 0.14.2
 ******
 * CIP-2418 Fix On command timeout by clearing talons with a script
-* CIP-2416 Decoupled LRU ON and clearing talon 
+* CIP-2416 Decoupled LRU ON and clearing talon
 
 0.14.1 (0.14.0: DO NOT USE)
 ******
@@ -191,7 +193,7 @@ UNRELEASED CHANGES
 
 0.13.0
 ******
-* CIP-2238: Internally, MCS no longer refers to dishes/DISH IDs as receptors/receptor IDs, 
+* CIP-2238: Internally, MCS no longer refers to dishes/DISH IDs as receptors/receptor IDs,
   and the distinction has been made when those integer indices actually refer to VCC IDs
 
 0.12.28
@@ -231,7 +233,7 @@ UNRELEASED CHANGES
 
 Development
 ***********
-* Added Abort and ObsReset command implementation for Vcc and 
+* Added Abort and ObsReset command implementation for Vcc and
   FspCorr/Pss/PstSubarray devices
 
 0.12.20
@@ -297,7 +299,7 @@ Development
 
 0.12.6
 ******
-* CIP-1886 update vcc_component_manager._ready = False at the end of abort() 
+* CIP-1886 update vcc_component_manager._ready = False at the end of abort()
 
 0.12.5
 ******
@@ -314,7 +316,7 @@ Development
 
 0.12.2
 ******
-* CIP-1764 Added telmodel schema validation against the InitSysParam command 
+* CIP-1764 Added telmodel schema validation against the InitSysParam command
 
 0.12.1
 *****

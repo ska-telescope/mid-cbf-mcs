@@ -136,7 +136,7 @@ class TestFsp:
 
         return device_under_test.adminMode == AdminMode.ONLINE
 
-    @pytest.mark.parametrize("function_mode", [FspModes.CORR, FspModes.PST_BF])
+    @pytest.mark.parametrize("function_mode", [FspModes.CORR, FspModes.PST])
     def test_SetFunctionMode(
         self: TestFsp,
         device_under_test: context.DeviceProxy,
@@ -223,7 +223,7 @@ class TestFsp:
             ),
         )
 
-    @pytest.mark.parametrize("function_mode", [FspModes.CORR, FspModes.PST_BF])
+    @pytest.mark.parametrize("function_mode", [FspModes.CORR, FspModes.PST])
     def test_SetFunctionMode_not_allowed_from_off(
         self: TestFsp,
         device_under_test: context.DeviceProxy,
@@ -257,7 +257,7 @@ class TestFsp:
             ),
         )
 
-    @pytest.mark.parametrize("function_mode", [FspModes.CORR, FspModes.PST_BF])
+    @pytest.mark.parametrize("function_mode", [FspModes.CORR, FspModes.PST])
     def test_SetFunctionMode_not_allowed_already_set(
         self: TestFsp,
         device_under_test: context.DeviceProxy,
@@ -301,7 +301,7 @@ class TestFsp:
 
     @pytest.mark.parametrize(
         "fsp_mode",
-        [FspModes.CORR, FspModes.PST_BF],
+        [FspModes.CORR, FspModes.PST],
     )
     # parameterized with all possible subarray IDs, a duplicate ID and IDs below and above range
     @pytest.mark.parametrize(
@@ -426,7 +426,7 @@ class TestFsp:
 
     @pytest.mark.parametrize(
         "fsp_mode",
-        [FspModes.CORR, FspModes.PST_BF],
+        [FspModes.CORR, FspModes.PST],
     )
     @pytest.mark.parametrize("sub_ids", [[1, 2, 3]])
     def test_RemoveSubarrayMembership(

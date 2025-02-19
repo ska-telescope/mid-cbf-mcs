@@ -42,6 +42,7 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
         :param hps_fsp_corr_controller_fqdn: FQDN of the HPS FSP Correlator controller device
         """
         super().__init__(
+            internal_parameter_path=FSP_CORR_PARAM_PATH,
             *args,
             **kwargs,
         )
@@ -72,53 +73,28 @@ class FspCorrSubarrayComponentManager(FspModeSubarrayComponentManager):
     # Class Helpers
     # -------------
 
-    def _build_hps_fsp_config(
-        self: FspCorrSubarrayComponentManager, configuration: dict
-    ) -> str:
+    def _build_hps_fsp_config_mode_specific(
+        self: FspCorrSubarrayComponentManager,
+        configuration: dict,
+        hps_fsp_configuration: dict,
+    ) -> None:
         """
-        Build the input JSON string for the HPS FSP Corr controller ConfigureScan command
+        Helper function for _build_hps_fsp_config in base class.
+
+        Builds the parameters that are specific to CORR HPS FSP configuration.
+
+        :param hps_fsp_configuration: A work in progress HPS FSP configuration
+
         """
-        # append all internal parameters to the configuration to pass to HPS
-        # first construct HPS FSP ConfigureScan input
-
-        hps_fsp_configuration = dict({"configure_scan": configuration})
-
-        self.logger.debug(
-            f"Config JSON before appending HPS parameters: {hps_fsp_configuration}"
-        )
-
-        # Get the internal parameters from file
-        internal_params_file_name = FSP_CORR_PARAM_PATH
-        with open(internal_params_file_name) as f:
-            hps_fsp_configuration.update(
-                json.loads(f.read().replace("\n", ""))
-            )
-
-        # append the fs_sample_rates to the configuration
-        hps_fsp_configuration["fs_sample_rates"] = configuration[
-            "fs_sample_rates"
-        ]
-
-        # append RDT frequency shift values, indexed by VCC ID
-        hps_fsp_configuration["vcc_id_to_rdt_freq_shifts"] = configuration[
-            "vcc_id_to_rdt_freq_shifts"
-        ]
-
-        # append FC gain values, indexed by VCC ID
-        hps_fsp_configuration["vcc_id_to_fc_gain"] = configuration[
-            "vcc_id_to_fc_gain"
-        ]
 
         # TODO: zoom-factor removed from configurescan, but required by HPS, to
         # be inferred from channel_width introduced in ADR-99 when ready to
         # implement zoom
         hps_fsp_configuration["configure_scan"]["zoom_factor"] = 0
 
-        self.logger.debug(
-            f"Config JSON after appending HPS parameters: {hps_fsp_configuration}"
-        )
-
-        return json.dumps(hps_fsp_configuration)
+        hps_fsp_configuration["vcc_id_to_fc_gain"] = configuration[
+            "vcc_id_to_fc_gain"
+        ]
 
     def _deconfigure(
         self: FspCorrSubarrayComponentManager,
