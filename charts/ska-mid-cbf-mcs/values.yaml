@@ -75,18 +75,17 @@ hostInfo:
 
 # Device Tango Resource Locator (TRL) defaults
 # Indices added when templates are evaluated
-controller_trl: "mid-cbf/control/0"
-subarray_trl: "mid-cbf/subarray"
-vcc_trl: "mid-cbf/mcs-vcc"
-fsp_trl: "mid-cbf/mcs-fsp"
-fsp_corr_trl: "mid-cbf/mcs-fsp-corr-subarray"
-fsp_pst_trl: "mid-cbf/mcs-fsp-pst-subarray"
-
+controllerTrl: "mid_csp_cbf/sub_elt/controller" # TODO: "mid-cbf/control/0"
+subarrayTrl: "mid_csp_cbf/sub_elt/subarray" # TODO: "mid-cbf/subarray/01"
+vccTrl: "mid_csp_cbf/vcc" # TODO: "mid-cbf/mcs-vcc/01"
+fspTrl: "mid_csp_cbf/fsp" # TODO: "mid-cbf/mcs-fsp/01"
+fspCorrTrl: "mid_csp_cbf/fspCorrSubarray" # TODO: "mid-cbf/mcs-fsp-corr-subarray/01.01"
+fspPstTrl: "mid_csp_cbf/fspPstSubarray" # TODO: "mid-cbf/mcs-fsp-pst-subarray/01.01"
 
 # The amount of each resource type to deploy
-num_subarray: 1
-num_vcc: 8
-num_fsp: 4
+numSubarray: 1
+numVcc: 8
+numFsp: 4
 
 # Default timeout in seconds for a given device to apply to its internal proxies
 controllerTimeout: 60
@@ -109,29 +108,29 @@ deviceServers:
     enabled: true
     file: "data/vcc.yaml"
   
-  # fsp:
-  #   enabled: true
-  #   file: "data/fsp.yaml"
+  fsp:
+    enabled: true
+    file: "data/fsp.yaml"
   
-  # powerswitch:
-  #   file: "data/powerswitch.yaml"
+  powerswitch:
+    file: "data/powerswitch.yaml"
 
-  # talonlru:
-  #   enabled: true
-  #   file: "data/talonlru.yaml"
+  talonlru:
+    enabled: true
+    file: "data/talonlru.yaml"
 
-  # talonboard:
-  #   enabled: true
-  #   file: "data/talonboard.yaml"
+  talonboard:
+    enabled: true
+    file: "data/talonboard.yaml"
 
-  # slim:
-  #   enabled: true
-  #   file: "data/slim.yaml"
+  slim:
+    enabled: true
+    file: "data/slim.yaml"
 
-  # slimlink:
-  #   enabled: true
-  #   file: "data/slimlink.yaml"
+  slimlink:
+    enabled: true
+    file: "data/slimlink.yaml"
 
-  # talondxlogconsumer:
-  #   enabled: true
-  #   file: "data/talondxlogconsumer.yaml"
+  talondxlogconsumer:
+    enabled: true
+    file: "data/talondxlogconsumer.yaml"

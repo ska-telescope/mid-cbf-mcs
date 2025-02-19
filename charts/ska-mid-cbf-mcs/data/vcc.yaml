@@ -23,32 +23,32 @@ server:
     classes:
     - name: "Vcc"
       devices:
-      {{- $num_vcc := (add1 $.Values.num_vcc | int) }}
-      {{- range untilStep 1 $num_vcc 1 }}
+      {{- $numVcc := (add1 $.Values.numVcc | int) }}
+      {{- range untilStep 1 $numVcc 1 }}
       {{- $vcc_id := .}}
-      - name: {{ printf "%s/%02d" $.Values.vcc_trl . }}
+      - name: {{ printf "%s/%02d" $.Values.vccTrl $vcc_id }}
         properties:
           - name: "DeviceID"
             values:
             - {{ quote $vcc_id }}
           - name: "TalonLRUAddress"
             values:
-            - "mid_csp_cbf/talon_lru/001" # TODO
+            - {{ printf "mid_csp_cbf/talon_lru/%03d" (div $vcc_id 2 | int) }}
           - name: "VccControllerAddress"
             values:
-            - "talondx-001/vcc-app/vcc-controller" # TODO
+            - {{ printf "talondx-%03d/vcc-app/vcc-controller" $vcc_id }}
           - name: "Band1And2Address"
             values:
-            - "talondx-001/vcc-app/vcc-band-1-and-2" # TODO
+            - {{ printf "talondx-%03d/vcc-app/vcc-band-1-and-2" $vcc_id }}
           - name: "Band3Address"
             values:
-            - "talondx-001/vcc-app/vcc-band-3" # TODO
+            - {{ printf "talondx-%03d/vcc-app/vcc-band-3" $vcc_id }}
           - name: "Band4Address"
             values:
-            - "talondx-001/vcc-app/vcc-band-4" # TODO
+            - {{ printf "talondx-%03d/vcc-app/vcc-band-4" $vcc_id }}
           - name: "Band5Address"
             values:
-            - "talondx-001/vcc-app/vcc-band-5" # TODO
+            - {{ printf "talondx-%03d/vcc-app/vcc-band-5" $vcc_id }}
           - name: "LRCTimeout"
             values:
             - {{ quote $.Values.vccTimeout }}

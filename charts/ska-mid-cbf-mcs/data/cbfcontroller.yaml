@@ -23,43 +23,42 @@ server:
     classes:
     - name: "CbfController"
       devices:
-      - name: {{ $.Values.controller_trl }}
+      - name: {{ $.Values.controllerTrl }}
         properties:
           - name: "MaxCapabilities"
             values:
-            - {{ printf "VCC:%d" $.Values.num_vcc }}
-            - {{ printf "FSP:%d" $.Values.num_fsp }}
-            - {{ printf "Subarray:%d" $.Values.num_subarray }}
+            - {{ printf "VCC:%d" $.Values.numVcc }}
+            - {{ printf "FSP:%d" $.Values.numFsp }}
+            - {{ printf "Subarray:%d" $.Values.numSubarray }}
           - name: "CbfSubarray"
             values:
-            {{- $num_subarray := (add1 $.Values.num_subarray | int) }}
-            {{- range untilStep 1 $num_subarray 1 }}
-            {{- $subarray_id := .}}
-            - {{ printf "%s/%02d" $.Values.subarray_trl . }}
+            {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
+            {{- range untilStep 1 $numSubarray 1 }}
+            - {{ printf "%s_%02d" $.Values.subarrayTrl . }}
             {{- end }}
           - name: "FSP"
             values:
-            {{- $num_fsp := (add1 $.Values.num_fsp | int) }}
-            {{- range untilStep 1 $num_fsp 1 }}
-            - {{ printf "%s/%02d" $.Values.fsp_trl . }}
+            {{- $numFsp := (add1 $.Values.numFsp | int) }}
+            {{- range untilStep 1 $numFsp 1 }}
+            - {{ printf "%s/%02d" $.Values.fspTrl . }}
             {{- end }}
           - name: "VCC"
             values:
-            {{- $num_vcc := (add1 $.Values.num_vcc | int) }}
-            {{- range untilStep 1 $num_vcc 1 }}
-            - {{ printf "%s/%02d" $.Values.vcc_trl . }}
+            {{- $numVcc := (add1 $.Values.numVcc | int) }}
+            {{- range untilStep 1 $numVcc 1 }}
+            - {{ printf "%s/%02d" $.Values.vccTrl . }}
             {{- end }}
           - name: "TalonLRU"
             values:
-            {{- $num_vcc := (div $.Values.num_vcc 2 | add1 | int) }}
-            {{- range untilStep 1 $num_vcc 1 }}
+            {{- $numVcc := (div $.Values.numVcc 2 | add1 | int) }}
+            {{- range untilStep 1 $numVcc 1 }}
             - {{ printf "mid-cbf/talon-lru/%02d" . }} # TODO: remove for AA2
             {{- end }}
           - name: "TalonBoard"
             values:
-            {{- $num_vcc := (add1 $.Values.num_vcc | int) }}
-            {{- range untilStep 1 $num_vcc 1 }}
-            - {{ printf "mid-cbf/talon-board/%02d" . }} # TODO: remove for AA2
+            {{- $numVcc := (add1 $.Values.numVcc | int) }}
+            {{- range untilStep 1 $numVcc 1 }}
+            - {{ printf "mid-cbf/talon-board/%03d" . }} # TODO: remove for AA2
             {{- end }}
           - name: "PowerSwitch"  # TODO: remove for AA2
             values:

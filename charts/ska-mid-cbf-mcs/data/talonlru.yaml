@@ -46,7 +46,7 @@ server:
             - "AA41"
           - name: "LRCTimeout"
             values:
-            - "{{ .Values.lruTimeout }}"
+            - {{ quote $.Values.lruTimeout }}
       - name: "mid_csp_cbf/talon_lru/002"
         properties:
           - name: "TalonDxBoard1"
@@ -69,7 +69,7 @@ server:
             - "AA42"
           - name: "LRCTimeout"
             values:
-            - "{{ .Values.lruTimeout }}"
+            - {{ quote $.Values.lruTimeout }}
       - name: "mid_csp_cbf/talon_lru/003"
         properties:
           - name: "TalonDxBoard1"
@@ -92,7 +92,7 @@ server:
             - "2"
           - name: "LRCTimeout"
             values:
-            - "{{ .Values.lruTimeout }}"
+            - {{ quote $.Values.lruTimeout }}
       - name: "mid_csp_cbf/talon_lru/004"
         properties:
           - name: "TalonDxBoard1"
@@ -115,7 +115,7 @@ server:
             - "3"
           - name: "LRCTimeout"
             values:
-            - "{{ .Values.lruTimeout }}"
+            - {{ quote $.Values.lruTimeout }}
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

@@ -23,44 +23,44 @@ server:
     classes:
     - name: "Fsp"
       devices:
-      {{- $num_fsp := (add1 $.Values.num_fsp | int) }}
-      {{- range untilStep 1 $num_fsp 1 }}
+      {{- $numFsp := (add1 $.Values.numFsp | int) }}
+      {{- range untilStep 1 $numFsp 1 }}
       {{- $fsp_id := .}}
-      - name: {{ printf "%s/%02d" $.Values.fsp_trl . }}
+      - name: {{ printf "%s/%02d" $.Values.fspTrl $fsp_id }}
         properties:
           - name: "DeviceID"
             values:
             - {{ quote $fsp_id }}
           - name: "FspCorrSubarray"
             values:
-            {{- $num_subarray := (add1 $.Values.num_subarray | int) }}
-            {{- range untilStep 1 $num_subarray 1 }}
-            - {{ printf "%s/%02d.%02d" $.Values.fsp_corr_trl $fsp_id .}}
+            {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
+            {{- range untilStep 1 $numSubarray 1 }}
+            - {{ printf "%s/%02d_%02d" $.Values.fspCorrTrl $fsp_id .}}
             {{- end }}
           - name: "FspPstSubarray"
             values:
-            {{- $num_subarray := (add1 $.Values.num_subarray | int) }}
-            {{- range untilStep 1 $num_subarray 1 }}
-            - {{ printf "%s/%02d.%02d" $.Values.fsp_pst_trl $fsp_id .}}
+            {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
+            {{- range untilStep 1 $numSubarray 1 }}
+            - {{ printf "%s/%02d_%02d" $.Values.fspPstTrl $fsp_id .}}
             {{- end }}
           - name: "HpsFspControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-controller" # TODO
+            - {{ printf "talondx-%03d/fsp-app/fsp-controller" $fsp_id }}
       {{- end }}
 
     - name: "FspCorrSubarray"
       devices:
-      {{- $num_fsp := (add1 $.Values.num_fsp | int) }}
-      {{- range untilStep 1 $num_fsp 1 }}
+      {{- $numFsp := (add1 $.Values.numFsp | int) }}
+      {{- range untilStep 1 $numFsp 1 }}
       {{- $fsp_id := .}}
-      {{- $num_subarray := (add1 $.Values.num_subarray | int) }}
-      {{- range untilStep 1 $num_subarray 1 }}
+      {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
+      {{- range untilStep 1 $numSubarray 1 }}
       {{- $subarray_id := .}}
-      - name: {{ printf "%s/%02d.%02d" $.Values.fsp_corr_trl $fsp_id $subarray_id}}
+      - name: {{ printf "%s/%02d_%02d" $.Values.fspCorrTrl $fsp_id $subarray_id}}
         properties:
           - name: "HpsFspCorrControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-corr-controller" # TODO
+            - {{ printf "talondx-%03d/fsp-app/fsp-corr-controller" $fsp_id }}
           - name: "LRCTimeout"
             values:
             - {{ quote $.Values.fspTimeout }}
@@ -69,17 +69,17 @@ server:
     
     - name: "FspPstSubarray"
       devices:
-      {{- $num_fsp := (add1 $.Values.num_fsp | int) }}
-      {{- range untilStep 1 $num_fsp 1 }}
+      {{- $numFsp := (add1 $.Values.numFsp | int) }}
+      {{- range untilStep 1 $numFsp 1 }}
       {{- $fsp_id := .}}
-      {{- $num_subarray := (add1 $.Values.num_subarray | int) }}
-      {{- range untilStep 1 $num_subarray 1 }}
+      {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
+      {{- range untilStep 1 $numSubarray 1 }}
       {{- $subarray_id := .}}
-      - name: {{ printf "%s/%02d.%02d" $.Values.fsp_pst_trl $fsp_id $subarray_id}}
+      - name: {{ printf "%s/%02d_%02d" $.Values.fspPstTrl $fsp_id $subarray_id}}
         properties:
           - name: "HpsFspPstControllerAddress"
             values:
-            - "talondx-001/fsp-app/fsp-pst-controller" # TODO
+            - {{ printf "talondx-%03d/fsp-app/fsp-pst-controller" $fsp_id }}
           - name: "LRCTimeout"
             values:
             - {{ quote $.Values.fspTimeout }}

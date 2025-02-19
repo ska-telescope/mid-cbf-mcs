@@ -23,45 +23,45 @@ server:
     classes:
     - name: "CbfSubarray"
       devices:
-      {{- $num_subarray := (add1 $.Values.num_subarray | int) }}
-      {{- range untilStep 1 $num_subarray 1 }}
+      {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
+      {{- range untilStep 1 $numSubarray 1 }}
       {{- $subarray_id := .}}
-      - name: {{ printf "%s/%02d" $.Values.subarray_trl . }}
+      - name: {{ printf "%s_%02d" $.Values.subarrayTrl $subarray_id }}
         properties:
           - name: "DeviceID"
             values:
             - {{ quote $subarray_id }}
           - name: "CbfControllerAddress"
             values:
-            - {{ $.Values.controller_trl }}
+            - {{ $.Values.controllerTrl }}
           - name: "FSP"
             values:
-            {{- $num_fsp := (add1 $.Values.num_fsp | int) }}
-            {{- range untilStep 1 $num_fsp 1 }}
-            - {{ printf "%s/%02d" $.Values.fsp_trl . }}
+            {{- $numFsp := (add1 $.Values.numFsp | int) }}
+            {{- range untilStep 1 $numFsp 1 }}
+            - {{ printf "%s/%02d" $.Values.fspTrl . }}
             {{- end }}
           - name: "FspCorrSubarray"
             values:
-            {{- $num_fsp := (add1 $.Values.num_fsp | int) }}
-            {{- range untilStep 1 $num_fsp 1 }}
-            - {{ printf "%s/%02d.%02d" $.Values.fsp_corr_trl . $subarray_id}}
+            {{- $numFsp := (add1 $.Values.numFsp | int) }}
+            {{- range untilStep 1 $numFsp 1 }}
+            - {{ printf "%s/%02d_%02d" $.Values.fspCorrTrl . $subarray_id}}
             {{- end }}
           - name: "FspPstSubarray"
             values:
-            {{- $num_fsp := (add1 $.Values.num_fsp | int) }}
-            {{- range untilStep 1 $num_fsp 1 }}
-            - {{ printf "%s/%02d.%02d" $.Values.fsp_pst_trl . $subarray_id}}
+            {{- $numFsp := (add1 $.Values.numFsp | int) }}
+            {{- range untilStep 1 $numFsp 1 }}
+            - {{ printf "%s/%02d_%02d" $.Values.fspPstTrl . $subarray_id}}
             {{- end }}
           - name: "VCC"
             values:
-            {{- $num_vcc := (add1 $.Values.num_vcc | int) }}
-            {{- range untilStep 1 $num_vcc 1 }}
-            - {{ printf "%s/%02d" $.Values.vcc_trl . }}
+            {{- $numVcc := (add1 $.Values.numVcc | int) }}
+            {{- range untilStep 1 $numVcc 1 }}
+            - {{ printf "%s/%02d" $.Values.vccTrl . }}
             {{- end }}
           - name: "TalonBoard"
             values:
-            {{- $num_vcc := (add1 $.Values.num_vcc | int) }}
-            {{- range untilStep 1 $num_vcc 1 }}
+            {{- $numVcc := (add1 $.Values.numVcc | int) }}
+            {{- range untilStep 1 $numVcc 1 }}
             - {{ printf "mid_csp_cbf/talon_board/%02d" . }} # TODO: remove for AA2
             {{- end }}
           - name: "VisSLIM"
