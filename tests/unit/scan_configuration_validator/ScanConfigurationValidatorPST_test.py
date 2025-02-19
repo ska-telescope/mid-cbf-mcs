@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import json
 import os
 from logging import getLogger
@@ -29,7 +28,16 @@ class TestScanConfigurationValidatorPST:
             {
                 "configure_scan_file": "ConfigureScan_6_0_PST.json",
                 "sub_id": 1,
-                "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100","SKA081","SKA046","SKA077","SKA048"],
+                "dish_ids": [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
             }
         ],
     )
@@ -75,17 +83,16 @@ class TestScanConfigurationValidatorPST:
         print(msg)
         assert "Scan configuration is valid." in msg
         assert success is True
-        
-        
-    @pytest.mark.parametrize("fsp_ids", [[], [1,2], [9]])
+
+    @pytest.mark.parametrize("fsp_ids", [[], [1, 2], [9]])
     def test_Invalid_FSP_IDs(
         self: TestScanConfigurationValidatorPST,
         validator_params: dict[any],
         fsp_ids: int,
     ):
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            0
-        ]["fsp_ids"] = fsp_ids
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][0][
+            "fsp_ids"
+        ] = fsp_ids
         json_str = json.dumps(self.full_configuration)
 
         validator: SubarrayScanConfigurationValidator = (
@@ -105,15 +112,15 @@ class TestScanConfigurationValidatorPST:
         )
         assert success is False
 
-    @pytest.mark.parametrize("fsp_ids", [[1],[2],[3],[4],[9]])
+    @pytest.mark.parametrize("fsp_ids", [[1], [2], [3], [4], [9]])
     def test_Invalid_FSP_IDs_PST(
         self: TestScanConfigurationValidatorPST,
         validator_params: dict[any],
         fsp_ids: int,
     ):
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            0
-        ]["fsp_ids"] = fsp_ids
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][0][
+            "fsp_ids"
+        ] = fsp_ids
         json_str = json.dumps(self.full_configuration)
 
         validator: SubarrayScanConfigurationValidator = (
@@ -137,14 +144,13 @@ class TestScanConfigurationValidatorPST:
         validator_params: dict[any],
         fsp_id: int,
     ):
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][0][
+            "fsp_ids"
+        ] = [fsp_id]
 
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            0
-        ]["fsp_ids"] = [fsp_id]
-        
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            1
-        ]["fsp_ids"] = [fsp_id]
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][1][
+            "fsp_ids"
+        ] = [fsp_id]
         json_str = json.dumps(self.full_configuration)
 
         validator: SubarrayScanConfigurationValidator = (
@@ -162,10 +168,9 @@ class TestScanConfigurationValidatorPST:
             in msg
         )
         assert success is False
-    
 
     @pytest.mark.parametrize(
-        "start_freq_value", [296862800,495075940,693235300,891448420]
+        "start_freq_value", [296862800, 495075940, 693235300, 891448420]
     )
     def test_Invalid_start_freq_pst_limitations_band1(
         self: TestScanConfigurationValidatorPST,
@@ -173,9 +178,9 @@ class TestScanConfigurationValidatorPST:
         start_freq_value: int,
     ):
         self.full_configuration["common"]["frequency_band"] = "1"
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            0
-        ]["start_freq"] = start_freq_value
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][0][
+            "start_freq"
+        ] = start_freq_value
         json_str = json.dumps(self.full_configuration)
 
         validator: SubarrayScanConfigurationValidator = (
@@ -192,17 +197,18 @@ class TestScanConfigurationValidatorPST:
         assert expected_msg in msg
         assert success is False
 
-
-    @pytest.mark.parametrize("channel_count", [-1, 1, 0, 30,3699,3701,58982, 59000])
+    @pytest.mark.parametrize(
+        "channel_count", [-1, 1, 0, 30, 3699, 3701, 58982, 59000]
+    )
     def test_Invalid_channel_count(
         self: TestScanConfigurationValidatorPST,
         validator_params: dict[any],
         channel_count: int,
     ):
         # Test cases to be added as more support channel widths are added
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            0
-        ]["channel_count"] = channel_count
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][0][
+            "channel_count"
+        ] = channel_count
         json_str = json.dumps(self.full_configuration)
 
         validator: SubarrayScanConfigurationValidator = (
@@ -228,13 +234,13 @@ class TestScanConfigurationValidatorPST:
         config_file_name = "ConfigureScan_6_0_PST.json"
         path_to_test_json = os.path.join(FILE_PATH, config_file_name)
 
-        pst_start_channel_id = self.full_configuration["midcbf"][
-            "pst_bf"
-        ]["processing_regions"][0]["pst_start_channel_id"]
-        
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            0
-        ]["timing_beams"][0]["output_host"][0][0] = 185
+        pst_start_channel_id = self.full_configuration["midcbf"]["pst_bf"][
+            "processing_regions"
+        ][0]["pst_start_channel_id"]
+
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][0][
+            "timing_beams"
+        ][0]["output_host"][0][0] = 185
 
         json_str = json.dumps(self.full_configuration)
 
@@ -255,11 +261,11 @@ class TestScanConfigurationValidatorPST:
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
         self.full_configuration = json.loads(json_str)
-        
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            0
-        ]["timing_beams"][0]["output_port"][0][0] = 185
-        
+
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][0][
+            "timing_beams"
+        ][0]["output_port"][0][0] = 185
+
         json_str = json.dumps(self.full_configuration)
 
         validator: SubarrayScanConfigurationValidator = (
@@ -279,11 +285,11 @@ class TestScanConfigurationValidatorPST:
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
         self.full_configuration = json.loads(json_str)
-        
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            0
-        ]["timing_beams"][0]["output_link_map"][0][0] = 185
-        
+
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][0][
+            "timing_beams"
+        ][0]["output_link_map"][0][0] = 185
+
         json_str = json.dumps(self.full_configuration)
 
         validator: SubarrayScanConfigurationValidator = (
@@ -299,22 +305,20 @@ class TestScanConfigurationValidatorPST:
         expected_msg = f"Start Channel ID given for the processing region ({pst_start_channel_id})"
         assert expected_msg in msg
         assert success is False
-        
+
     @pytest.mark.parametrize(
         "mapping, expected_success_result",
-        [([[0,1]], True),
-         ([[0,1],[185,2]], False)],
+        [([[0, 1]], True), ([[0, 1], [185, 2]], False)],
     )
     def test_single_output_link_map_mapping(
         self: TestScanConfigurationValidatorPST,
         validator_params: dict[any],
         mapping: list,
-        expected_success_result:bool
+        expected_success_result: bool,
     ):
-        
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            0
-        ]["timing_beams"][0]["output_link_map"] = mapping
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][0][
+            "timing_beams"
+        ][0]["output_link_map"] = mapping
         json_str = json.dumps(self.full_configuration)
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
@@ -331,19 +335,17 @@ class TestScanConfigurationValidatorPST:
 
     @pytest.mark.parametrize(
         "mapping, expected_success_result",
-        [([[0,20000]], True),
-         ([[0,20000],[185,20000]], False)],
+        [([[0, 20000]], True), ([[0, 20000], [185, 20000]], False)],
     )
     def test_single_output_port_mapping(
         self: TestScanConfigurationValidatorPST,
         validator_params: dict[any],
         mapping: list,
-        expected_success_result:bool
+        expected_success_result: bool,
     ):
-        
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            0
-        ]["timing_beams"][0]["output_link_map"] = mapping
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][0][
+            "timing_beams"
+        ][0]["output_link_map"] = mapping
         json_str = json.dumps(self.full_configuration)
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
@@ -360,19 +362,20 @@ class TestScanConfigurationValidatorPST:
 
     @pytest.mark.parametrize(
         "mapping, expected_success_result",
-        [([[0,"192.168.178.26"]], True),
-         ([[0,"192.168.178.26"],[185,"192.168.178.26"]], False)],
+        [
+            ([[0, "192.168.178.26"]], True),
+            ([[0, "192.168.178.26"], [185, "192.168.178.26"]], False),
+        ],
     )
     def test_single_output_host_mapping(
         self: TestScanConfigurationValidatorPST,
         validator_params: dict[any],
         mapping: list,
-        expected_success_result:bool
+        expected_success_result: bool,
     ):
-        
-        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][
-            0
-        ]["timing_beams"][0]["output_link_map"] = mapping
+        self.full_configuration["midcbf"]["pst_bf"]["processing_regions"][0][
+            "timing_beams"
+        ][0]["output_link_map"] = mapping
         json_str = json.dumps(self.full_configuration)
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
@@ -388,6 +391,6 @@ class TestScanConfigurationValidatorPST:
         assert success is expected_success_result
 
     def test_timing_beam_limitation_per_pr(
-        self:TestScanConfigurationValidatorPST
+        self: TestScanConfigurationValidatorPST,
     ):
         pass

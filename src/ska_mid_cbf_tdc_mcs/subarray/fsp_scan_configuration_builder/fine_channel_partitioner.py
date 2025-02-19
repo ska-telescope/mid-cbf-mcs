@@ -182,7 +182,7 @@ def partition_spectrum_to_frequency_slices(
             "fsp_id": 1,  # frequency slice processor id, 1-based index
             "fsp_start_ch": 60,
             "num_channels": 14740,
-            "sdp_start_channel_id": 0,
+            "start_channel_id": 0,
             "sdp_end_channel_id": 14739,
             "start_ch": -7380,
             "start_ch_exact": -7383,
@@ -327,7 +327,7 @@ def partition_spectrum_to_frequency_slices(
 
         # determine first SDP channels
         # Sequential from 0 from all channels for all processed fs's
-        fsp_info["sdp_start_channel_id"] = first_sdp_channel_id
+        fsp_info["start_channel_id"] = first_sdp_channel_id
         first_sdp_channel_id += fsp_info["num_channels"]
         fsp_info["sdp_end_channel_id"] = first_sdp_channel_id - 1
 

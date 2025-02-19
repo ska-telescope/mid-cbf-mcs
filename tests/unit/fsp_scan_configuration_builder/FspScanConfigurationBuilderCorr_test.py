@@ -20,8 +20,8 @@ from ska_telmodel import channel_map
 
 from ska_mid_cbf_tdc_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes, const
-from ska_mid_cbf_tdc_mcs.subarray.fsp_scan_configuration_builder.builder import (
-    FspScanConfigurationBuilder as fsp_builder,
+from ska_mid_cbf_tdc_mcs.subarray.fsp_scan_configuration_builder.builder_corr import (
+    FspScanConfigurationBuilderCorr as fsp_builder,
 )
 
 # Paths
@@ -49,7 +49,6 @@ class TestFspScanConfigurationBuilder:
 
         with pytest.raises(ValueError):
             fsp_builder(
-                function_mode=FspModes.CORR,
                 function_configuration=corr_config,
                 dish_utils=dish_util,
                 subarray_dish_ids=subarray_dish_ids,
@@ -81,7 +80,6 @@ class TestFspScanConfigurationBuilder:
 
         with pytest.raises(ValueError):
             fsp_builder(
-                function_mode=FspModes.CORR,
                 function_configuration=corr_config,
                 dish_utils=dish_util,
                 subarray_dish_ids=subarray_dish_ids,
@@ -122,7 +120,6 @@ class TestFspScanConfigurationBuilder:
         dish_util = DISHUtils(sys_param_configuration)
 
         builder = fsp_builder(
-            function_mode=FspModes.CORR,
             function_configuration=corr_config,
             dish_utils=dish_util,
             subarray_dish_ids=subarray_dish_ids,

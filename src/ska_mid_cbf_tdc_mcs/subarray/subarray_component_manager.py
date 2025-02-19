@@ -47,8 +47,8 @@ from ska_mid_cbf_tdc_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_tdc_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
-from ska_mid_cbf_tdc_mcs.subarray.fsp_scan_configuration_builder.builder import (
-    FspScanConfigurationBuilder,
+from ska_mid_cbf_tdc_mcs.subarray.fsp_scan_configuration_builder.builder_corr import (
+    FspScanConfigurationBuilderCorr,
 )
 from ska_mid_cbf_tdc_mcs.subarray.scan_configuration_validator.validator import (
     SubarrayScanConfigurationValidator,
@@ -1346,8 +1346,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             corr_config = configuration["correlation"]
 
             # TODO: set wideband shift when ready for implementation
-            fsp_config_builder = FspScanConfigurationBuilder(
-                function_mode=FspModes.CORR,
+            fsp_config_builder = FspScanConfigurationBuilderCorr(
                 function_configuration=corr_config,
                 dish_utils=self._dish_utils,
                 subarray_dish_ids=self.dish_ids,
