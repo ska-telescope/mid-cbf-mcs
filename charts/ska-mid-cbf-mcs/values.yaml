@@ -2,18 +2,11 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-display: ":0"
-xauthority: "~/.Xauthority"
-
 enabled: true
 
 system: csp
 subsystem: cbfmcs-mid
 telescope: SKA-mid
-signalVerificationVersion: 0.2.16
-svImageRegistry: "artefact.skao.int"
-
-num_subarrays: 1
 
 labels:
   app: ska-mid-cbf-mcs
@@ -22,13 +15,29 @@ global:
   minikube: false
   exposeDatabaseDS: true
   exposeAllDS: false
-  tango_host: databaseds-tango-base-test:10000
+  tango_host: "databaseds-tango-base-test:10000"
   dsconfig:
     image:
       registry: artefact.skao.int
       image: ska-tango-images-tango-dsconfig
       tag: 1.5.12
       pullPolicy: IfNotPresent
+
+signalVerificationVersion: 0.2.16
+svImageRegistry: "artefact.skao.int"
+
+livenessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+readinessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
 
 midcbf:
   image:
@@ -47,6 +56,46 @@ resources:
     memory: 128Mi  
     ephemeral-storage: 256Mi
 
+nodeSelector: {}
+
+affinity: {}
+
+tolerations: []
+
+hostInfo:
+  environment: "minikube"
+  hostIP: "127.0.0.1"
+  externalPort: 10001
+  clusterDomain: cluster.local
+
+
+################################################################################
+######################### DEVICE SERVER CONFIGURATION ##########################
+################################################################################
+
+# Device Tango Resource Locator (TRL) defaults
+# Indices added when templates are evaluated
+controller_trl: "mid-cbf/control/0"
+subarray_trl: "mid-cbf/subarray"
+vcc_trl: "mid-cbf/mcs-vcc"
+fsp_trl: "mid-cbf/mcs-fsp"
+fsp_corr_trl: "mid-cbf/mcs-fsp-corr-subarray"
+fsp_pst_trl: "mid-cbf/mcs-fsp-pst-subarray"
+
+
+# The amount of each resource type to deploy
+num_subarray: 1
+num_vcc: 8
+num_fsp: 4
+
+# Default timeout in seconds for a given device to apply to its internal proxies
+controllerTimeout: 60
+vccTimeout: 3
+fspTimeout: 60
+lruTimeout: 60
+slimLinkTimeout: 10
+
+# Device server configuration, generated from YAML files in data/ directory
 deviceServers:
   cbfcontroller:
     enabled: true
@@ -60,47 +109,29 @@ deviceServers:
     enabled: true
     file: "data/vcc.yaml"
   
-  fsp:
-    enabled: true
-    file: "data/fsp.yaml"
+  # fsp:
+  #   enabled: true
+  #   file: "data/fsp.yaml"
   
-  powerswitch:
-    file: "data/powerswitch.yaml"
+  # powerswitch:
+  #   file: "data/powerswitch.yaml"
 
-  talonlru:
-    enabled: true
-    file: "data/talonlru.yaml"
+  # talonlru:
+  #   enabled: true
+  #   file: "data/talonlru.yaml"
 
-  talonboard:
-    enabled: true
-    file: "data/talonboard.yaml"
+  # talonboard:
+  #   enabled: true
+  #   file: "data/talonboard.yaml"
 
-  slim:
-    enabled: true
-    file: "data/slim.yaml"
+  # slim:
+  #   enabled: true
+  #   file: "data/slim.yaml"
 
-  slimlink:
-    enabled: true
-    file: "data/slimlink.yaml"
+  # slimlink:
+  #   enabled: true
+  #   file: "data/slimlink.yaml"
 
-  talondxlogconsumer:
-    enabled: true
-    file: "data/talondxlogconsumer.yaml"
-
-controllerTimeout: 60
-fspTimeout: 60
-lruTimeout: 60
-slimLinkTimeout: 10
-vccTimeout: 3
-
-nodeSelector: {}
-
-affinity: {}
-
-tolerations: []
-
-hostInfo:
-  environment: "minikube"
-  hostIP: "127.0.0.1"
-  externalPort: 10001
-  clusterDomain: cluster.local
+  # talondxlogconsumer:
+  #   enabled: true
+  #   file: "data/talondxlogconsumer.yaml"

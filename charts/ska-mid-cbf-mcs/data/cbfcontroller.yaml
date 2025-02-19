@@ -5,18 +5,17 @@ command: "CbfController"
 instances: ["controller"]
 depends_on:
   - device: sys/database/2
-readinessProbe:
-  initialDelaySeconds: 0
-  periodSeconds: 10
-  timeoutSeconds: 5
-  successThreshold: 1
-  failureThreshold: 3
 livenessProbe:
-  initialDelaySeconds: 0
-  periodSeconds: 10
-  timeoutSeconds: 5
-  successThreshold: 1
-  failureThreshold: 3
+{{ toYaml $.Values.livenessProbe | indent 2 }}
+readinessProbe:
+{{ toYaml $.Values.readinessProbe | indent 2 }}
+image:
+{{- with $.Values.midcbf.image}}
+  registry: {{ quote .registry }}
+  image: {{ quote .image }}
+  tag: {{ quote .tag }}
+  pullPolicy: {{ quote .pullPolicy }}
+{{- end }}
 server:
   name: "CbfController"
   instances:
@@ -24,51 +23,45 @@ server:
     classes:
     - name: "CbfController"
       devices:
-      - name: "mid_csp_cbf/sub_elt/controller"
+      - name: {{ $.Values.controller_trl }}
         properties:
-          - name: "CbfSubarray"
-            values:
-            - "mid_csp_cbf/sub_elt/subarray_01"
-            - "mid_csp_cbf/sub_elt/subarray_02"
-            - "mid_csp_cbf/sub_elt/subarray_03"
-          - name: "FSP"
-            values:
-            - "mid_csp_cbf/fsp/01"
-            - "mid_csp_cbf/fsp/02"
-            - "mid_csp_cbf/fsp/03"
-            - "mid_csp_cbf/fsp/04"
           - name: "MaxCapabilities"
             values:
-            - "VCC:8"
-            - "FSP:4"
-            - "Subarray:1"
+            - {{ printf "VCC:%d" $.Values.num_vcc }}
+            - {{ printf "FSP:%d" $.Values.num_fsp }}
+            - {{ printf "Subarray:%d" $.Values.num_subarray }}
+          - name: "CbfSubarray"
+            values:
+            {{- $num_subarray := (add1 $.Values.num_subarray | int) }}
+            {{- range untilStep 1 $num_subarray 1 }}
+            {{- $subarray_id := .}}
+            - {{ printf "%s/%02d" $.Values.subarray_trl . }}
+            {{- end }}
+          - name: "FSP"
+            values:
+            {{- $num_fsp := (add1 $.Values.num_fsp | int) }}
+            {{- range untilStep 1 $num_fsp 1 }}
+            - {{ printf "%s/%02d" $.Values.fsp_trl . }}
+            {{- end }}
           - name: "VCC"
             values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            {{- $num_vcc := (add1 $.Values.num_vcc | int) }}
+            {{- range untilStep 1 $num_vcc 1 }}
+            - {{ printf "%s/%02d" $.Values.vcc_trl . }}
+            {{- end }}
           - name: "TalonLRU"
             values:
-            - "mid_csp_cbf/talon_lru/001"
-            - "mid_csp_cbf/talon_lru/002"
-            - "mid_csp_cbf/talon_lru/003"
-            - "mid_csp_cbf/talon_lru/004"
+            {{- $num_vcc := (div $.Values.num_vcc 2 | add1 | int) }}
+            {{- range untilStep 1 $num_vcc 1 }}
+            - {{ printf "mid-cbf/talon-lru/%02d" . }} # TODO: remove for AA2
+            {{- end }}
           - name: "TalonBoard"
             values:
-            - "mid_csp_cbf/talon_board/001"
-            - "mid_csp_cbf/talon_board/002"
-            - "mid_csp_cbf/talon_board/003"
-            - "mid_csp_cbf/talon_board/004"
-            - "mid_csp_cbf/talon_board/005"
-            - "mid_csp_cbf/talon_board/006"
-            - "mid_csp_cbf/talon_board/007"
-            - "mid_csp_cbf/talon_board/008"
-          - name: "PowerSwitch"
+            {{- $num_vcc := (add1 $.Values.num_vcc | int) }}
+            {{- range untilStep 1 $num_vcc 1 }}
+            - {{ printf "mid-cbf/talon-board/%02d" . }} # TODO: remove for AA2
+            {{- end }}
+          - name: "PowerSwitch"  # TODO: remove for AA2
             values:
             - "mid_csp_cbf/power_switch/001"
             - "mid_csp_cbf/power_switch/002"
@@ -76,13 +69,13 @@ server:
             - "mid_csp_cbf/power_switch/004"
           - name: "FsSLIM"
             values:
-            - "mid_csp_cbf/slim/slim-fs"
+            - "mid_csp_cbf/slim/slim-fs"  # TODO: remove for AA2
           - name: "VisSLIM"
             values:
-            - "mid_csp_cbf/slim/slim-vis"
+            - "mid_csp_cbf/slim/slim-vis"  # TODO: remove for AA2
           - name: "LRCTimeout"
             values:
-            - "{{ .Values.controllerTimeout }}"
+            - {{ quote $.Values.controllerTimeout }}
           - name: "TalonDxConfigPath"
             values:
             - "mnt/talondx-config"
@@ -95,11 +88,7 @@ server:
           - name: "VisSLIMConfigPath"
             values:
             - "mnt/slim/vis/slim_config.yaml"
-image:
-  registry: "{{.Values.midcbf.image.registry}}"
-  image: "{{.Values.midcbf.image.image}}"
-  tag: "{{.Values.midcbf.image.tag}}"
-  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+
 environment_variables:
 - name: NAMESPACE
   value: "{{ .Release.Namespace }}"

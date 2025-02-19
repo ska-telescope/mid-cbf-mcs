@@ -5,18 +5,17 @@ command: "CbfSubarray"
 instances: ["cbfsubarray"]
 depends_on:
   - device: sys/database/2
-readinessProbe:
-  initialDelaySeconds: 0
-  periodSeconds: 10
-  timeoutSeconds: 5
-  successThreshold: 1
-  failureThreshold: 3
 livenessProbe:
-  initialDelaySeconds: 0
-  periodSeconds: 10
-  timeoutSeconds: 5
-  successThreshold: 1
-  failureThreshold: 3
+{{ toYaml $.Values.livenessProbe | indent 2 }}
+readinessProbe:
+{{ toYaml $.Values.readinessProbe | indent 2 }}
+image:
+{{- with $.Values.midcbf.image}}
+  registry: {{ quote .registry }}
+  image: {{ quote .image }}
+  tag: {{ quote .tag }}
+  pullPolicy: {{ quote .pullPolicy }}
+{{- end }}
 server:
   name: "CbfSubarray"
   instances:
@@ -24,60 +23,48 @@ server:
     classes:
     - name: "CbfSubarray"
       devices:
-      {{ $count := (.Values.num_subarrays | int) }}
-      {{- range $i, $e := until $count }}
-      - name: "mid_csp_cbf/sub_elt/subarray_0{{ add1 $i }}"
+      {{- $num_subarray := (add1 $.Values.num_subarray | int) }}
+      {{- range untilStep 1 $num_subarray 1 }}
+      {{- $subarray_id := .}}
+      - name: {{ printf "%s/%02d" $.Values.subarray_trl . }}
         properties:
+          - name: "DeviceID"
+            values:
+            - {{ quote $subarray_id }}
           - name: "CbfControllerAddress"
             values:
-            - "mid_csp_cbf/sub_elt/controller"
+            - {{ $.Values.controller_trl }}
           - name: "FSP"
             values:
-            - "mid_csp_cbf/fsp/01"
-            - "mid_csp_cbf/fsp/02"
-            - "mid_csp_cbf/fsp/03"
-            - "mid_csp_cbf/fsp/04"
+            {{- $num_fsp := (add1 $.Values.num_fsp | int) }}
+            {{- range untilStep 1 $num_fsp 1 }}
+            - {{ printf "%s/%02d" $.Values.fsp_trl . }}
+            {{- end }}
           - name: "FspCorrSubarray"
             values:
-            - "mid_csp_cbf/fspCorrSubarray/01_0{{ add1 $i }}"
-            - "mid_csp_cbf/fspCorrSubarray/02_0{{ add1 $i }}"
-            - "mid_csp_cbf/fspCorrSubarray/03_0{{ add1 $i }}"
-            - "mid_csp_cbf/fspCorrSubarray/04_0{{ add1 $i }}"
+            {{- $num_fsp := (add1 $.Values.num_fsp | int) }}
+            {{- range untilStep 1 $num_fsp 1 }}
+            - {{ printf "%s/%02d.%02d" $.Values.fsp_corr_trl . $subarray_id}}
+            {{- end }}
           - name: "FspPstSubarray"
             values:
-            - "mid_csp_cbf/fspPstSubarray/01_0{{ add1 $i }}"
-            - "mid_csp_cbf/fspPstSubarray/02_0{{ add1 $i }}"
-            - "mid_csp_cbf/fspPstSubarray/03_0{{ add1 $i }}"
-            - "mid_csp_cbf/fspPstSubarray/04_0{{ add1 $i }}"
-          - name: "SubID"
-            values:
-            - "1"
+            {{- $num_fsp := (add1 $.Values.num_fsp | int) }}
+            {{- range untilStep 1 $num_fsp 1 }}
+            - {{ printf "%s/%02d.%02d" $.Values.fsp_pst_trl . $subarray_id}}
+            {{- end }}
           - name: "VCC"
             values:
-            - "mid_csp_cbf/vcc/001"
-            - "mid_csp_cbf/vcc/002"
-            - "mid_csp_cbf/vcc/003"
-            - "mid_csp_cbf/vcc/004"
-            - "mid_csp_cbf/vcc/005"
-            - "mid_csp_cbf/vcc/006"
-            - "mid_csp_cbf/vcc/007"
-            - "mid_csp_cbf/vcc/008"
+            {{- $num_vcc := (add1 $.Values.num_vcc | int) }}
+            {{- range untilStep 1 $num_vcc 1 }}
+            - {{ printf "%s/%02d" $.Values.vcc_trl . }}
+            {{- end }}
           - name: "TalonBoard"
             values:
-            - "mid_csp_cbf/talon_board/001"
-            - "mid_csp_cbf/talon_board/002"
-            - "mid_csp_cbf/talon_board/003"
-            - "mid_csp_cbf/talon_board/004"
-            - "mid_csp_cbf/talon_board/005"
-            - "mid_csp_cbf/talon_board/006"
-            - "mid_csp_cbf/talon_board/007"
-            - "mid_csp_cbf/talon_board/008"
+            {{- $num_vcc := (add1 $.Values.num_vcc | int) }}
+            {{- range untilStep 1 $num_vcc 1 }}
+            - {{ printf "mid_csp_cbf/talon_board/%02d" . }} # TODO: remove for AA2
+            {{- end }}
           - name: "VisSLIM"
             values:
-            - "mid_csp_cbf/slim/slim-vis"
+            - "mid_csp_cbf/slim/slim-vis" # TODO: remove for AA2
       {{- end}}
-image:
-  registry: "{{.Values.midcbf.image.registry}}"
-  image: "{{.Values.midcbf.image.image}}"
-  tag: "{{.Values.midcbf.image.tag}}"
-  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
