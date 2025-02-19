@@ -27,9 +27,9 @@ server:
         properties:
           - name: "MaxCapabilities"
             values:
-            - {{ printf "VCC:%d" $.Values.numVcc }}
-            - {{ printf "FSP:%d" $.Values.numFsp }}
-            - {{ printf "Subarray:%d" $.Values.numSubarray }}
+            - {{ printf "VCC:%d" (int $.Values.numVcc) }}
+            - {{ printf "FSP:%d" (int $.Values.numFsp) }}
+            - {{ printf "Subarray:%d" (int $.Values.numSubarray) }}
           - name: "CbfSubarray"
             values:
             {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
