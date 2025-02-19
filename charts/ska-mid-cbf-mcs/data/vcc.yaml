@@ -26,7 +26,7 @@ server:
       {{- $numVcc := (add1 $.Values.numVcc | int) }}
       {{- range untilStep 1 $numVcc 1 }}
       {{- $vcc_id := .}}
-      - name: {{ printf "%s/%02d" $.Values.vccTrl $vcc_id }}
+      - name: {{ printf "%s/%03d" $.Values.vccTrl $vcc_id }}
         properties:
           - name: "DeviceID"
             values:

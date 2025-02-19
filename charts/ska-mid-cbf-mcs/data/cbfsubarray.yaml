@@ -56,7 +56,7 @@ server:
             values:
             {{- $numVcc := (add1 $.Values.numVcc | int) }}
             {{- range untilStep 1 $numVcc 1 }}
-            - {{ printf "%s/%02d" $.Values.vccTrl . }}
+            - {{ printf "%s/%03d" $.Values.vccTrl . }}
             {{- end }}
           - name: "TalonBoard"
             values:

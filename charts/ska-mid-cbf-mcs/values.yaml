@@ -83,7 +83,7 @@ fspCorrTrl: "mid_csp_cbf/fspCorrSubarray" # TODO: "mid-cbf/mcs-fsp-corr-subarray
 fspPstTrl: "mid_csp_cbf/fspPstSubarray" # TODO: "mid-cbf/mcs-fsp-pst-subarray/01.01"
 
 # The amount of each resource type to deploy
-numSubarray: 1
+numSubarray: 2
 numVcc: 8
 numFsp: 4
 
