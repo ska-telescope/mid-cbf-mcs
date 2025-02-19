@@ -16,7 +16,8 @@ from ska_mid_cbf_tdc_mcs.subarray.scan_configuration_validator.validator import 
 FILE_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 COUNT_FSP = 4
 
-
+# TODO: Refactor out CORR only test.  Make it so that this file contains the common tests for all FSP modes
+# Example: The Scan configuration this test validatates are ones with multiple FSP mode processing regions
 class TestScanConfigurationValidator:
     logger = getLogger()
 
@@ -148,7 +149,7 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        expected_msg = f"AA 0.5 Requirement: {(FspModes.CORR).name} Supports only FSP {[1, 2, 3, 4]}."
+        expected_msg = f"AA 1.0 Requirement: {(FspModes.CORR).name} Supports only FSP {[1, 2, 3, 4]}."
         print(msg)
         assert expected_msg in msg
         assert success is False
@@ -502,8 +503,7 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        expected_msg = f"Start Channel ID ({sdp_start_channel_id}) must be the same must match the first channel entry of output_host"
-        print(msg)
+        expected_msg = f"Start Channel ID given for the processing region ({sdp_start_channel_id})"
         assert expected_msg in msg
         assert success is False
 
@@ -525,8 +525,7 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        expected_msg = f"Start Channel ID ({sdp_start_channel_id}) must be the same must match the first channel entry of output_port"
-        print(msg)
+        expected_msg = f"Start Channel ID given for the processing region ({sdp_start_channel_id})"
         assert expected_msg in msg
         assert success is False
 
@@ -548,8 +547,7 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        expected_msg = f"Start Channel ID ({sdp_start_channel_id}) must be the same must match the first channel entry of output_link_map"
-        print(msg)
+        expected_msg = f"Start Channel ID given for the processing region ({sdp_start_channel_id})"
         assert expected_msg in msg
         assert success is False
 
