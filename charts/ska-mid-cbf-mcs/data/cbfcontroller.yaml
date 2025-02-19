@@ -52,7 +52,7 @@ server:
             values:
             {{- $numVcc := (div $.Values.numVcc 2 | add1 | int) }}
             {{- range untilStep 1 $numVcc 1 }}
-            - {{ printf "mid-cbf/talon-lru/%02d" . }} # TODO: remove for AA2
+            - {{ printf "mid-cbf/talon-lru/%03d" . }} # TODO: remove for AA2
             {{- end }}
           - name: "TalonBoard"
             values:
