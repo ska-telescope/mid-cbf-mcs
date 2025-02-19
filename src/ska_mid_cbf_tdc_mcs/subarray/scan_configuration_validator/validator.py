@@ -100,7 +100,7 @@ class SubarrayScanConfigurationValidator:
                     return (False, msg)
         else:
             msg = (
-                "'receptors' not specified for Fsp CORR config."
+                "'receptors' not specified for given processing region."
                 "Per ICD all receptors allocated to subarray are used"
             )
             self.logger.debug(msg)
@@ -429,18 +429,15 @@ class SubarrayScanConfigurationValidator:
         """
         if fsp_mode == FspModes.CORR:
             start_channel_id_name = "sdp_start_channel_id"
-            channel_width = int(processing_region["channel_width"])
         elif fsp_mode == FspModes.PST:
             start_channel_id_name = "pst_start_channel_id"
-            # As of Scan Configuration 6.0, PST only support one channel width
-            # Hence this value won't be in the Scan Configuration
-            channel_width = 53760
         else:
             msg = f"_validate_processing_region_channel_values for {fsp_mode} has not been implemented"
             self.logger.error(msg)
             return (False, msg)
 
         start_channel_id = int(processing_region[start_channel_id_name])
+        channel_width = int(processing_region["channel_width"])
         channel_count = int(processing_region["channel_count"])
         valid_channel_width = scan_configuration_supported_value(
             "processing_region"
@@ -520,7 +517,7 @@ class SubarrayScanConfigurationValidator:
         # the validation below
         # check in global_enum.py for the supported fsp id per fsp mode dictionary
         if fsp_id not in supported_function_mode_fsp_ids:
-            msg = f"AA 0.5 Requirement: {fsp_mode.name} Supports only FSP {supported_function_mode_fsp_ids}."
+            msg = f"AA 1.0 Requirement: {fsp_mode.name} Supports only FSP {supported_function_mode_fsp_ids}."
             self.logger.error(msg)
             return (False, msg)
 
@@ -1018,7 +1015,7 @@ class SubarrayScanConfigurationValidator:
         # check that the start_channel_id matches the first channel in the map
         if pr_start_channel_id != map_pairs[0][0]:
             msg = (
-                f"Start Channel ID give for the processing region ({pr_start_channel_id})" ,
+                f"Start Channel ID given for the processing region ({pr_start_channel_id})" ,
                 f"must match the Start Channel ID of {map_type} ({map_pairs[0][0]})"
             )
             self.logger.error(msg)
@@ -1029,10 +1026,12 @@ class SubarrayScanConfigurationValidator:
         # Checks if the max_entry value is given for the map_type
         # This checks if there is a limitation of how many entries are allowed
         # with MCS
+        
         if ("max_entry" in valid_map_type_value and 
             len(map_pairs) > valid_map_type_value["max_entry"]):
+            max_entry_val = valid_map_type_value["max_entry"]
             msg = (
-                    f"MCS currently only support {valid_map_type_value["max_entry"]} "
+                    f"MCS currently only support {max_entry_val} ",
                     f"for {map_type} in {fsp_mode} processing region. ",
                     f"Number of entries given: {len(map_pairs)}"
                     )
@@ -1131,14 +1130,19 @@ class SubarrayScanConfigurationValidator:
         for processing_region in configuration[function_mode][
             "processing_regions"
         ]:
-            processing_region = copy.deepcopy(processing_region)
-
+            fsp_ids = processing_region["fsp_ids"]
+            mode_supported_values = scan_configuration_supported_value("processing_region")[function_mode_value]
+            # As of Scan Configuration 6.0: There is only one valid channel width for PST
+            # and it is not a field for timing beams.
+            if function_mode_value == FspModes.PST:
+                support_channel_width = list(mode_supported_values["channel_width"])[0]
+                processing_region["channel_width"] = support_channel_width
+ 
             # Validations that the fps_id inside the the fsp_ids are valid values
             # is done in _validate_fsp_id below
             if (
-                len(processing_region["fsp_ids"]) > self.supported_fsp_id_upper
-                or len(processing_region["fsp_ids"])
-                < self.supported_fsp_id_lower
+                len(fsp_ids) > self.supported_fsp_id_upper or 
+                len(fsp_ids) < self.supported_fsp_id_lower
             ):
                 msg = (
                     f"AA 1.0 only support fsp_ids with array length of 1-8,"
@@ -1162,8 +1166,20 @@ class SubarrayScanConfigurationValidator:
             supported_function_mode_fsp_ids = (
                 scan_configuration_supported_value("processing_region")
             )[FspModes(function_mode_value)]["fsp_id"]
-
-            for fsp_id_str in processing_region["fsp_ids"]:
+            
+            # Validation that the PR region contains valid amount of FSP requested
+            # Note: I the max_fsp_id_per_pr field does not exist in mode_supported_values,
+            # then there is no limitations with the amount of FSP that can be requested
+            if ("max_fsp_id_per_pr" in mode_supported_values and
+                   len(fsp_ids) > mode_supported_values["max_fsp_id_per_pr"]):
+                max_fsp_id_per_pr = mode_supported_values["max_fsp_id_per_pr"]
+                msg = (f"For {FspModes(function_mode_value)}: Only {max_fsp_id_per_pr} ",
+                       "FSP(s) is/are supported for each Processing Region. ",
+                       f"{len(fsp_ids)} FSP ID(s) given for ",
+                       "the given Processing Region")
+                return (False, msg)
+            
+            for fsp_id_str in fsp_ids:
                 fsp_id = int(fsp_id_str)
                 success, msg = self._validate_fsp_id(
                     fsp_id,

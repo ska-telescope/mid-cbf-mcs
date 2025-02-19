@@ -183,6 +183,7 @@ def scan_configuration_supported_value(parameter: str) -> any:
             },
             FspModes.PST: {
                 "fsp_id": [5, 6, 7, 8],
+                "max_fsp_id_per_pr": 1,
                 "channel_width": {53760},
                 "channel_count": {"range": (3700, 3700), 
                                   "multiple": 1,
@@ -217,8 +218,7 @@ def scan_configuration_supported_value(parameter: str) -> any:
                 }
                 }
             },
-        },
-    }
+        }
 
     if parameter in supported_values:
         return supported_values[parameter]
