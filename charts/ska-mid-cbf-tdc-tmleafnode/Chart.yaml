@@ -1,8 +1,8 @@
 apiVersion: v2
 name: ska-mid-cbf-tdc-tmleafnode
 description: A Helm chart to deploy tmleafnode simulators for Mid CBF for testing purposes.
-version: 1.1.1
-appVersion: 1.1.1
+version: 1.1.2
+appVersion: 1.1.2
 icon: https://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
 dependencies:
 - name: ska-tango-util
