@@ -114,25 +114,25 @@ deviceServers:
     enabled: true
     file: "data/fsp.yaml"
 
-  # powerswitch:
-  #   file: "data/powerswitch.yaml"
+  powerswitch:
+    file: "data/powerswitch.yaml"
 
-  # talonlru:
-  #   enabled: true
-  #   file: "data/talonlru.yaml"
+  talonlru:
+    enabled: true
+    file: "data/talonlru.yaml"
 
-  # talonboard:
-  #   enabled: true
-  #   file: "data/talonboard.yaml"
+  talonboard:
+    enabled: true
+    file: "data/talonboard.yaml"
 
-  # slim:
-  #   enabled: true
-  #   file: "data/slim.yaml"
+  slim:
+    enabled: true
+    file: "data/slim.yaml"
 
-  # slimlink:
-  #   enabled: true
-  #   file: "data/slimlink.yaml"
+  slimlink:
+    enabled: true
+    file: "data/slimlink.yaml"
 
-  # talondxlogconsumer:
-  #   enabled: true
-  #   file: "data/talondxlogconsumer.yaml"
+  talondxlogconsumer:
+    enabled: true
+    file: "data/talondxlogconsumer.yaml"

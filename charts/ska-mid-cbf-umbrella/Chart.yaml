@@ -14,13 +14,13 @@ dependencies:
 - name: ska-mid-cbf-mcs
   version: 1.1.1
   repository: "file://../ska-mid-cbf-mcs"
-# - name: ska-mid-cbf-tmleafnode
-#   version: 1.1.1
-#   repository: "file://../ska-mid-cbf-tmleafnode"
-# - name: ska-mid-cbf-engineering-console
-#   version: 1.0.1
-#   repository: https://artefact.skao.int/repository/helm-internal
-#   condition: ska-mid-cbf-engineering-console.enabled
+- name: ska-mid-cbf-tmleafnode
+  version: 1.1.1
+  repository: "file://../ska-mid-cbf-tmleafnode"
+- name: ska-mid-cbf-engineering-console
+  version: 1.0.1
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-mid-cbf-engineering-console.enabled
 - name: ska-taranta
   version: 1.0.29
   repository: https://artefact.skao.int/repository/helm-internal
