@@ -278,7 +278,7 @@ def calculate_dish_sample_rate(
 
 
 def get_coarse_channels(
-    start_freq: int, end_freq: int, wb_shift: int
+    start_freq: int, end_freq: int, wb_shift: int, fsp_mode=FspModes.CORR
 ) -> list[int]:
     """
     Determine the coarse frequency Slices that contain the processing region
@@ -290,6 +290,8 @@ def get_coarse_channels(
 
     :raise ValueError: if start_freq is greater than end_freq
     """
+    if fsp_mode == FspModes.PST:
+        return[3]
     if start_freq > end_freq:
         raise ValueError("start_freq must be <= end_freq")
 
@@ -301,6 +303,7 @@ def get_coarse_channels(
         (end_freq - wb_shift + const.HALF_FS_BW) / const.FS_BW
     )
     coarse_channels = list(range(coarse_channel_low, coarse_channel_high + 1))
+    print(coarse_channels)
     return coarse_channels
 
 

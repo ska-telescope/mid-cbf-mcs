@@ -48,11 +48,13 @@ class FspScanConfigurationBuilderPst(FspScanConfigurationBuilder):
             frequency_band,
         )
 
+    # TODO: Add timing beams
     def _fsp_config_from_processing_region(
         self: FspScanConfigurationBuilder,
         processing_region_config: dict,
     ) -> list[dict]:
-        """Create a list of FSP configurations for a given processing region config
+        """
+        Create a list of FSP configurations for a given processing region config
 
         :param processing_region_config: The processing region configuration, see telescope model for details
         :param wideband_shift: The wideband shift to apply to the region (Hz)
@@ -64,7 +66,6 @@ class FspScanConfigurationBuilderPst(FspScanConfigurationBuilder):
         # sort the ids, just in case they are given in non-ascending order
         fsp_ids: list[int] = processing_region_config["fsp_ids"]
         fsp_ids.sort()
-
         timing_beams = processing_region_config["timing_beams"]
         dish_ids = []
         for timing_beam in timing_beams:
@@ -96,6 +97,7 @@ class FspScanConfigurationBuilderPst(FspScanConfigurationBuilder):
                 k_value=self._dish_utils.dish_id_to_k[dish_id],
                 wideband_shift=self._wideband_shift,
                 band_name=self._frequency_band,
+                fsp_mode=self._function_mode
             )
             vcc_to_fs_infos[
                 self._dish_utils.dish_id_to_vcc_id[dish_id]
@@ -113,29 +115,29 @@ class FspScanConfigurationBuilderPst(FspScanConfigurationBuilder):
         # Adjust the start_channel_ids based on
         start_channel_ids = self._process_start_channel_id(
             calculated_fsp_infos,
-            processing_region_config["sdp_start_channel_id"],
+            processing_region_config["pst_start_channel_id"],
             processing_region_config["channel_count"],
         )
+        
         # Split up the PR output ports according to the start channel ids of the FSPs.
         # See the comments in _process_output_mappings() for more details
-        output_mappings = {}
-
-        # output_port and output_host are optional parameters
-        if "output_port" in processing_region_config:
-            output_mappings["output_port"] = processing_region_config[
-                "output_port"
-            ]
-
-        if "output_host" in processing_region_config:
-            output_mappings["output_host"] = processing_region_config[
-                "output_host"
-            ]
-
-        # No need to check for output_link_map as at least one is required
-        # (as of Scan Configuration 5.0)
-        output_mappings["output_link_map"] = processing_region_config[
-            "output_link_map"
-        ]
+        # Unlike Corr PR, all three fields are requried for PST PR
+        output_mappings = {
+                            "output_port":[],
+                            "output_host":[],
+                            "output_link_map":[]
+                            }
+        
+        for timing_beam in timing_beams:
+            output_mappings["output_port"].extend(
+                timing_beam["output_port"]
+            )
+            output_mappings["output_host"].extend(
+                timing_beam["output_host"]
+            )
+            output_mappings["output_link_map"].extend(
+                timing_beam["output_link_map"]
+            )
 
         processed_output_mappings = self._process_output_mappings(
             calculated_fsp_infos,
@@ -158,11 +160,9 @@ class FspScanConfigurationBuilderPst(FspScanConfigurationBuilder):
             fsp_config["frequency_slice_id"] = calculated_fsp_infos[fsp_id][
                 "fs_id"
             ]
-            fsp_config["integration_factor"] = processing_region_config[
-                "integration_factor"
-            ]
-            fsp_config["receptors"] = copy.copy(dish_ids)
-
+            
+            # For now, copy all the timing beams for a PR to all FSP Config
+            fsp_config["timing_beams"] = timing_beams
             # The 0-14880 channel number where we want to start processing in
             # the FS, which is the fsp_start_ch value
             fsp_config["fs_start_channel_offset"] = calculated_fsp_infos[
@@ -173,13 +173,15 @@ class FspScanConfigurationBuilderPst(FspScanConfigurationBuilder):
                 "vcc_id_to_rdt_freq_shifts"
             ] = vcc_id_to_rdt_freq_shifts[fsp_id]
 
+            # TODO:
+            # Unlike Corr where each PR contains as set of FSP and the output mappings
+            # PST has timing beams that dictations the output mappings
+            # FSP App (HPS) does not use the timing beams (nor does any output mappings)
+            # This is really required for the Visibiltiy transport for MCS.
+            # For now, adding the output mappings similar to what we do for Corr
             fsp_config["output_link_map"] = fsp_to_output_link_map[fsp_id]
-
-            # Optional values:
-            if "output_host" in processing_region_config:
-                fsp_config["output_host"] = fsp_to_output_host_map[fsp_id]
-            if "output_port" in processing_region_config:
-                fsp_config["output_port"] = fsp_to_output_port_map[fsp_id]
+            fsp_config["output_host"] = fsp_to_output_host_map[fsp_id]
+            fsp_config["output_port"] = fsp_to_output_port_map[fsp_id]
 
             fsp_configs.append(fsp_config)
 

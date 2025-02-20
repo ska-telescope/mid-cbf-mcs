@@ -336,6 +336,10 @@ class FspScanConfigurationBuilder:
         if "output_port" in output_mappings:
             # Split up the PR output ports according to the start channel ids of
             # the FSPs.
+            # 
+            # See note in _process_start_channel_id() for explainations on
+            # how the channels are split
+            # 
             # We use the array of start_channel_ids, and split up the
             # processing region output_port at the given start_channel_ids,
             #
