@@ -85,7 +85,9 @@ fspPstTrl: "mid_csp_cbf/fspPstSubarray" # TODO: "mid-cbf/mcs-fsp-pst-subarray/01
 # The amount of each resource type to deploy
 numSubarray: 1
 numVcc: 8
+numVccPerPod: 6
 numFsp: 4
+numFspPerPod: 2
 
 # Default timeout in seconds for a given device to apply to its internal proxies
 controllerTimeout: 60
@@ -96,22 +98,22 @@ slimLinkTimeout: 10
 
 # Device server configuration, generated from YAML files in data/ directory
 deviceServers:
-  cbfcontroller:
+  mid-cbf-controller:
     enabled: true
     file: "data/cbfcontroller.yaml"
 
-  cbfsubarray:
+  mid-cbf-subarray:
     enabled: true
     file: "data/cbfsubarray.yaml"
 
-  vcc:
+  mid-cbf-vcc-multi:
     enabled: true
     file: "data/vcc.yaml"
   
-  fsp:
+  mid-cbf-fsp-multi:
     enabled: true
     file: "data/fsp.yaml"
-  
+
   powerswitch:
     file: "data/powerswitch.yaml"
 

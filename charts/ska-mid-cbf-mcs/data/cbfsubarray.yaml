@@ -1,10 +1,14 @@
-name: cbfsubarray
+name: mid-cbf-subarray
 function: cbf-subarray-observation
 domain: subarray
 command: "CbfSubarray"
-instances: ["cbfsubarray"]
+instances:
+{{- $numSubarray := (add1 $.Values.numSubarray | int) }}
+{{- range untilStep 1 $numSubarray 1 }}
+- {{ printf "%02d" . | quote }}
+{{- end }}
 depends_on:
-  - device: sys/database/2
+  - device: "sys/database/2"
 livenessProbe:
 {{ toYaml $.Values.livenessProbe | indent 2 }}
 readinessProbe:
@@ -18,53 +22,53 @@ image:
 {{- end }}
 server:
   name: "CbfSubarray"
-  instances:
-  - name: "cbfsubarray"
+  instances: # deploy 1 subarray device per pod
+  {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
+  {{- range untilStep 1 $numSubarray 1 }}
+  {{- $subarrayId := . }}
+  - name: {{ printf "%02d" $subarrayId | quote}}
     classes:
     - name: "CbfSubarray"
       devices:
-      {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
-      {{- range untilStep 1 $numSubarray 1 }}
-      {{- $subarray_id := .}}
-      - name: {{ printf "%s_%02d" $.Values.subarrayTrl $subarray_id }}
+      - name: {{ printf "%s_%02d" $.Values.subarrayTrl $subarrayId | quote }}
         properties:
           - name: "DeviceID"
             values:
-            - {{ quote $subarray_id }}
+            - {{ quote $subarrayId }}
           - name: "CbfControllerAddress"
             values:
-            - {{ $.Values.controllerTrl }}
+            - {{ quote $.Values.controllerTrl }}
           - name: "FSP"
             values:
             {{- $numFsp := (add1 $.Values.numFsp | int) }}
             {{- range untilStep 1 $numFsp 1 }}
-            - {{ printf "%s/%02d" $.Values.fspTrl . }}
+            - {{ printf "%s/%02d" $.Values.fspTrl . | quote }}
             {{- end }}
           - name: "FspCorrSubarray"
             values:
             {{- $numFsp := (add1 $.Values.numFsp | int) }}
             {{- range untilStep 1 $numFsp 1 }}
-            - {{ printf "%s/%02d_%02d" $.Values.fspCorrTrl . $subarray_id}}
+            - {{ printf "%s/%02d_%02d" $.Values.fspCorrTrl . $subarrayId | quote }}
             {{- end }}
           - name: "FspPstSubarray"
             values:
             {{- $numFsp := (add1 $.Values.numFsp | int) }}
             {{- range untilStep 1 $numFsp 1 }}
-            - {{ printf "%s/%02d_%02d" $.Values.fspPstTrl . $subarray_id}}
+            - {{ printf "%s/%02d_%02d" $.Values.fspPstTrl . $subarrayId | quote }}
             {{- end }}
           - name: "VCC"
             values:
             {{- $numVcc := (add1 $.Values.numVcc | int) }}
             {{- range untilStep 1 $numVcc 1 }}
-            - {{ printf "%s/%03d" $.Values.vccTrl . }}
+            - {{ printf "%s/%03d" $.Values.vccTrl . | quote }}
             {{- end }}
           - name: "TalonBoard"
             values:
             {{- $numVcc := (add1 $.Values.numVcc | int) }}
             {{- range untilStep 1 $numVcc 1 }}
-            - {{ printf "mid_csp_cbf/talon_board/%03d" . }} # TODO: remove for AA2
+            - {{ printf "mid_csp_cbf/talon_board/%03d" . | quote }} # TODO: remove for AA2
             {{- end }}
           - name: "VisSLIM"
             values:
             - "mid_csp_cbf/slim/slim-vis" # TODO: remove for AA2
-      {{- end}}
+  {{- end}} # range numSubarray

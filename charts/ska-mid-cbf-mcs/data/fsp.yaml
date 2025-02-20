@@ -1,10 +1,19 @@
-name: fsp
+name: mid-cbf-fsp-multi
 function: fsp-processing
 domain: signal-processing
 command: "FspMulti"
-instances: ["fsp"]
+instances:
+{{- $numFsp := (int $.Values.numFsp) }}
+{{- $numFspPerPod := (int $.Values.numFspPerPod) }}
+{{- $numPod := (div $numFsp $numFspPerPod | add1 | int) }}
+{{- if mod $numFsp $numFspPerPod }}
+{{- $numPod = (add1 $numPod | int) }}
+{{- end }}
+{{- range untilStep 1 $numPod 1 }}
+- {{ printf "%02d" . | quote }}
+{{- end }}
 depends_on:
-  - device: sys/database/2
+  - device: "sys/database/2"
 livenessProbe:
 {{ toYaml $.Values.livenessProbe | indent 2 }}
 readinessProbe:
@@ -18,70 +27,76 @@ image:
 {{- end }}
 server:
   name: "FspMulti"
-  instances:
-  - name: "fsp"
+  instances: # deploy numFspPerPod FSP and FSP function mode devices per pod
+  {{- $fspId := 0 }}
+  {{- $fspCorrId := 0 }}
+  {{- $fspPstId := 0 }}
+  {{- range untilStep 1 $numPod 1 }}
+  - name: {{ printf "%02d" . | quote }}
     classes:
     - name: "Fsp"
       devices:
-      {{- $numFsp := (add1 $.Values.numFsp | int) }}
-      {{- range untilStep 1 $numFsp 1 }}
-      {{- $fsp_id := .}}
-      - name: {{ printf "%s/%02d" $.Values.fspTrl $fsp_id }}
+      {{- range until $numFspPerPod }}
+      {{- $fspId = add1 $fspId }}
+      {{- if le $fspId $numFsp }}
+      - name: {{ printf "%s/%02d" $.Values.fspTrl $fspId | quote }}
         properties:
           - name: "DeviceID"
             values:
-            - {{ quote $fsp_id }}
+            - {{ quote $fspId }}
           - name: "FspCorrSubarray"
             values:
             {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
             {{- range untilStep 1 $numSubarray 1 }}
-            - {{ printf "%s/%02d_%02d" $.Values.fspCorrTrl $fsp_id .}}
+            - {{ printf "%s/%02d_%02d" $.Values.fspCorrTrl $fspId . | quote }}
             {{- end }}
           - name: "FspPstSubarray"
             values:
             {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
             {{- range untilStep 1 $numSubarray 1 }}
-            - {{ printf "%s/%02d_%02d" $.Values.fspPstTrl $fsp_id .}}
+            - {{ printf "%s/%02d_%02d" $.Values.fspPstTrl $fspId . | quote }}
             {{- end }}
           - name: "HpsFspControllerAddress"
             values:
-            - {{ printf "talondx-%03d/fsp-app/fsp-controller" $fsp_id }}
-      {{- end }}
-
+            - {{ printf "talondx-%03d/fsp-app/fsp-controller" $fspId | quote }}
+      {{- end }} # if fspId <= numFsp
+      {{- end }} # range numFspPerPod
     - name: "FspCorrSubarray"
       devices:
-      {{- $numFsp := (add1 $.Values.numFsp | int) }}
-      {{- range untilStep 1 $numFsp 1 }}
-      {{- $fsp_id := .}}
+      {{- range until $numFspPerPod }}
+      {{- $fspCorrId = add1 $fspCorrId }}
+      {{- if le $fspCorrId $numFsp }}
       {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
       {{- range untilStep 1 $numSubarray 1 }}
-      {{- $subarray_id := .}}
-      - name: {{ printf "%s/%02d_%02d" $.Values.fspCorrTrl $fsp_id $subarray_id}}
+      {{- $subarrayId := .}}
+      - name: {{ printf "%s/%02d_%02d" $.Values.fspCorrTrl $fspCorrId $subarrayId | quote }}
         properties:
           - name: "HpsFspCorrControllerAddress"
             values:
-            - {{ printf "talondx-%03d/fsp-app/fsp-corr-controller" $fsp_id }}
+            - {{ printf "talondx-%03d/fsp-app/fsp-corr-controller" $fspCorrId | quote }}
           - name: "LRCTimeout"
             values:
             - {{ quote $.Values.fspTimeout }}
-      {{- end }}
-      {{- end }}
-    
+      {{- end }} # range numSubarray
+      {{- end }} # if fspId <= numFsp
+      {{- end }} # range numFspPerPod
     - name: "FspPstSubarray"
       devices:
-      {{- $numFsp := (add1 $.Values.numFsp | int) }}
-      {{- range untilStep 1 $numFsp 1 }}
-      {{- $fsp_id := .}}
+      {{- range until $numFspPerPod }}
+      {{- $fspPstId = add1 $fspPstId }}
+      {{- if le $fspPstId $numFsp }}
       {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
       {{- range untilStep 1 $numSubarray 1 }}
-      {{- $subarray_id := .}}
-      - name: {{ printf "%s/%02d_%02d" $.Values.fspPstTrl $fsp_id $subarray_id}}
+      {{- $subarrayId := .}}
+      - name: {{ printf "%s/%02d_%02d" $.Values.fspPstTrl $fspPstId $subarrayId | quote }}
         properties:
           - name: "HpsFspPstControllerAddress"
             values:
-            - {{ printf "talondx-%03d/fsp-app/fsp-pst-controller" $fsp_id }}
+            - {{ printf "talondx-%03d/fsp-app/fsp-pst-controller" $fspPstId | quote }}
           - name: "LRCTimeout"
             values:
             - {{ quote $.Values.fspTimeout }}
-      {{- end }}
-      {{- end }}
+      {{- end }} # range numSubarray
+      {{- end }} # if fspId <= numFsp
+      {{- end }} # range numFspPerPod
+  {{- end }} # range numPod
