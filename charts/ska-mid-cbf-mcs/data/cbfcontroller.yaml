@@ -1,8 +1,8 @@
-name: cbfcontroller
+name: mid-cbf-controller
 function: cbf-central-control
 domain: csp-monitoring
 command: "CbfController"
-instances: ["controller"]
+instances: ["0"]
 depends_on:
   - device: sys/database/2
 livenessProbe:
@@ -19,7 +19,7 @@ image:
 server:
   name: "CbfController"
   instances:
-  - name: "controller"
+  - name: "0"
     classes:
     - name: "CbfController"
       devices:

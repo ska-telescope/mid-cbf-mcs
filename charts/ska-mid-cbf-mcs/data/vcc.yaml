@@ -1,10 +1,19 @@
-name: vcc
+name: mid-cbf-vcc-multi
 function: coarse-channelisation
 domain: sensing
 command: "Vcc"
-instances: ["vcc"]
+instances:
+{{- $numVcc := (int $.Values.numVcc) }}
+{{- $numVccPerPod := (int $.Values.numVccPerPod) }}
+{{- $numPod := (div $numVcc $numVccPerPod | add1 | int) }}
+{{- if mod $numVcc $numVccPerPod }}
+{{- $numPod = (add1 $numPod | int) }}
+{{- end }}
+{{- range untilStep 1 $numPod 1 }}
+- {{ printf "%02d" . | quote }}
+{{- end }}
 depends_on:
-  - device: sys/database/2
+  - device: "sys/database/2"
 livenessProbe:
 {{ toYaml $.Values.livenessProbe | indent 2 }}
 readinessProbe:
@@ -18,38 +27,44 @@ image:
 {{- end }}
 server:
   name: "Vcc"
-  instances:
-  - name: "vcc"
+  instances: # deploy numVccPerPod VCC devices per pod
+  {{- $vccId := 0 }}
+  {{- $vccTrl := $.Values.vccTrl }}
+  {{- $vccTimeout := $.Values.vccTimeout }}
+  {{- range untilStep 1 $numPod 1 }}
+  - name: {{ printf "%02d" . | quote }}
     classes:
     - name: "Vcc"
       devices:
-      {{- $numVcc := (add1 $.Values.numVcc | int) }}
-      {{- range untilStep 1 $numVcc 1 }}
-      {{- $vcc_id := .}}
-      - name: {{ printf "%s/%03d" $.Values.vccTrl $vcc_id }}
+      {{- range until $numVccPerPod }}
+      {{- $vccId = add1 $vccId }}
+      {{- if le $vccId $numVcc }}
+      - name: {{ printf "%s/%03d" $vccTrl $vccId | quote }}
         properties:
           - name: "DeviceID"
             values:
-            - {{ quote $vcc_id }}
+            - {{ quote $vccId }}
           - name: "TalonLRUAddress"
             values:
-            - {{ printf "mid_csp_cbf/talon_lru/%03d" (div $vcc_id 2 | int) }}
+            - {{ printf "mid_csp_cbf/talon_lru/%03d" (div $vccId 2 | add1 | int) | quote }}
           - name: "VccControllerAddress"
             values:
-            - {{ printf "talondx-%03d/vcc-app/vcc-controller" $vcc_id }}
+            - {{ printf "talondx-%03d/vcc-app/vcc-controller" $vccId | quote }}
           - name: "Band1And2Address"
             values:
-            - {{ printf "talondx-%03d/vcc-app/vcc-band-1-and-2" $vcc_id }}
+            - {{ printf "talondx-%03d/vcc-app/vcc-band-1-and-2" $vccId | quote }}
           - name: "Band3Address"
             values:
-            - {{ printf "talondx-%03d/vcc-app/vcc-band-3" $vcc_id }}
+            - {{ printf "talondx-%03d/vcc-app/vcc-band-3" $vccId | quote }}
           - name: "Band4Address"
             values:
-            - {{ printf "talondx-%03d/vcc-app/vcc-band-4" $vcc_id }}
+            - {{ printf "talondx-%03d/vcc-app/vcc-band-4" $vccId | quote }}
           - name: "Band5Address"
             values:
-            - {{ printf "talondx-%03d/vcc-app/vcc-band-5" $vcc_id }}
+            - {{ printf "talondx-%03d/vcc-app/vcc-band-5" $vccId | quote }}
           - name: "LRCTimeout"
             values:
-            - {{ quote $.Values.vccTimeout }}
-      {{- end }}
+            - {{ quote $vccTimeout }}
+      {{- end }} # if vccId <= numVcc
+      {{- end }} # range numVccPerPod
+  {{- end }} # range numPod
