@@ -67,6 +67,27 @@ class Const:
         self.FINE_CHANNEL_WIDTH = 13440
         self.K_VALUE_RANGE = (1, 2222)
 
+        # Mappings for PST Processing Region Start Frequencies to FS IDs to be used
+        # NOTE: Temp for AA 1.0, where the bandwidth required for a PST FS is greater
+        # than ones requested by Corr.  This will cause the existing algo to calculate
+        # partition and coarse channels selection to fail.
+        # For AA 1.0, there is a strict restriction that a PST PR must have only 1 FSP
+        # and only certain start frequencies are allowed, hence partitioning for each FSP
+        # should not be required
+        self.PST_FS_ID_MAPPING = {
+            -99456000: 0,
+            98703360: 1,
+            296862720: 2,
+            495075840: 3,
+            693235200: 4,
+            891448320: 5,
+            1089607680: 6,
+            1287767040: 7,
+            1485980160: 8,
+            1684139520: 9,
+            1882352640: 10,
+        }
+
 
 const = Const()
 
@@ -188,11 +209,11 @@ def scan_configuration_supported_value(parameter: str) -> any:
                 "channel_count": {
                     "range": (3700, 3700),
                     "multiple": 1,
-                    "max_entry": 1,
                 },
                 "output_host": {
                     "difference_multiple": 185,
                     "max_channel_per": 3700,
+                    "max_entry": 1,
                 },
                 "output_port": {
                     "increment": 185,
@@ -203,6 +224,7 @@ def scan_configuration_supported_value(parameter: str) -> any:
                     "difference_multiple": 185,
                     "max_channel_per": 3700,
                     "values": [1],
+                    "max_entry": 1,
                 },
                 "max_timing_beams": 1,
                 "timing_beam_id_supported_range": (1, 16),
@@ -291,7 +313,7 @@ def get_coarse_channels(
     :raise ValueError: if start_freq is greater than end_freq
     """
     if fsp_mode == FspModes.PST:
-        return[3]
+        return [const.PST_FS_ID_MAPPING[start_freq]]
     if start_freq > end_freq:
         raise ValueError("start_freq must be <= end_freq")
 
