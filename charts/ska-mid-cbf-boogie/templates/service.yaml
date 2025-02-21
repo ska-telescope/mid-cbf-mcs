@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: boogie-container
+spec:
+  selector:
+    app: boogie
+  ports: 
+    - protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.containerPort }}

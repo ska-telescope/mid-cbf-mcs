@@ -109,7 +109,7 @@ deviceServers:
   mid-cbf-vcc-multi:
     enabled: true
     file: "data/vcc.yaml"
-  
+
   mid-cbf-fsp-multi:
     enabled: true
     file: "data/fsp.yaml"

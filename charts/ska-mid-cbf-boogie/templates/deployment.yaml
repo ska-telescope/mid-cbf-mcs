@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: boogie-container
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: boogie
+  template:
+    metadata:
+      labels:
+        app: boogie
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}/{{ .Values.image.image }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          env:
+            - name: TANGO_HOST
+              value: {{ .Values.boogie.tango_host }}
+          command: ["tail", "-f", "/dev/null"]
