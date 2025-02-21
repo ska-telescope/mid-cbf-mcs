@@ -1,0 +1,34 @@
+{
+    "interface": "https://schema.skao.int/ska-csp-configurescan/5.0",
+    "common": {
+        "config_id": "sbi-mvp01-20200325-00001-science_A",
+        "frequency_band": "2",
+        "subarray_id": 1,
+        "eb_id": "eb-m001-20230712-56789"
+    },
+    "pst": {},
+    "transaction_id": "txn-....-00001",
+    "midcbf": {
+        "pst_bf": {
+            "processing_regions": [{
+                "fsp_ids": [5],
+                "start_freq": 1089607680,
+                "channel_count": 3700,
+                "pst_start_channel_id": 20268,
+                "timing_beams": [{
+                    "timing_beam_id": 1,
+                    "receptors": ["SKA081"],
+                    "output_link_map": [
+                        [20268, 1]
+                    ],
+                    "output_host": [
+                        [20268, "192.168.178.26"]
+                    ],
+                    "output_port": [
+                        [20268, 20000]
+                    ]
+                }]
+            }]
+        }
+    }
+}

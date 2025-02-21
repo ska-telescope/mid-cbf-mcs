@@ -649,7 +649,7 @@ class SubarrayScanConfigurationValidator:
         )[fsp_mode]
 
         support_start_frequency_by_band: dict = pst_pr_supported_value[
-            "pst_pr_supported_value"
+            "support_start_frequency_by_band"
         ]
         if self.frequency_band in support_start_frequency_by_band:
             if (
@@ -678,9 +678,12 @@ class SubarrayScanConfigurationValidator:
                 f"{len(timing_beams)} timing beams given",
             )
             return (False, msg)
-
+        elif len(timing_beams) == 0:
+            msg = "At least one timing beam must be given for a PST Processgion Region, none was given"
+            return (False, msg)
+            
+        channel_count = int(processing_region["channel_count"])
         for timing_beam in timing_beams:
-            channel_count = int(timing_beam["channel_count"])
             output_host = timing_beam["output_host"]
             output_port = timing_beam["output_port"]
             timing_beam_id = timing_beam["timing_beam_id"]
@@ -746,18 +749,18 @@ class SubarrayScanConfigurationValidator:
             if success is False:
                 return (False, msg)
 
-            success, msg = self._validate_receptors(processing_region)
+            success, msg = self._validate_receptors(timing_beam)
             if success is False:
                 return (False, msg)
 
             success, msg = self._validate_output_link_map(
-                processing_region["output_link_map"]
+                timing_beam["output_link_map"]
             )
             if success is False:
                 return (False, msg)
 
-        msg = "MCS Current Does not Support PST Configurations, Skipping"
-        self.logger.warning(msg)
+        msg = "FSP PST Validation Complete"
+        self.logger.debug(msg)
         return (True, msg)
 
     def _validate_max_channel_to_same_port_per_host(
@@ -896,6 +899,7 @@ class SubarrayScanConfigurationValidator:
         start_freq: int,
         channel_width: int,
         channel_count: int,
+        fsp_mode: FspModes,
     ) -> tuple[bool, str]:
         """
         Validates that the Processing Region contains enough FSP to process the
@@ -905,6 +909,7 @@ class SubarrayScanConfigurationValidator:
         :param start_freq: The center start frequency given for Processing Region
         :param channel_width: The channel width given for the Processing Region
         :param channel_count: The channel count request for the Process Region
+        :param fsp_mode: The FSP Function Mode requested for the processing region
 
         :return: tuple with:
                     bool to indicate if the there is enough fsp or not
@@ -913,7 +918,9 @@ class SubarrayScanConfigurationValidator:
         """
         # check if we have enough FSP for the given Frequency Band
         end_freq = get_end_frequency(start_freq, channel_width, channel_count)
-        coarse_channels = get_coarse_channels(start_freq, end_freq, wb_shift=0)
+        coarse_channels = get_coarse_channels(
+            start_freq, end_freq, wb_shift=0, fsp_mode=fsp_mode
+        )
 
         if len(fsp_given) < len(coarse_channels):
             msg = (
@@ -940,7 +947,9 @@ class SubarrayScanConfigurationValidator:
 
     # Update to include start_freq limitations for PST
     def _validate_processing_region_frequency(
-        self: SubarrayScanConfigurationValidator, processing_region: dict
+        self: SubarrayScanConfigurationValidator,
+        processing_region: dict,
+        fsp_mode: FspModes,
     ) -> tuple[bool, str]:
         """
         Validates that the values found in a Processing Region is within the
@@ -959,6 +968,33 @@ class SubarrayScanConfigurationValidator:
         fsp_given = processing_region["fsp_ids"]
         start_freq = int(processing_region["start_freq"])
 
+        pr_supported_value = scan_configuration_supported_value(
+            "processing_region"
+        )[fsp_mode]
+
+        if "support_start_frequency_by_band" in pr_supported_value:
+            support_start_frequency_by_band: dict = pr_supported_value[
+                "support_start_frequency_by_band"
+            ]
+            if self.frequency_band in support_start_frequency_by_band:
+                if (
+                    start_freq
+                    not in support_start_frequency_by_band[self.frequency_band]
+                ):
+                    msg = (
+                        "The start frequency given for the processing region ",
+                        f"is not support by MCS for the given band: {self.frequency_band}. ",
+                        f"Start frequency given: {start_freq}",
+                    )
+                    return (False, msg)
+            else:
+                supported_band = list(support_start_frequency_by_band.keys())
+                msg = (
+                    "MCS currently only support the follow frequency band ",
+                    f"for PST processing regions: {supported_band}",
+                )
+                return (False, msg)
+
         # Check that the Bandwidth specified is within the allowable range
         success, msg = self._validate_processing_region_within_bandwidth(
             start_freq, channel_width, channel_count
@@ -968,7 +1004,7 @@ class SubarrayScanConfigurationValidator:
 
         # Check that we have enough FSP to cover the required Bandwidth requested
         success, msg = self._validate_fsp_requirement_by_given_bandwidth(
-            fsp_given, start_freq, channel_width, channel_count
+            fsp_given, start_freq, channel_width, channel_count, fsp_mode
         )
         if success is False:
             return (False, msg)
@@ -1056,6 +1092,8 @@ class SubarrayScanConfigurationValidator:
                 f"for {map_type} in {fsp_mode} processing region. ",
                 f"Number of entries given: {len(map_pairs)}",
             )
+            self.logger.error(msg)
+            return (False, msg)
 
         # specific check for output_link_map. Remove if the restriction is changed
         if map_type == "output_link_map":
@@ -1159,7 +1197,7 @@ class SubarrayScanConfigurationValidator:
             mode_supported_values = scan_configuration_supported_value(
                 "processing_region"
             )[function_mode_value]
-            # As of Scan Configuration 6.0: There is only one valid channel width for PST
+            # As of Scan Configuration 5.0: There is only one valid channel width for PST
             # and it is not a field for timing beams.
             if function_mode_value == FspModes.PST:
                 support_channel_width = list(
@@ -1187,7 +1225,7 @@ class SubarrayScanConfigurationValidator:
                 return (False, msg)
 
             success, msg = self._validate_processing_region_frequency(
-                processing_region
+                processing_region, FspModes(function_mode_value)
             )
             if success is False:
                 return (False, msg)

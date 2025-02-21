@@ -49,7 +49,7 @@ class TestFspScanConfigurationBuilder:
 
         with pytest.raises(ValueError):
             fsp_builder(
-                function_configuration= pst_config,
+                function_configuration=pst_config,
                 dish_utils=dish_util,
                 subarray_dish_ids=subarray_dish_ids,
                 wideband_shift=0,
@@ -60,14 +60,16 @@ class TestFspScanConfigurationBuilder:
         self: TestFspScanConfigurationBuilder,
     ):
         # Setup configuration
-        with open(json_file_path + "ConfigureScan_basic_PST.json") as file:
+        with open(json_file_path + "ConfigureScan_basic_PST_band1.json") as file:
             json_str = file.read().replace("\n", "")
             full_configuration = json.loads(json_str)
 
         pst_config = full_configuration["midcbf"]["pst_bf"]
 
         # add bad receptor
-        pst_config["processing_regions"][0]["timing_beams"][0]["receptors"] = ["SKA999"]
+        pst_config["processing_regions"][0]["timing_beams"][0]["receptors"] = [
+            "SKA999"
+        ]
 
         # Setup subarray & dish_utils
         with open(json_file_path + "sys_param_8_boards.json") as file:
@@ -90,7 +92,7 @@ class TestFspScanConfigurationBuilder:
     @pytest.mark.parametrize(
         "config_name",
         [
-            "ConfigureScan_basic_PST.json",
+            "ConfigureScan_basic_PST_band1.json",
             # "ConfigureScan_4_1_CORR.json",
             # "ConfigureScan_AA4_values.json",
             # "ConfigureScan_CORR_2_non_overlapping_band_2_PRs.json",
@@ -162,15 +164,13 @@ class TestFspScanConfigurationBuilder:
 
             assert fsp["fsp_id"] in all_fsp_ids
             all_fsp_ids.remove(fsp["fsp_id"])
-            
+
         # Assert that all PR-fsps_ids got configured
         assert len(fsp_to_pr) == len(
             pst_config["processing_regions"]
         ), "There are PRs that didn't get any configured FSP"
 
-        for pr_index, pr_config in enumerate(
-            pst_config["processing_regions"]
-        ):
+        for pr_index, pr_config in enumerate(pst_config["processing_regions"]):
             # Assert all ports accounted for in configured FSP's
             if "output_port" in pr_config:
                 expected_output_ports = copy.deepcopy(pr_config["output_port"])
@@ -240,9 +240,19 @@ class TestFspScanConfigurationBuilder:
 
                 # assert the receptors are set if they are set in the PR, else
                 # they are the subarray receptors
-                for timing_beam_index, timing_beam in enumerate(fsp_config["timing_beams"]):
+                for timing_beam_index, timing_beam in enumerate(
+                    fsp_config["timing_beams"]
+                ):
                     assert "receptors" in timing_beam
-                    if "receptors" in pr_config["timing_beams"][timing_beam_index]:
-                        assert timing_beam["receptors"] == pr_config["timing_beams"][timing_beam_index]["receptors"]
+                    if (
+                        "receptors"
+                        in pr_config["timing_beams"][timing_beam_index]
+                    ):
+                        assert (
+                            timing_beam["receptors"]
+                            == pr_config["timing_beams"][timing_beam_index][
+                                "receptors"
+                            ]
+                        )
                     else:
                         assert timing_beam["receptors"] == subarray_dish_ids

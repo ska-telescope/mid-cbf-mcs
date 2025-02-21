@@ -152,7 +152,7 @@ def partition_spectrum_to_frequency_slices(
     k_value: int,
     wideband_shift: int,
     band_name: str,
-    fsp_mode = FspModes.CORR
+    fsp_mode=FspModes.CORR,
 ) -> dict:
     """
     determine the channelization information based on the calculations in
@@ -219,7 +219,10 @@ def partition_spectrum_to_frequency_slices(
 
     end_freq = ((channel_count * channel_width) + start_freq) - channel_width
     coarse_channels = get_coarse_channels(
-        start_freq=start_freq, end_freq=end_freq, wb_shift=wideband_shift,fsp_mode=fsp_mode
+        start_freq=start_freq,
+        end_freq=end_freq,
+        wb_shift=wideband_shift,
+        fsp_mode=fsp_mode,
     )
     if len(fsp_ids) != len(coarse_channels):
         raise ValueError(

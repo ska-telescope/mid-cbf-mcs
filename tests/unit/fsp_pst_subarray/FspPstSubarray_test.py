@@ -355,7 +355,7 @@ class TestFspPstSubarray:
         dut_lastHpsSCJson_1 = json.loads(
             device_under_test.lastHpsScanConfiguration
         )
-        assert dut_lastHpsSCJson_1["configure_scan"]["bf_vcc_ids"] == [1, 4]
+        assert dut_lastHpsSCJson_1["configure_scan"]["pst_vcc_id"] == [1, 4]
         assert dut_lastHpsSCJson_1["configure_scan"]["frequency_slice_id"] == 1
         assert dut_lastHpsSCJson_1["configure_scan"]["timing_beams"][0][
             "output_port"
@@ -365,7 +365,7 @@ class TestFspPstSubarray:
         command_dict = {}
 
         # Change some values in the Scan Configuration, to simulate loading a new configuration
-        scan_config_json["bf_vcc_ids"] = [2]
+        scan_config_json["pst_vcc_id"] = [2]
         scan_config_json["frequency_slice_id"] = 2
         scan_config_json["timing_beams"][0]["output_port"] = [
             [0, 1000],
@@ -424,7 +424,7 @@ class TestFspPstSubarray:
         dut_lastHpsSCJson_2 = json.loads(
             device_under_test.lastHpsScanConfiguration
         )
-        assert dut_lastHpsSCJson_2["configure_scan"]["bf_vcc_ids"] == [2]
+        assert dut_lastHpsSCJson_2["configure_scan"]["pst_vcc_id"] == [2]
         assert dut_lastHpsSCJson_2["configure_scan"]["frequency_slice_id"] == 2
         assert dut_lastHpsSCJson_2["configure_scan"]["timing_beams"][0][
             "output_port"

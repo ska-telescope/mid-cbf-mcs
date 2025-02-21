@@ -97,7 +97,7 @@ class FspScanConfigurationBuilderPst(FspScanConfigurationBuilder):
                 k_value=self._dish_utils.dish_id_to_k[dish_id],
                 wideband_shift=self._wideband_shift,
                 band_name=self._frequency_band,
-                fsp_mode=self._function_mode
+                fsp_mode=self._function_mode,
             )
             vcc_to_fs_infos[
                 self._dish_utils.dish_id_to_vcc_id[dish_id]
@@ -118,23 +118,19 @@ class FspScanConfigurationBuilderPst(FspScanConfigurationBuilder):
             processing_region_config["pst_start_channel_id"],
             processing_region_config["channel_count"],
         )
-        
+
         # Split up the PR output ports according to the start channel ids of the FSPs.
         # See the comments in _process_output_mappings() for more details
         # Unlike Corr PR, all three fields are requried for PST PR
         output_mappings = {
-                            "output_port":[],
-                            "output_host":[],
-                            "output_link_map":[]
-                            }
-        
+            "output_port": [],
+            "output_host": [],
+            "output_link_map": [],
+        }
+
         for timing_beam in timing_beams:
-            output_mappings["output_port"].extend(
-                timing_beam["output_port"]
-            )
-            output_mappings["output_host"].extend(
-                timing_beam["output_host"]
-            )
+            output_mappings["output_port"].extend(timing_beam["output_port"])
+            output_mappings["output_host"].extend(timing_beam["output_host"])
             output_mappings["output_link_map"].extend(
                 timing_beam["output_link_map"]
             )
@@ -160,7 +156,7 @@ class FspScanConfigurationBuilderPst(FspScanConfigurationBuilder):
             fsp_config["frequency_slice_id"] = calculated_fsp_infos[fsp_id][
                 "fs_id"
             ]
-            
+
             # For now, copy all the timing beams for a PR to all FSP Config
             fsp_config["timing_beams"] = timing_beams
             # The 0-14880 channel number where we want to start processing in

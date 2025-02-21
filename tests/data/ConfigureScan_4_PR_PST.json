@@ -1,0 +1,91 @@
+{
+    "interface": "https://schema.skao.int/ska-csp-configurescan/5.0",
+    "common": {
+        "config_id": "sbi-mvp01-20200325-00001-science_A",
+        "frequency_band": "1",
+        "subarray_id": 1,
+        "eb_id": "eb-m001-20230712-56789"
+    },
+    "pst": {},
+    "transaction_id": "txn-....-00001",
+    "midcbf": {
+        "pst_bf": {
+            "processing_regions": [{
+                "fsp_ids": [5],
+                "start_freq": 296862720,
+                "channel_count": 3700,
+                "pst_start_channel_id": 5522,
+                "timing_beams": [{
+                    "timing_beam_id": 1,
+                    "receptors": ["SKA081"],
+                    "output_link_map": [
+                        [5522, 1]
+                    ],
+                    "output_host": [
+                        [5522, "192.168.178.26"]
+                    ],
+                    "output_port": [
+                        [5522, 10000]
+                    ]
+                }]
+            },
+            {
+                "fsp_ids": [6],
+                "start_freq": 495075840,
+                "channel_count": 3700,
+                "pst_start_channel_id": 9209,
+                "timing_beams": [{
+                    "timing_beam_id": 2,
+                    "receptors": ["SKA046"],
+                    "output_link_map": [
+                        [9209, 1]
+                    ],
+                    "output_host": [
+                        [9209, "192.168.178.26"]
+                    ],
+                    "output_port": [
+                        [9209, 20000]
+                    ]
+                }]
+            },
+            {
+                "fsp_ids": [7],
+                "start_freq": 693235200,
+                "channel_count": 3700,
+                "pst_start_channel_id": 12895,
+                "timing_beams": [{
+                    "timing_beam_id": 3,
+                    "receptors": ["SKA077"],
+                    "output_link_map": [
+                        [12895, 1]
+                    ],
+                    "output_host": [
+                        [12895, "192.168.178.26"]
+                    ],
+                    "output_port": [
+                        [12895, 30000]
+                    ]
+                }]
+            },
+            {
+                "fsp_ids": [8],
+                "start_freq": 891448320,
+                "channel_count": 3700,
+                "pst_start_channel_id": 16582,
+                "timing_beams": [{
+                    "timing_beam_id": 4,
+                    "receptors": ["SKA048"],
+                    "output_link_map": [
+                        [16582, 1]
+                    ],
+                    "output_host": [
+                        [16582, "192.168.178.26"]
+                    ],
+                    "output_port": [
+                        [16582, 40000]
+                    ]
+                }]
+            }]
+        }
+    }
+}

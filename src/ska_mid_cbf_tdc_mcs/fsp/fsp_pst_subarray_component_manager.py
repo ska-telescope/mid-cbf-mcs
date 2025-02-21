@@ -110,7 +110,7 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
         configuration = json.loads(argin)
 
         # Assign newly specified VCCs
-        self._assign_vcc(configuration["bf_vcc_ids"])
+        self._assign_vcc(configuration["pst_vcc_ids"])
 
         # Issue ConfigureScan to HPS FSP PST controller
         if not self.simulation_mode:
