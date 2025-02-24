@@ -16,7 +16,7 @@ metadata:
 {{- end }}
 spec:
 {{- if (coalesce .Values.global.minikube .Values.minikube false)  }}
-  storageClassName: {{ .Values.artifactsPvc.storageClassName }}
+  storageClassName: nfss1
 {{- else }}
   storageClassName: {{ .Values.artifactsPvc.storageClassName }}
 {{- end }}
