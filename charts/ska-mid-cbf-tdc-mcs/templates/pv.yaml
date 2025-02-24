@@ -15,11 +15,8 @@ metadata:
 {{ toYaml $annotations | indent 4 }}
 {{- end }}
 spec:
-{{- if (coalesce .Values.global.minikube .Values.minikube false)  }}
-  storageClassName: nfss1
-{{- else }}
   storageClassName: {{ .Values.artifactsPvc.storageClassName }}
-{{- end }}
+  volumeMode: {{ .Values.artifactsPvc.volumeMode }}
   accessModes:
     - ReadWriteMany
   resources:
