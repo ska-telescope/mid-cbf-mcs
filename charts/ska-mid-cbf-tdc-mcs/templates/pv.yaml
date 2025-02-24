@@ -16,9 +16,9 @@ metadata:
 {{- end }}
 spec:
 {{- if (coalesce .Values.global.minikube .Values.minikube false)  }}
-  storageClassName: standard
+  storageClassName: {{ .Values.artifactsPvc.storageClassName }}
 {{- else }}
-  storageClassName: nfss1
+  storageClassName: {{ .Values.artifactsPvc.storageClassName }}
 {{- end }}
   accessModes:
     - ReadWriteMany
