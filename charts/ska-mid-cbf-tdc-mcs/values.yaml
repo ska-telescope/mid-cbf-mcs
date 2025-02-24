@@ -94,7 +94,7 @@ slimLinkTimeout: 10
 vccTimeout: 3
 
 artifactsPvc:
-  storageClassName: standard
+  storageClassName: nfss1
   volumeMode: Filesystem
 
 nodeSelector: {}
