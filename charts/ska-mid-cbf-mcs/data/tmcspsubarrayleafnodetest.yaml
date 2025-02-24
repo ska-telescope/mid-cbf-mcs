@@ -1,0 +1,34 @@
+name: tm-subarray-node
+function: tm-leaf-node
+domain: mid-csp-cbf
+command: "TmCspSubarrayLeafNodeTest"
+instances:
+{{- $numSubarray := (add1 $.Values.numSubarray | int) }}
+{{- range untilStep 1 $numSubarray 1 }}
+- {{ printf "%02d" . | quote }}
+{{- end }}
+depends_on:
+  - device: "sys/database/2"
+livenessProbe:
+{{ toYaml $.Values.livenessProbe | indent 2 }}
+readinessProbe:
+{{ toYaml $.Values.readinessProbe | indent 2 }}
+image:
+{{- with $.Values.midcbf.image}}
+  registry: {{ quote .registry }}
+  image: {{ quote .image }}
+  tag: {{ quote .tag }}
+  pullPolicy: {{ quote .pullPolicy }}
+{{- end }}
+server:
+  name: "TmCspSubarrayLeafNodeTest"
+  instances: # deploy 1 TM subarray leaf node device per CBF subarray
+  {{- $numSubarray := (add1 $.Values.numSubarray | int) }}
+  {{- range untilStep 1 $numSubarray 1 }}
+  {{- $subarrayId := . }}
+  - name: {{ printf "%02d" $subarrayId | quote}}
+    classes:
+    - name: "TmCspSubarrayLeafNodeTest"
+      devices:
+      - name: {{ printf "ska_mid/tm_leaf_node/csp_subarray_%02d" $subarrayId | quote }}
+  {{- end}}

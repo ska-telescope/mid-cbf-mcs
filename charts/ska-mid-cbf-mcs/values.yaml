@@ -136,3 +136,7 @@ deviceServers:
   talondxlogconsumer:
     enabled: true
     file: "data/talondxlogconsumer.yaml"
+
+  tm-subarray-node:
+    enabled: true
+    file: "data/tmcspsubarrayleafnodetest.yaml"

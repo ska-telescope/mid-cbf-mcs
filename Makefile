@@ -39,8 +39,6 @@ CI_PROJECT_DIR ?= .
 KUBE_CONFIG_BASE64 ?=  ## base64 encoded kubectl credentials for KUBECONFIG
 KUBECONFIG ?= /etc/deploy/config ## KUBECONFIG location
 
-CBF_CTRL_POD = $(shell kubectl -n $(KUBE_NAMESPACE) get pod --no-headers --selector=component=cbfcontroller-controller -o custom-columns=':metadata.name')
-
 # this assumes host and talon board 1g ethernet is on the 192.168 subnet
 HOST_IP = $(shell ip a 2> /dev/null | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | grep 192.168) 
 JIVE ?= false# Enable jive
@@ -127,9 +125,6 @@ jive: ## configure TANGO_HOST to enable Jive
 
 # uninstall charts, rebuild OCI image, install charts
 rebuild-reinstall: k8s-uninstall-chart oci-build k8s-install-chart
-
-k8s-pre-test:
-	@kubectl exec -n $(KUBE_NAMESPACE) $(CBF_CTRL_POD) -- mkdir -p /app/mnt/talondx-config
 
 python-pre-lint:
 	@pip3 install black isort flake8 pylint_junit typing_extensions

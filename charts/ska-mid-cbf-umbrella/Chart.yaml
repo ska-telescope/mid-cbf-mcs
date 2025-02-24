@@ -14,9 +14,6 @@ dependencies:
 - name: ska-mid-cbf-mcs
   version: 1.1.1
   repository: "file://../ska-mid-cbf-mcs"
-- name: ska-mid-cbf-tmleafnode
-  version: 1.1.1
-  repository: "file://../ska-mid-cbf-tmleafnode"
 # - name: ska-mid-cbf-boogie
 #   version: 0.1.0
 #   repository: "file://../ska-mid-cbf-boogie"
