@@ -115,6 +115,7 @@ deviceServers:
     file: "data/fsp.yaml"
 
   powerswitch:
+    enabled: true
     file: "data/powerswitch.yaml"
 
   talonlru:

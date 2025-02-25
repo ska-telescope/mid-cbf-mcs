@@ -1,5 +1,5 @@
 {
     "interface": "https://schema.skao.int/ska-mid-cbf-initsysparam/1.0",
-    "tm_data_sources": ["file://tests/data"],
+    "tm_data_sources": ["file://mnt/sys_param"],
     "tm_data_filepath": "sys_param_8_boards.json"
 }

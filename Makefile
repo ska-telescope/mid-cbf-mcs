@@ -1,75 +1,65 @@
 #
 # Project makefile for ska-mid-cbf-mcs project. 
+#
 PROJECT = ska-mid-cbf-mcs
 
-KUBE_NAMESPACE ?= ska-mid-cbf## KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to using Helm
-SDP_KUBE_NAMESPACE ?= ska-mid-cbf-sdp##namespace to be used
-DASHBOARD ?= webjive-dash.dump
-CLUSTER_DOMAIN ?= cluster.local
-
-HELM_RELEASE ?= test##H ELM_RELEASE is the release that all Kubernetes resources will be labelled with
-
-HELM_CHART ?= ska-mid-cbf-umbrella## HELM_CHART the chart name
-K8S_CHART ?= $(HELM_CHART)
-TANGO_DATABASE = tango-databaseds-$(HELM_RELEASE)
-TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
-
-# Python variables
-PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs KUBE_NAMESPACE=$(KUBE_NAMESPACE) HELM_RELEASE=$(RELEASE_NAME) TANGO_HOST=$(TANGO_HOST)
-
-# CIP-2859
-# Ignoring 501 which checks line length. There are over 500 failures for this in the code due to commenting. 
-# Also ignoring 503 because operators can either be before or after line break(504). 
-# We are choosing a standard to have it before the line break.
-PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,W503
-K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
-
-# unit and integration test targets
-PYTHON_TEST_FILE = ./tests/unit/
-K8S_TEST_FILE = ./tests/integration/controller ./tests/integration/subarray
-
-# additional pytest flags; use -k to isolate particular tests, e.g. -k test_Scan
-PYTHON_VARS_AFTER_PYTEST = --forked
-K8S_VARS_AFTER_PYTEST = -s
-
-CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-mcs
-
-CI_PROJECT_DIR ?= .
-
-KUBE_CONFIG_BASE64 ?=  ## base64 encoded kubectl credentials for KUBECONFIG
-KUBECONFIG ?= /etc/deploy/config ## KUBECONFIG location
-
-# this assumes host and talon board 1g ethernet is on the 192.168 subnet
-HOST_IP = $(shell ip a 2> /dev/null | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | grep 192.168) 
-JIVE ?= false# Enable jive
-TARANTA ?= false# Enable Taranta
-MINIKUBE ?= true ## Minikube or not
-EXPOSE_All_DS ?= false ## Expose All Tango Services to the external network (enable Loadbalancer service)
-SKA_TANGO_OPERATOR ?= true
-ITANGO_ENABLED ?= true## ITango enabled in ska-tango-base
+#
+# Include submodule makefiles to pick up the standard Make targets;
+# additional Make targets are defined in this file.
+#
+include .make/base.mk
+include .make/k8s.mk
+include .make/oci.mk
+include .make/helm.mk
+include .make/python.mk
 
 # define private overrides for above variables in here
 -include PrivateRules.mak
 
-# Test runner - run to completion job in K8s
-# name of the pod running the k8s_tests
-# TODO: test-makefile-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE) 
-#		old name is 64 characters, too long for container name
-TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
+##################
+# --- Python --- #
+##################
 
-ifneq ($(strip $(CI_JOB_ID)),)
-K8S_TEST_IMAGE_TO_TEST = $(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs/ska-mid-cbf-mcs:$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
-K8S_TEST_TANGO_IMAGE_PARAMS = --set ska-mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs \
-	--set ska-mid-cbf-mcs.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs \
-	--set ska-mid-cbf-mcs.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA) \
-	--set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
-else
+# CIP-2859: Ignoring 501 which checks line length. There are over 500 failures
+# for this in the code due to commenting.
+# Also ignoring 503 because operators can either be before or after line break(504).
+# We are choosing a standard to have it before the line break.
+PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,W503
+PYTHON_LINT_TARGET = src/ tests/
+PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src TANGO_HOST=$(TANGO_HOST)
+# unit test target(s)
+PYTHON_TEST_FILE = ./tests/unit
+# additional pytest flags; use -k to isolate particular tests, e.g. -k test_Scan
+PYTHON_VARS_AFTER_PYTEST =
 PYTHON_RUNNER = python3 -m
-K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:$(VERSION)
-K8S_TEST_TANGO_IMAGE_PARAMS = --set ska-mid-cbf-mcs.midcbf.image.tag=$(VERSION) \
-	--set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(VERSION) \
-	--set ska-mid-cbf-mcs.hostInfo.hostIP="$(HOST_IP)"
-endif
+
+python-pre-lint:
+	@pip3 install black isort flake8 pylint_junit typing_extensions
+
+python-pre-build:
+	@$(PYTHON_RUNNER) pip install sphinx==2.2
+
+################
+# --- Helm --- #
+################
+
+# release that all Kubernetes resources will be labelled with
+HELM_RELEASE = test
+HELM_CHART = ska-mid-cbf-umbrella
+
+###############
+# --- k8s --- #
+###############
+
+CI_REGISTRY = gitlab.com/ska-telescope/ska-mid-cbf-mcs
+CI_PROJECT_DIR = .
+
+# --- Taranta config --- #
+# Enable jive
+JIVE = false
+# Enable Taranta
+TARANTA = false
+DASHBOARD = webjive-dash.dump
 
 TARANTA_PARAMS = --set ska-taranta.enabled=$(TARANTA) \
 				 --set ska-taranta-auth.enabled=$(TARANTA) \
@@ -83,6 +73,50 @@ TARANTA_PARAMS = --set ska-taranta.enabled=$(TARANTA) \
 endif
 endif
 
+# --- k8s config --- #
+
+CLUSTER_DOMAIN = cluster.local
+# this assumes host and talon board 1g ethernet is on the 192.168 subnet
+HOST_IP = $(shell ip a 2> /dev/null | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | grep 192.168)
+MINIKUBE = true
+# Expose All Tango Services to the external network (enable Loadbalancer service)
+EXPOSE_All_DS = false
+SKA_TANGO_OPERATOR = true
+# ITango enabled in ska-tango-base
+ITANGO_ENABLED = true
+
+K8S_CHART = $(HELM_CHART)
+K8S_UMBRELLA_CHART_PATH = ./charts/ska-mid-cbf-umbrella
+# defines the Kubernetes Namespace that will be deployed to using Helm
+KUBE_NAMESPACE = ska-mid-cbf
+# SDP namespace to be used
+SDP_KUBE_NAMESPACE = ska-mid-cbf-sdp
+
+TANGO_DATABASE = tango-databaseds-$(HELM_RELEASE)
+TANGO_HOST = $(TANGO_DATABASE):10000
+
+# integration test target(s)
+K8S_TEST_FILE = ./tests/integration/controller ./tests/integration/subarray
+K8S_VARS_BEFORE_PYTEST = TANGO_HOST=$(TANGO_HOST)
+
+# additional pytest flags; use -k to isolate particular tests, e.g. -k test_Scan
+K8S_VARS_AFTER_PYTEST = -s --verbose
+
+# base64 encoded kubectl credentials for KUBECONFIG
+KUBE_CONFIG_BASE64 =
+# KUBECONFIG location
+KUBECONFIG = /etc/deploy/config
+
+ifneq ($(strip $(CI_JOB_ID)),)
+K8S_TEST_IMAGE_TO_TEST = $(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs/ska-mid-cbf-mcs:$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
+K8S_TEST_TANGO_IMAGE_PARAMS = --set ska-mid-cbf-mcs.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs \
+	--set ska-mid-cbf-mcs.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
+else
+K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:$(VERSION)
+K8S_TEST_TANGO_IMAGE_PARAMS = --set ska-mid-cbf-mcs.midcbf.image.tag=$(VERSION) \
+	--set ska-mid-cbf-mcs.hostInfo.hostIP="$(HOST_IP)"
+endif
+
 K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 	--set global.exposeAllDS=$(EXPOSE_All_DS) \
 	--set global.tango_host=$(TANGO_HOST) \
@@ -93,29 +127,49 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 	${K8S_TEST_TANGO_IMAGE_PARAMS} \
 	${TARANTA_PARAMS}
 
-K8S_TEST_TEST_COMMAND ?= $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
-						pytest \
-						$(K8S_VARS_AFTER_PYTEST) $(K8S_TEST_FILE) \
+K8S_TEST_TEST_COMMAND = $(K8S_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
+						pytest $(K8S_VARS_AFTER_PYTEST) $(K8S_TEST_FILE) \
 						| tee pytest.stdout
 
-PYTHON_LINT_TARGET = src/ tests/
+k8s-pre-test:
+	poetry export --format requirements.txt --output tests/k8s-test-requirements.txt --without-hashes --dev --with dev
 
-#
-# include makefile to pick up the standard Make targets, e.g., 'make build'
-# build, 'make push' docker push procedure, etc. The other Make targets
-# ('make interactive', 'make test', etc.) are defined in this file.
-#
-include .make/base.mk
-include .make/k8s.mk
-include .make/oci.mk
-include .make/helm.mk
-include .make/python.mk
+k8s-do-test:
+	@rm -fr build
+	@mkdir -p build/logs
+	@find ./tests -name "*.pyc" -type f -delete
+	@echo "k8s-test: start test runner: $(K8S_TEST_RUNNER) -n $(KUBE_NAMESPACE)"
+	kubectl run $(K8S_TEST_RUNNER) -n $(KUBE_NAMESPACE) --restart=Never \
+	--pod-running-timeout=$(K8S_TIMEOUT) --image-pull-policy=IfNotPresent \
+	--image=$(K8S_TEST_IMAGE_TO_TEST) --env=INGRESS_HOST=$(INGRESS_HOST) \
+	$(PROXY_VALUES) $(K8S_TEST_RUNNER_ADD_ARGS) -iq -- sleep infinity &
+	@sleep 1
+	@echo "k8s-test: waiting for test runner to boot up: $(K8S_TEST_RUNNER)"
+	kubectl -n $(KUBE_NAMESPACE) wait pod $(K8S_TEST_RUNNER) --for=condition=ready --timeout=$(K8S_TIMEOUT)
+	@echo "k8s-test: copying in tests directory"
+	kubectl -n $(KUBE_NAMESPACE) cp tests $(K8S_TEST_RUNNER):/app/tests
+	@echo "k8s-test: installing requirements then executing tests..."
+	@kubectl -n $(KUBE_NAMESPACE) exec $(K8S_TEST_RUNNER) -- bash -c \
+		"cd /app && \
+		mkdir -p build/reports && \
+		sudo apt-get -qq update && \
+		sudo apt-get -qq install -y --no-install-recommends python3-pip && \
+		pip install --no-warn-script-location -qUr tests/k8s-test-requirements.txt && \
+		$(K8S_TEST_TEST_COMMAND)" ; \
+		echo $$? > build/status
+	kubectl -n $(KUBE_NAMESPACE) cp $(K8S_TEST_RUNNER):/app/build/ ./build/
+	kubectl get all,job,pv,pvc,ingress,cm -n $(KUBE_NAMESPACE) -o yaml > build/k8s_manifest.txt
+	@echo "k8s-test: test run complete, processing logs"
+	for i in $$(kubectl get pod -n $(KUBE_NAMESPACE) -o jsonpath='{.items[*].metadata.name}'); do \
+	kubectl logs $$i -n $(KUBE_NAMESPACE) >> build/logs/$$i-logs.txt; \
+	done;
+	kubectl --namespace $(KUBE_NAMESPACE) delete --ignore-not-found pod $(K8S_TEST_RUNNER) --wait=false
+	@echo "k8s-test: the test run exit code is ($$(cat build/status))"
+	@exit `cat build/status`
 
-#
-# Defines a default make target so that help is printed if make is called
-# without a target
-#
-.DEFAULT_GOAL := help
+#########################
+# --- Miscellaneous --- #
+#########################
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
@@ -126,16 +180,12 @@ jive: ## configure TANGO_HOST to enable Jive
 # uninstall charts, rebuild OCI image, install charts
 rebuild-reinstall: k8s-uninstall-chart oci-build k8s-install-chart
 
-python-pre-lint:
-	@pip3 install black isort flake8 pylint_junit typing_extensions
-
-python-pre-build:
-	@$(PYTHON_RUNNER) pip install sphinx==2.2
-
 help: ## show this help.
 	@echo "make targets:"
 	@echo "$(MAKEFILE_LIST)"
 	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ": .*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-
-.PHONY: all jive unit-test requirements test up down help k8s show lint logs describe mkcerts localip namespace delete_namespace ingress_check kubeconfig kubectl_dependencies helm_dependencies rk8s_test k8s_test rlint
+# Defines a default make target so that help is printed if make is called
+# without a target
+.DEFAULT_GOAL := help
+.PHONY: k8s-do-test python-pre-lint python-pre-build jive rebuild-reinstall help

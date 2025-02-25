@@ -48,4 +48,7 @@ FROM $BASE_IMAGE
 ENV VIRTUAL_ENV=/app
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-COPY --from=build $VIRTUAL_ENV $VIRTUAL_ENV
+COPY --chown=tango:tango --from=build $VIRTUAL_ENV $VIRTUAL_ENV
+ADD --chown=tango:tango mnt $VIRTUAL_ENV/mnt
+
+WORKDIR $VIRTUAL_ENV

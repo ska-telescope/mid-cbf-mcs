@@ -52,13 +52,13 @@ server:
             values:
             {{- $numVcc := (div $.Values.numVcc 2 | add1 | int) }}
             {{- range untilStep 1 $numVcc 1 }}
-            - {{ printf "mid-cbf/talon-lru/%03d" . }} # TODO: remove for AA2
+            - {{ printf "mid_csp_cbf/talon_lru/%03d" . }} # TODO: remove for AA2
             {{- end }}
           - name: "TalonBoard"
             values:
             {{- $numVcc := (add1 $.Values.numVcc | int) }}
             {{- range untilStep 1 $numVcc 1 }}
-            - {{ printf "mid-cbf/talon-board/%03d" . }} # TODO: remove for AA2
+            - {{ printf "mid_csp_cbf/talon_board/%03d" . }} # TODO: remove for AA2
             {{- end }}
           - name: "PowerSwitch"  # TODO: remove for AA2
             values:
@@ -90,56 +90,56 @@ server:
 
 environment_variables:
 - name: NAMESPACE
-  value: "{{ .Release.Namespace }}"
+  value: "{{ $.Release.Namespace }}"
 - name: ENVIRONMENT
-  value: "{{ .Values.hostInfo.environment }}"
+  value: "{{ $.Values.hostInfo.environment }}"
 - name: MINIKUBE_HOST_IP
-  value: "{{ .Values.hostInfo.hostIP }}"
+  value: "{{ $.Values.hostInfo.hostIP }}"
 - name: EXTERNAL_DB_PORT
-  value: "{{ .Values.hostInfo.externalPort }}"
+  value: "{{ $.Values.hostInfo.externalPort }}"
 - name: CLUSTER_DOMAIN
-  value: "{{ .Values.hostInfo.clusterDomain }}"
+  value: "{{ $.Values.hostInfo.clusterDomain }}"
 volume:
-  existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
+  existingClaimName: "artifacts-pvc-{{ $.Release.Name }}"
   mountPath: "/app/mnt/talondx-config"
   readOnly: false
 
-{{- if or (.Values.hw_config) (.Values.fs_slim) (.Values.vis_slim) (.Values.talondx_config) }}
+{{- if or ($.Values.hw_config) ($.Values.fs_slim) ($.Values.vis_slim) ($.Values.talondx_config) }}
 extraVolumes:
-{{- if .Values.hw_config }}
+{{- if $.Values.hw_config }}
 - name: hw-config-mount
   configMap: 
     name:  hwconfig-configmap
 {{- end }}
-{{- if .Values.talondx_config }}
+{{- if $.Values.talondx_config }}
 - name: talondx-config-mount
   configMap: 
     name:  talondx-config-configmap
 {{- end }}
-{{- if .Values.fs_slim }}
+{{- if $.Values.fs_slim }}
 - name: fs-slim-mount
   configMap:
     name:  fs-slim-configmap
 {{- end }}
-{{- if .Values.vis_slim }}
+{{- if $.Values.vis_slim }}
 - name: vis-slim-mount
   configMap:
     name:  vis-slim-configmap
 {{- end }}
 extraVolumeMounts:
-{{- if .Values.hw_config }}
+{{- if $.Values.hw_config }}
   - name: hw-config-mount
     mountPath: /app/mnt/hw_config
 {{- end }}
-{{- if .Values.talondx_config }}
+{{- if $.Values.talondx_config }}
   - name: talondx-config-mount
     mountPath: /app/mnt/talondx_config
 {{- end }}
-{{- if .Values.fs_slim }}
+{{- if $.Values.fs_slim }}
   - name: fs-slim-mount
     mountPath: /app/mnt/slim/fs
 {{- end }}
-{{- if .Values.vis_slim }}
+{{- if $.Values.vis_slim }}
   - name: vis-slim-mount
     mountPath: /app/mnt/slim/vis
 {{- end }}
