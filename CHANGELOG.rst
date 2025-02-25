@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* SKB-803: Updated the artifacts PVC so that storageClassName and volumeMode can be configured from values
 
 1.1.2
 *****

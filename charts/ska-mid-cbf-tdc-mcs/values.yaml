@@ -93,6 +93,10 @@ lruTimeout: 60
 slimLinkTimeout: 10
 vccTimeout: 3
 
+artifactsPvc:
+  storageClassName: nfss1
+  volumeMode: Filesystem
+
 nodeSelector: {}
 
 affinity: {}
