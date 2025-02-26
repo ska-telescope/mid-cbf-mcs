@@ -156,7 +156,7 @@ k8s-do-test:
 		sudo apt-get -qq install -y --no-install-recommends python3-pip && \
 		pip install --no-warn-script-location -qUr tests/k8s-test-requirements.txt && \
 		$(K8S_TEST_TEST_COMMAND); \
-		echo $? > build/status"
+		echo \$$? > build/status" 2>&1
 	kubectl -n $(KUBE_NAMESPACE) cp $(K8S_TEST_RUNNER):/app/build/ ./build/
 	kubectl get all,job,pv,pvc,ingress,cm -n $(KUBE_NAMESPACE) -o yaml > build/k8s_manifest.txt
 	@echo "k8s-test: test run complete, processing logs"
