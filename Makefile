@@ -130,9 +130,24 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 K8S_TEST_TEST_COMMAND = $(K8S_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
 						pytest $(K8S_VARS_AFTER_PYTEST) $(K8S_TEST_FILE)
 
+# Export dependencies for pip installation during k8s-test
 k8s-pre-test:
 	poetry export --format requirements.txt --output tests/k8s-test-requirements.txt --without-hashes --dev --with dev
 
+# k8s-test script override procedure
+# 1. Delete any previous test outputs and create test output directory
+# 2. Spin up test runner pod, run with infinite sleep to keep it alive
+# 3. Wait for runner to boot up
+# 4. Copy test files into runner
+# 5. Execute test script:
+#    - Create output directory for generated reports and test script exit code
+#    - Install pip and previously exported dependencies
+#    - Run test scripts with pytest
+#    - Store pytest exit code in output directory
+# 6. Copy test outputs from runner into output directory
+# 7. Store pod logs in output directory
+# 8. Delete test runner pod
+# 9. Exit with pytest exit code
 k8s-do-test:
 	@rm -fr build
 	@mkdir -p build/logs
