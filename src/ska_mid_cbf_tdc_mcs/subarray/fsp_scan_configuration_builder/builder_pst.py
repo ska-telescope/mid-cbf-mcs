@@ -1,5 +1,3 @@
-import copy
-
 from ska_mid_cbf_tdc_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes
 from ska_mid_cbf_tdc_mcs.subarray.fsp_scan_configuration_builder.builder import (

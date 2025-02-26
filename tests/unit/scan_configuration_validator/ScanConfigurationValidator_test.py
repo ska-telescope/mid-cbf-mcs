@@ -32,15 +32,15 @@ class TestScanConfigurationValidator:
                 "configure_scan_file": "ConfigureScan_4_1_CORR.json",
                 "sub_id": 1,
                 "dish_ids": [
-                            "SKA001",
-                            "SKA036",
-                            "SKA063",
-                            "SKA100",
-                            "SKA081",
-                            "SKA046",
-                            "SKA077",
-                            "SKA048",
-                        ],
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
             }
         ],
     )
@@ -62,8 +62,10 @@ class TestScanConfigurationValidator:
 
     @pytest.mark.parametrize(
         "config_file_name",
-        ["ConfigureScan_4_1_CORR.json",
-         "ConfigureScan_CORR_PST_8_receptor_5_FSP.json"],
+        [
+            "ConfigureScan_4_1_CORR.json",
+            "ConfigureScan_CORR_PST_8_receptor_5_FSP.json",
+        ],
     )
     def test_Valid_Configuration_Version(
         self: TestScanConfigurationValidator,

@@ -19,7 +19,7 @@ import pytest
 from ska_telmodel import channel_map
 
 from ska_mid_cbf_tdc_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes, const
+from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes
 from ska_mid_cbf_tdc_mcs.subarray.fsp_scan_configuration_builder.builder_pst import (
     FspScanConfigurationBuilderPst as fsp_builder,
 )
@@ -60,7 +60,9 @@ class TestFspScanConfigurationBuilder:
         self: TestFspScanConfigurationBuilder,
     ):
         # Setup configuration
-        with open(json_file_path + "ConfigureScan_basic_PST_band1.json") as file:
+        with open(
+            json_file_path + "ConfigureScan_basic_PST_band1.json"
+        ) as file:
             json_str = file.read().replace("\n", "")
             full_configuration = json.loads(json_str)
 

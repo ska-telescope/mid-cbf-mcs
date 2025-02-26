@@ -636,7 +636,6 @@ class SubarrayScanConfigurationValidator:
                     str message about the configuration
         :rtype: tuple[bool, str]
         """
-        # TODO: Need to process the Timing beam array
         # Difference from Corr is that the output_host, output_ports are in the
         # timing beams, and PST can have multiple timing beams
         fsp_mode = FspModes.PST
@@ -681,7 +680,7 @@ class SubarrayScanConfigurationValidator:
         elif len(timing_beams) == 0:
             msg = "At least one timing beam must be given for a PST Processgion Region, none was given"
             return (False, msg)
-            
+
         channel_count = int(processing_region["channel_count"])
         for timing_beam in timing_beams:
             output_host = timing_beam["output_host"]

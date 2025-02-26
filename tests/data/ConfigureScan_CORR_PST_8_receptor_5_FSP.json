@@ -1,7 +1,7 @@
 {
     "interface": "https://schema.skao.int/ska-csp-configurescan/5.0",
     "common": {
-        "config_id": "4 receptor, band 1, 4 FSP, no options",
+        "config_id": "8 receptor, band 1, 8 FSP, no options",
         "frequency_band": "1",
         "subarray_id": 1
     },
@@ -11,19 +11,19 @@
             "processing_regions": [
             {
                 "fsp_ids": [8],
-                "start_freq": 891448320,
+                "start_freq": 296862720,
                 "channel_count": 3700,
-                "pst_start_channel_id": 16582,
+                "pst_start_channel_id": 5522,
                 "timing_beams": [{
                     "timing_beam_id": 1,
                     "output_link_map": [
-                        [16582, 1]
+                        [5522, 1]
                     ],
                     "output_host": [
-                        [16582, "192.168.178.26"]
+                        [5522, "192.168.178.26"]
                     ],
                     "output_port": [
-                        [16582, 40000]
+                        [5522, 40000]
                     ]
                 }]
             }]

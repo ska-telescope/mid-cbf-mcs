@@ -804,7 +804,23 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
-        [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
+        [
+            ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json"),
+            (
+                "ConfigureScan_CORR_PST_8_receptor_5_FSP.json",
+                [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+                "Scan1_basic.json",
+            ),
+        ],
     )
     def test_Scan_reconfigure(
         self: TestCbfSubarray,
@@ -927,7 +943,22 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, receptors",
-        [("ConfigureScan_basic_CORR.json", ["SKA001"])],
+        [
+            ("ConfigureScan_basic_CORR.json", ["SKA001"]),
+            (
+                "ConfigureScan_CORR_PST_8_receptor_5_FSP.json",
+                [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+            ),
+        ],
     )
     def test_Abort_from_ready(
         self: TestCbfSubarray,
@@ -1007,7 +1038,23 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
-        [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
+        [
+            ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json"),
+            (
+                "ConfigureScan_CORR_PST_8_receptor_5_FSP.json",
+                [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+                "Scan1_basic.json",
+            ),
+        ],
     )
     def test_Abort_from_scanning(
         self: TestCbfSubarray,

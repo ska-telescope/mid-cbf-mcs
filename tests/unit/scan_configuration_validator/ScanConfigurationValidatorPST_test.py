@@ -110,7 +110,7 @@ class TestScanConfigurationValidatorPST:
         pst_config = self.full_configuration["midcbf"]["pst_bf"]
         pst_pr = pst_config["processing_regions"][0]
         pst_pr["fsp_ids"] = fsp_ids
-        
+
         json_str = json.dumps(self.full_configuration)
 
         validator: SubarrayScanConfigurationValidator = (
@@ -158,7 +158,6 @@ class TestScanConfigurationValidatorPST:
         validator_params: dict[any],
         fsp_id: int,
     ):
-        
         pst_config = self.full_configuration["midcbf"]["pst_bf"]
         pst_pr = pst_config["processing_regions"][0]
         pst_pr["fsp_ids"] = [fsp_id]
@@ -255,7 +254,7 @@ class TestScanConfigurationValidatorPST:
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
         self.full_configuration = json.loads(json_str)
-        
+
         pst_config = self.full_configuration["midcbf"]["pst_bf"]
         pst_pr = pst_config["processing_regions"][0]
 
@@ -278,13 +277,13 @@ class TestScanConfigurationValidatorPST:
         expected_msg = f"Start Channel ID given for the processing region ({pst_start_channel_id})"
         assert expected_msg in msg
         assert success is False
-        
+
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
         self.full_configuration = json.loads(json_str)
         pst_config = self.full_configuration["midcbf"]["pst_bf"]
         pst_pr = pst_config["processing_regions"][0]
-        
+
         pst_pr["timing_beams"][0]["output_port"][0][0] = 185
 
         json_str = json.dumps(self.full_configuration)
@@ -308,7 +307,7 @@ class TestScanConfigurationValidatorPST:
         self.full_configuration = json.loads(json_str)
         pst_config = self.full_configuration["midcbf"]["pst_bf"]
         pst_pr = pst_config["processing_regions"][0]
-        
+
         pst_pr["timing_beams"][0]["output_link_map"][0][0] = 185
 
         json_str = json.dumps(self.full_configuration)
@@ -339,9 +338,9 @@ class TestScanConfigurationValidatorPST:
     ):
         pst_config = self.full_configuration["midcbf"]["pst_bf"]
         pst_pr = pst_config["processing_regions"][0]
-        
+
         pst_pr["timing_beams"][0]["output_link_map"] = mapping
-        
+
         json_str = json.dumps(self.full_configuration)
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
@@ -353,7 +352,7 @@ class TestScanConfigurationValidatorPST:
             )
         )
         success, msg = validator.validate_input()
-        if expected_success_result == False:
+        if expected_success_result is False:
             assert "MCS currently only support 1 " in msg
         else:
             assert "Scan configuration is valid." in msg
@@ -371,9 +370,9 @@ class TestScanConfigurationValidatorPST:
     ):
         pst_config = self.full_configuration["midcbf"]["pst_bf"]
         pst_pr = pst_config["processing_regions"][0]
-        
+
         pst_pr["timing_beams"][0]["output_port"] = mapping
-  
+
         json_str = json.dumps(self.full_configuration)
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
@@ -385,7 +384,7 @@ class TestScanConfigurationValidatorPST:
             )
         )
         success, msg = validator.validate_input()
-        if expected_success_result == False:
+        if expected_success_result is False:
             assert "MCS currently only support 1 " in msg
         else:
             assert "Scan configuration is valid." in msg
@@ -404,12 +403,11 @@ class TestScanConfigurationValidatorPST:
         mapping: list,
         expected_success_result: bool,
     ):
-        
         pst_config = self.full_configuration["midcbf"]["pst_bf"]
         pst_pr = pst_config["processing_regions"][0]
-        
+
         pst_pr["timing_beams"][0]["output_host"] = mapping
-        
+
         json_str = json.dumps(self.full_configuration)
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
@@ -421,7 +419,7 @@ class TestScanConfigurationValidatorPST:
             )
         )
         success, msg = validator.validate_input()
-        if expected_success_result == False:
+        if expected_success_result is False:
             assert "MCS currently only support 1 " in msg
         else:
             assert "Scan configuration is valid." in msg
@@ -460,7 +458,7 @@ class TestScanConfigurationValidatorPST:
         )
 
         success, msg = validator.validate_input()
-        expected_message = f"MCS currently only support 1 timing beam(s) per PST Processing Region, "
+        expected_message = "MCS currently only support 1 timing beam(s) per PST Processing Region, "
         assert expected_message in msg
         assert success is False
 
@@ -480,10 +478,9 @@ class TestScanConfigurationValidatorPST:
         self.full_configuration = json.loads(json_str)
         pst_config = self.full_configuration["midcbf"]["pst_bf"]
         pst_pr = pst_config["processing_regions"][0]
-        
+
         pst_pr["timing_beams"] = []
 
-        
         json_str = json.dumps(self.full_configuration)
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
@@ -502,22 +499,26 @@ class TestScanConfigurationValidatorPST:
 
     @pytest.mark.parametrize(
         "start_freq,expected_success_result",
-        [(296862720,True),
-         (495075840,True),
-         (693235200,True),
-         (891448320,True),
-         (1089607680,False),
-         (1287767040,False),
-         (1485980160,False),
-         (1684139520,False)],
+        [
+            (296862720, True),
+            (495075840, True),
+            (693235200, True),
+            (891448320, True),
+            (1089607680, False),
+            (1287767040, False),
+            (1485980160, False),
+            (1684139520, False),
+        ],
     )
     def test_timing_beams_supported_band1_start_freq(
         self: TestScanConfigurationValidatorPST,
         validator_params: dict[any],
-        start_freq:int,
-        expected_success_result: bool  
+        start_freq: int,
+        expected_success_result: bool,
     ):
-        path_to_test_json = os.path.join(FILE_PATH, "ConfigureScan_basic_PST_band1.json")
+        path_to_test_json = os.path.join(
+            FILE_PATH, "ConfigureScan_basic_PST_band1.json"
+        )
 
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
@@ -525,7 +526,7 @@ class TestScanConfigurationValidatorPST:
         pst_config = self.full_configuration["midcbf"]["pst_bf"]
         pst_pr = pst_config["processing_regions"][0]
         pst_pr["start_freq"] = start_freq
-        
+
         json_str = json.dumps(self.full_configuration)
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
@@ -538,32 +539,35 @@ class TestScanConfigurationValidatorPST:
         )
 
         success, msg = validator.validate_input()
-        if expected_success_result == False:
-            expected_msg = f"is not support by MCS for the given band: 1. "
+        if expected_success_result is False:
+            expected_msg = "is not support by MCS for the given band: 1. "
             assert expected_msg in msg
         else:
             assert "Scan configuration is valid." in msg
         assert success is expected_success_result
-        
-        
+
     @pytest.mark.parametrize(
         "start_freq,expected_success_result",
-        [(296862720,False),
-         (495075840,False),
-         (693235200,False),
-         (891448320,True),
-         (1089607680,True),
-         (1287767040,True),
-         (1485980160,True),
-         (1684139520,True)],
+        [
+            (296862720, False),
+            (495075840, False),
+            (693235200, False),
+            (891448320, True),
+            (1089607680, True),
+            (1287767040, True),
+            (1485980160, True),
+            (1684139520, True),
+        ],
     )
     def test_timing_beams_supported_band2_start_freq(
         self: TestScanConfigurationValidatorPST,
         validator_params: dict[any],
-        start_freq:int,
-        expected_success_result: bool  
+        start_freq: int,
+        expected_success_result: bool,
     ):
-        path_to_test_json = os.path.join(FILE_PATH, "ConfigureScan_basic_PST_band2.json")
+        path_to_test_json = os.path.join(
+            FILE_PATH, "ConfigureScan_basic_PST_band2.json"
+        )
 
         with open(path_to_test_json) as file:
             json_str = file.read().replace("\n", "")
@@ -571,7 +575,7 @@ class TestScanConfigurationValidatorPST:
         pst_config = self.full_configuration["midcbf"]["pst_bf"]
         pst_pr = pst_config["processing_regions"][0]
         pst_pr["start_freq"] = start_freq
-        
+
         json_str = json.dumps(self.full_configuration)
         validator: SubarrayScanConfigurationValidator = (
             SubarrayScanConfigurationValidator(
@@ -584,8 +588,8 @@ class TestScanConfigurationValidatorPST:
         )
 
         success, msg = validator.validate_input()
-        if expected_success_result == False:
-            expected_msg = f"is not support by MCS for the given band: 2. "
+        if expected_success_result is False:
+            expected_msg = "is not support by MCS for the given band: 2. "
             assert expected_msg in msg
         else:
             assert "Scan configuration is valid." in msg

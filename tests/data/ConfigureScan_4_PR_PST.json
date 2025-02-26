@@ -9,6 +9,7 @@
     "pst": {},
     "transaction_id": "txn-....-00001",
     "midcbf": {
+        "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
         "pst_bf": {
             "processing_regions": [{
                 "fsp_ids": [5],

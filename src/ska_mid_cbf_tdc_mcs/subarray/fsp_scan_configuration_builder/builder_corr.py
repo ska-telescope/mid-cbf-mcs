@@ -63,7 +63,6 @@ class FspScanConfigurationBuilderCorr(FspScanConfigurationBuilder):
         fsp_ids: list[int] = processing_region_config["fsp_ids"]
         fsp_ids.sort()
 
-        # TODO: Update for PST, as receptors are in the timing beams
         dish_ids = []
         if (
             "receptors" not in processing_region_config
