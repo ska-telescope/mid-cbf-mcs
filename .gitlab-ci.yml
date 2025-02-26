@@ -66,11 +66,6 @@ include:
 k8s-test:
   variables:
     KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
-  before_script:
-    - make k8s-namespace
-    - make k8s-namespace-credentials
-    - make k8s-install-chart
-    - make k8s-wait
 
 stop-k8s-test:
   variables:
