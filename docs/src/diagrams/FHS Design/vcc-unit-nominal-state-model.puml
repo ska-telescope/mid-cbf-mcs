@@ -1,0 +1,101 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title VCC Unit State Model (Nominal)\n
+participant "LMC\n" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nController" as controller
+  participant "VCC\nUnit" as vcc_unit
+  participant "Switch\n400Gb" as switch
+  participant "Terabox\n" as terabox
+  participant "Power\nSwitch" as ps
+end box
+' participant "Local\nCache" as cache #Salmon
+' participant "PDU\n" as pdu #Orange
+participant "FHS\nBMC" as fhs_bmc #Grey
+' participant "FPGA\nBMC" as fpga_bmc #Grey
+box "\nFHS\n"
+    collections "FHS VCC\nController" as vcc_cont
+
+    participant "FHS\nController" as fhs_cont
+    participant "FHS\nServer" as fhs_cpu
+    collections "FHS\nFPGA" as fhs_fpga
+end box
+
+note over controller, ps #BurlyWood  : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState: UNKNOWN
+
+lmc             ->  controller      : AdminMode.ONLINE
+group #LightCyan For each FHS in configuration:
+    controller      ->  vcc_unit        : AdminMode.ONLINE
+    vcc_unit        ->  terabox         : AdminMode.ONLINE
+    note over           terabox     #Tomato    : AdminMode.ONLINE\nOpState: OFF
+    note over           vcc_unit    #Tomato    : AdminMode.ONLINE\nOpState: OFF
+end group
+note over           controller   #Tomato   : AdminMode.ONLINE\nOpState: OFF
+
+lmc             ->  controller      : On()
+group #LightCyan For each FHS in configuration:
+    controller      ->  vcc_unit        : On()
+    vcc_unit        ->  switch          : AdminMode.ONLINE
+    note over           switch      #PaleGreen    : AdminMode.ONLINE\nOpState.ON\nHealthState:OK
+    vcc_unit        ->  terabox         : On()
+    terabox         ->  ps              : AdminMode.ONLINE
+    note over           ps          #PaleGreen    : AdminMode.ONLINE\nOpState.ON\nHealthState:OK
+    terabox         ->  ps              : TurnOutletOn()
+    terabox         ->  fhs_bmc         : TurnServerOn()
+    note over vcc_cont, fhs_fpga    #BurlyWood    : **Init Worker Node**\nAdminMode: OFFLINE\nOpState: DISABLE\nHealthState: UNKNOWN
+    terabox       ->  vcc_cont          : AdminMode.ONLINE
+    terabox       ->  fhs_cont          : AdminMode.ONLINE
+    terabox       ->  fhs_cpu           : AdminMode.ONLINE
+    terabox       ->  fhs_fpga          : AdminMode.ONLINE
+    note over vcc_cont, fhs_fpga     #PaleGreen   : AdminMode: ONLINE\nOpState: ON\nHealthState: OK
+    note over terabox   #PaleGreen      : OpState: ON\nHealthState: OK
+    note over vcc_unit  #PaleGreen      : OpState: ON\nHealthState: OK
+end group
+note over controller    #PaleGreen      : OpState: ON\nHealthState: OK
+
+lmc             ->  controller      : Off()
+group #LightCyan For each FHS in configuration:
+    controller      ->  vcc_unit        : Off()
+    vcc_unit        ->  switch          : AdminMode.OFFLINE
+    note over           switch      #BurlyWood    : AdminMode.OFFLINE\nOpState.DISABLE\nHealthState:UNKNOWN
+    vcc_unit        ->  terabox         : Off()
+    terabox         ->  fhs_bmc         : TurnServerOff()
+    terabox       ->  vcc_cont          : AdminMode.OFFLINE
+    terabox       ->  fhs_cont          : AdminMode.OFFLINE
+    terabox       ->  fhs_cpu           : AdminMode.OFFLINE
+    terabox       ->  fhs_fpga          : AdminMode.OFFLINE
+    note over vcc_cont, fhs_fpga    #BurlyWood    : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState: UNKNOWN
+    terabox         ->  ps              : TurnOutletOff()
+    terabox         ->  ps              : AdminMode.OFFLINE
+    note over           ps          #BurlyWood    : AdminMode.OFFLINE\nOpState.DISABLE\nHealthState:UNKNOWN 
+    note over terabox   #Tomato      : OpState: OFF\nHealthState: UNKNOWN
+    note over vcc_unit  #Tomato      : OpState: OFF\nHealthState: UNKNOWN
+end group
+note over controller    #Tomato      : OpState: OFF\nHealthState: UNKNOWN
+
+lmc             ->  controller      : AdminMode.OFFLINE
+group #LightCyan For each FHS in configuration:
+    controller      ->  vcc_unit        : AdminMode.OFFLINE
+    vcc_unit        ->  terabox         : AdminMode.OFFLINE
+end group
+note over controller, ps #BurlyWood  : AdminMode: OFFLINE\nOpState: DISABLE
+
+
+@enduml

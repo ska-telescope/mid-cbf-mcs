@@ -1,0 +1,53 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title FHS Off Command Sequence\n
+box "\nMCS\n"
+  participant "Mid.CBF\nController" as controller
+  participant "Terabox\n" as fhs_tel
+end box
+participant "FHS\nBMC" as fhs_bmc #Grey
+box "\nFHS\n"
+participant "NIC\n" as nic #LightGreen
+box "Worker Node"
+participant "FHS\nController" as fhs_safety
+participant "FHS\nCPU" as fhs_cpu
+collections "FHS\nFPGA" as fhs_fpga
+end box
+end box
+
+note over controller, fhs_tel   : AdminMode: ONLINE\nOpState: ON
+
+group #LightCyan For each FHS in configuration:
+  controller    ->  fhs_tel     : Off()
+  fhs_tel       ->  fhs_safety  : AdminMode.OFFLINE
+  fhs_tel       ->  fhs_cpu     : AdminMode.OFFLINE
+  fhs_tel       ->  fhs_fpga    : AdminMode.OFFLINE
+  note over fhs_safety, fhs_fpga : AdminMode: OFFLINE\nOpState: DISABLE
+
+  fhs_tel       ->  fhs_bmc     : TurnOffServer()
+  fhs_tel       ->  nic         : ping()
+  nic           --> fhs_tel     : result
+  note over fhs_tel             : OpState: OFF
+  fhs_tel       -->  controller : result
+end group
+
+note over controller            : OpState: OFF
+
+@enduml

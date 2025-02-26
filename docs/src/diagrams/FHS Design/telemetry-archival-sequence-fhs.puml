@@ -1,0 +1,39 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title FHS Telemetry Archival Sequence\n
+
+participant "Influx\nDB" as inf #SandyBrown
+participant "FHS\nBMC" as fhs_bmc #Grey
+participant "FPGA\nBMC" as fpga_bmc #Grey
+box "\nFHS\n"
+  participant "Linux\nOS" as os #LightGreen
+
+end box
+
+group #LightCyan Every 10s:
+  os            ->  fpga_bmc    : QueryTelemetry()
+  fpga_bmc     -->  os          : result
+
+  os            ->  fhs_bmc     : QueryTelemetry()
+  fhs_bmc      -->  os          : result
+  os            ->  inf         : ArchiveTelemetry()
+end group
+
+@enduml

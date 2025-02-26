@@ -1,0 +1,77 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title VCC Unit State Model (Server Fault)\n
+' participant "LMC\n" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nController" as controller
+  participant "VCC\nUnit" as vcc_unit
+  participant "Switch\n400Gb" as switch
+  participant "Terabox\n" as terabox
+  participant "Power\nSwitch" as ps
+end box
+' participant "Local\nCache" as cache #Salmon
+' participant "PDU\n" as pdu #Orange
+' participant "FHS\nBMC" as fhs_bmc #Grey
+' participant "FPGA\nBMC" as fpga_bmc #Grey
+box "\nFHS\n"
+    collections "FHS VCC\nController 1-3" as vcc_cont1
+    collections "FHS VCC\nController 4-6" as vcc_cont2
+
+    participant "FHS\nController" as fhs_cont
+    participant "FHS\nServer" as fhs_cpu
+    collections "FHS\nFPGA" as fhs_fpga
+end box
+
+note over controller, fhs_fpga #PaleGreen  : AdminMode: ONLINE\nOpState: ON\nHealthState: OK
+
+note over fhs_cpu #FFAAAA        : Fault !
+note over fhs_cpu                  : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState.FAILED
+
+fhs_cont           <--  fhs_cpu    : HealthState.FAILED
+fhs_cont           ->  fhs_fpga    : HealthState.UNKNOWN
+note over fhs_fpga                 : HealthState: UNKNOWN
+note over fhs_cont                 : OpState: FAULT\nHealthState.FAILED
+
+terabox            <--  fhs_cont   : HealthState.FAILED
+note over terabox                  : OpState: FAULT\nHealthState.FAILED
+vcc_unit           <--  terabox    : HealthState.FAILED
+note over vcc_unit                 : HealthState.DEGRADED
+vcc_unit            ->  vcc_cont1  : HealthStateCallback()
+vcc_unit            ->  vcc_cont2  : HealthStateCallback()
+note over vcc_cont1, vcc_cont2     : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState.FAILED
+
+' vcc_unit            <-  switch     : HealthState.OK
+' vcc_unit            <-  ps         : HealthState.OK
+' terabox             ->  terabox    : UpdateHealthState()
+' fhs_cont            ->  fhs_cont   : UpdateHealthState()
+' fhs_cont            <-  fhs_cpu    : HealthState.OK
+
+' fhs_cont            <-  fhs_fpga2  : HealthState.OK
+
+
+' vcc_unit            ->  vcc_cont1  : UpdateHealthState()
+' vcc_unit            ->  vcc_cont2  : UpdateHealthState()
+' note over fhs_cont                 : HealthState.DEGRADED
+' note over terabox                  : HealthState.DEGRADED
+' note over vcc_unit                 : HealthState.DEGRADED
+
+
+
+@enduml

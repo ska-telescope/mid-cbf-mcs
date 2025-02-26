@@ -1,0 +1,43 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title FHS Telemetry Tango Sequence\n
+participant "FHS\nBMC" as fhs_bmc #Grey
+participant "FPGA\nBMC" as fpga_bmc #Grey
+box "\nFHS\n"
+  participant "FHS\nController" as fhs_safety
+  participant "FHS\nCPU" as fhs_cpu
+  collections "FHS\nFPGA" as fhs_fpga
+end box
+
+group #LightCyan Every 30s:
+  fhs_safety    ->  fhs_cpu     : UpdateTelemetry()
+  fhs_cpu       ->  fhs_bmc     : QueryTelemetry()
+  fhs_bmc      -->  fhs_cpu     : result
+  fhs_cpu       ->  fhs_cpu     : Update\nTelemetry
+  fhs_cpu       ->  fhs_cpu     : Update\nhealthState
+
+  fhs_safety    ->  fhs_fpga    : UpdateTelemetry()
+  fhs_fpga      ->  fpga_bmc    : QueryTelemetry()
+  fpga_bmc     -->  fhs_fpga    : result
+  fhs_fpga      ->  fhs_fpga    : Update\nTelemetry
+  fhs_fpga      ->  fhs_fpga    : Update\nhealthState
+end group
+
+@enduml

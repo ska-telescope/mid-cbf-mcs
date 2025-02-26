@@ -1,0 +1,42 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title FHS Emergency Shutdown Sequence\n
+box "\nMCS\n"
+  participant "Terabox\n" as fhs_tel
+end box
+participant "FHS\nBMC" as fhs_bmc #Grey
+participant "FPGA\nBMC" as fpga_bmc #Grey
+box "\nFHS\n"
+  participant "FHS\nController" as fhs_safety
+  participant "FHS\nCPU" as fhs_cpu
+  collections "FHS\nFPGA" as fhs_fpga
+end box
+
+note over fhs_tel, fhs_fpga  : AdminMode: ONLINE,\nOpState: ON,\nhealthState: OK
+
+fhs_safety      ->  fhs_cpu     :   QueryTelemetry()
+note over fhs_cpu #FFAAAA     :   Over Temperature!
+note over fhs_cpu               :   healthState: FAILED
+note over fhs_safety            :   healthState: FAILED
+fhs_safety      ->  fhs_bmc !!  :   EmergencyShutdown()
+
+note over fhs_tel, fhs_fpga     : healthState: UNKNOWN
+
+@enduml

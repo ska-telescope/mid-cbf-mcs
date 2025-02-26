@@ -1,0 +1,73 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title VCC Unit State Model (PDU Fault)\n
+' participant "LMC\n" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nController" as controller
+  participant "VCC\nUnit" as vcc_unit
+  participant "Switch\n400Gb" as switch
+  participant "Terabox\n" as terabox
+  participant "Power\nSwitch" as ps
+end box
+' participant "Local\nCache" as cache #Salmon
+' participant "PDU\n" as pdu #Orange
+' participant "FHS\nBMC" as fhs_bmc #Grey
+' participant "FPGA\nBMC" as fpga_bmc #Grey
+box "\nFHS\n"
+    collections "FHS VCC\nController 1-3" as vcc_cont1
+    collections "FHS VCC\nController 4-6" as vcc_cont2
+
+    participant "FHS\nController" as fhs_cont
+    participant "FHS\nServer" as fhs_cpu
+    collections "FHS\nFPGA" as fhs_fpga
+end box
+
+note over controller, fhs_fpga #PaleGreen  : AdminMode: ONLINE\nOpState: ON\nHealthState: OK
+
+note over ps #FFAAAA         : Fault !
+note over ps                   : AdminMode: NOT_FITTED?\nOpState: FAULT?\nHealthState.FAILED
+
+terabox           <--  ps     : HealthState.FAILED
+terabox           ->  fhs_cont     : AdminMode.OFFLINE
+
+fhs_cont           ->  fhs_cpu     : AdminMode.OFFLINE
+fhs_cont           ->  fhs_fpga    : AdminMode.OFFLINE
+note over fhs_cont, fhs_fpga       : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState.UNKNOWN
+note over terabox                 : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState.UNKNOWN
+
+
+
+vcc_unit            ->  vcc_cont1  : HealthStateCallback()
+vcc_unit            ->  vcc_cont2  : HealthStateCallback()
+note over vcc_cont1, vcc_cont2     : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState.UNKNOWN
+
+vcc_unit           ->  terabox    : AdminMode.OFFLINE
+' terabox            ->   ps        : AdminMode.OFFLINE
+' note over ps                      : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState.UNKNOWN
+terabox            ->  fhs_cont   : AdminMode.OFFLINE
+
+fhs_cont           ->  fhs_cpu     : AdminMode.OFFLINE
+fhs_cont           ->  fhs_fpga    : AdminMode.OFFLINE
+note over fhs_cont, fhs_fpga       : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState.UNKNOWN
+note over terabox                 : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState.UNKNOWN
+note over vcc_unit               : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState.FAILED
+
+
+@enduml
