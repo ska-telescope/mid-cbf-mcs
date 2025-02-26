@@ -85,8 +85,8 @@ SKA_TANGO_OPERATOR ?= true
 # ITango enabled in ska-tango-base
 ITANGO_ENABLED ?= true
 
-K8S_CHART ?= $(HELM_CHART)
-K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
+K8S_CHART = $(HELM_CHART)
+K8S_UMBRELLA_CHART_PATH = ./charts/ska-mid-cbf-umbrella
 # defines the Kubernetes Namespace that will be deployed to using Helm
 KUBE_NAMESPACE ?= ska-mid-cbf
 # SDP namespace to be used
