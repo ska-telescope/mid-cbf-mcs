@@ -128,8 +128,7 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 	${TARANTA_PARAMS}
 
 K8S_TEST_TEST_COMMAND = $(K8S_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
-						pytest $(K8S_VARS_AFTER_PYTEST) $(K8S_TEST_FILE) \
-						| tee pytest.stdout
+						pytest $(K8S_VARS_AFTER_PYTEST) $(K8S_TEST_FILE)
 
 k8s-pre-test:
 	poetry export --format requirements.txt --output tests/k8s-test-requirements.txt --without-hashes --dev --with dev
@@ -157,7 +156,7 @@ k8s-do-test:
 		pip install --no-warn-script-location -qUr tests/k8s-test-requirements.txt && \
 		$(K8S_TEST_TEST_COMMAND); \
 		echo \$$? > build/status" 2>&1
-	kubectl -n $(KUBE_NAMESPACE) cp $(K8S_TEST_RUNNER):/app/build/ ./build/
+	kubectl -n $(KUBE_NAMESPACE) cp $(K8S_TEST_RUNNER):/app/build ./build
 	kubectl get all,job,pv,pvc,ingress,cm -n $(KUBE_NAMESPACE) -o yaml > build/k8s_manifest.txt
 	@echo "k8s-test: test run complete, processing logs"
 	for i in $$(kubectl get pod -n $(KUBE_NAMESPACE) -o jsonpath='{.items[*].metadata.name}'); do \
