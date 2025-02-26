@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import os
 import unittest
 from typing import Generator
 
@@ -26,6 +27,10 @@ from ska_tango_testing.harness import TangoTestHarnessContext
 from ska_tango_testing.integration import TangoEventTracer
 
 from ska_mid_cbf_tdc_mcs.testing.mock.mock_device import MockDeviceBuilder
+
+# Paths
+file_path = os.path.dirname(os.path.abspath(__file__))
+vis_slim_config_path = file_path + "/../../../mnt/slim/vis/slim_config.yaml"
 
 
 @pytest.fixture(name="device_under_test")
@@ -72,7 +77,7 @@ def tango_event_tracer(
 def mock_tm() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.add_attribute("delayModel", "")
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -86,7 +91,7 @@ def mock_controller() -> unittest.mock.Mock:
         "MaxCapabilities",
         {"MaxCapabilities": ["VCC:4", "FSP:4", "Subarray:1"]},
     )
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -98,17 +103,48 @@ def mock_vcc_builder() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
     builder.add_attribute("longRunningCommandResult", ("", ""))
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
-    builder.add_result_command("UpdateDelayModel", ResultCode.OK)
-    builder.add_result_command("ConfigureBand", ResultCode.OK)
-    builder.add_result_command("ConfigureScan", ResultCode.OK)
-    builder.add_result_command("Scan", ResultCode.OK)
-    builder.add_result_command("EndScan", ResultCode.OK)
-    builder.add_result_command("GoToIdle", ResultCode.OK)
-    builder.add_result_command("Abort", ResultCode.OK)
-    builder.add_result_command("ObsReset", ResultCode.OK)
-    # return unevaluated builder
+    builder.add_lrc(
+        name="ConfigureBand",
+        result_code=ResultCode.OK,
+        message="ConfigureBand completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="ConfigureScan",
+        result_code=ResultCode.OK,
+        message="ConfigureScan completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="Scan",
+        result_code=ResultCode.OK,
+        message="Scan completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="EndScan",
+        result_code=ResultCode.OK,
+        message="EndScan completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="GoToIdle",
+        result_code=ResultCode.OK,
+        message="GoToIdle completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="Abort",
+        result_code=ResultCode.OK,
+        message="Abort completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="ObsReset",
+        result_code=ResultCode.OK,
+        message="ObsReset completed OK",
+        queued=True,
+    )
     return builder
 
 
@@ -120,14 +156,26 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("functionMode", 0)
-    builder.add_attribute("subarrayMembership", 0)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
-    builder.add_result_command("AddSubarrayMembership", ResultCode.OK)
-    builder.add_result_command("SetFunctionMode", ResultCode.OK)
-    builder.add_result_command("RemoveSubarrayMembership", ResultCode.OK)
-    builder.add_result_command("UpdateDelayModel", ResultCode.OK)
-    return builder()
+    builder.add_attribute("subarrayMembership", [])
+    builder.add_lrc(
+        name="AddSubarrayMembership",
+        result_code=ResultCode.OK,
+        message="AddSubarrayMembership completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="RemoveSubarrayMembership",
+        result_code=ResultCode.OK,
+        message="RemoveSubarrayMembership completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="SetFunctionMode",
+        result_code=ResultCode.OK,
+        message="SetFunctionMode completed OK",
+        queued=True,
+    )
+    return builder
 
 
 @pytest.fixture()
@@ -140,15 +188,44 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
     builder.add_attribute("subarrayMembership", 0)
     builder.add_attribute("obsState", ObsState.IDLE)
     builder.add_property("FspID", {"FspID": [1]})
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
-    builder.add_result_command("ConfigureScan", ResultCode.OK)
-    builder.add_result_command("Scan", ResultCode.OK)
-    builder.add_result_command("EndScan", ResultCode.OK)
-    builder.add_result_command("GoToIdle", ResultCode.OK)
-    builder.add_result_command("Abort", ResultCode.OK)
-    builder.add_result_command("ObsReset", ResultCode.OK)
-    return builder()
+    builder.add_result_command("UpdateDelayModel", ResultCode.OK)
+    builder.add_lrc(
+        name="ConfigureScan",
+        result_code=ResultCode.OK,
+        message="ConfigureScan completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="Scan",
+        result_code=ResultCode.OK,
+        message="Scan completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="EndScan",
+        result_code=ResultCode.OK,
+        message="EndScan completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="GoToIdle",
+        result_code=ResultCode.OK,
+        message="GoToIdle completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="Abort",
+        result_code=ResultCode.OK,
+        message="Abort completed OK",
+        queued=True,
+    )
+    builder.add_lrc(
+        name="ObsReset",
+        result_code=ResultCode.OK,
+        message="ObsReset completed OK",
+        queued=True,
+    )
+    return builder
 
 
 @pytest.fixture()
@@ -160,7 +237,7 @@ def mock_talon_board() -> unittest.mock.Mock:
     builder.add_attribute("subarrayID", "")
     builder.add_attribute("dishID", "SKA001")
     builder.add_attribute("vccID", "1")
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -169,8 +246,10 @@ def mock_vis_mesh() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.ON)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
-    builder.add_attribute("meshConfiguration", "")
-    return builder()
+    with open(vis_slim_config_path) as f:
+        mesh_config_str = f.read()
+    builder.add_attribute("meshConfiguration", mesh_config_str)
+    return builder
 
 
 @pytest.fixture()
@@ -183,7 +262,7 @@ def mock_host_lut_s1() -> unittest.mock.Mock:
     builder.add_command("connectToHostLUTStage2", ResultCode.OK)
     builder.add_command("Program", ResultCode.OK)
     builder.add_command("Unprogram", ResultCode.OK)
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -194,7 +273,7 @@ def mock_host_lut_s2() -> unittest.mock.Mock:
     builder.add_attribute("host_lut_s1_chan_offsets", [0])
     builder.add_command("Program", ResultCode.OK)
     builder.add_command("Unprogram", ResultCode.OK)
-    return builder()
+    return builder
 
 
 @pytest.fixture()
@@ -204,7 +283,7 @@ def mock_spead_desc() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_command("StartScan", ResultCode.OK)
     builder.add_command("EndScan", ResultCode.OK)
-    return builder()
+    return builder
 
 
 @pytest.fixture()

@@ -80,12 +80,9 @@ class TestCbfSubarray:
             VisSLIM=["mid_csp_cbf/slim/slim-vis"],
             DeviceID="1",
         )
+
         for name, mock in initial_mocks.items():
-            # Subarray requires unique VCC mocks to be generated
-            if "mid_csp_cbf/vcc/" in name:
-                harness.add_mock_device(device_name=name, device_mock=mock())
-            else:
-                harness.add_mock_device(device_name=name, device_mock=mock)
+            harness.add_mock_device(device_name=name, device_mock=mock(name))
 
         with harness as test_context:
             yield test_context
@@ -655,10 +652,12 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
-        [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
+        [
+            ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json"),
+            ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan_invalid.json"),
+        ],
     )
     def test_Scan(
         self: TestCbfSubarray,
@@ -711,18 +710,56 @@ class TestCbfSubarray:
             ("obsState", ObsState.IDLE, ObsState.RESOURCING, 1),
             ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
             ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
-            ("obsState", ObsState.SCANNING, ObsState.READY, 1),
-            ("obsState", ObsState.READY, ObsState.SCANNING, 1),
-            ("obsState", ObsState.IDLE, ObsState.READY, 1),
-            ("obsState", ObsState.RESOURCING, ObsState.IDLE, 1),
-            ("obsState", ObsState.EMPTY, ObsState.RESOURCING, 1),
-            ("receptors", (), None, 1),
         ]
+        # Conditional for Scan/EndScan failure case testing
+        if "invalid" not in scan_file_name:
+            attr_values.extend(
+                [
+                    ("obsState", ObsState.SCANNING, ObsState.READY, 1),
+                    ("obsState", ObsState.READY, ObsState.SCANNING, 1),
+                ]
+            )
+        attr_values.extend(
+            [
+                ("obsState", ObsState.IDLE, ObsState.READY, 1),
+                ("obsState", ObsState.RESOURCING, ObsState.IDLE, 1),
+                ("obsState", ObsState.EMPTY, ObsState.RESOURCING, 1),
+                ("receptors", (), None, 1),
+            ]
+        )
 
         # Assertions for all issued LRC
         for command_name, return_value in command_dict.items():
             # Check that the command was successfully queued
             assert return_value[0] == ResultCode.QUEUED
+
+            # Conditional for Scan/EndScan failure case testing
+            if "Scan" in command_name and "invalid" in scan_file_name:
+                if command_name == "Scan":
+                    attr_values.append(
+                        (
+                            "longRunningCommandResult",
+                            (
+                                f"{return_value[1][0]}",
+                                f'[{ResultCode.FAILED.value}, "Failed to validate Scan input JSON"]',
+                            ),
+                            None,
+                            1,
+                        )
+                    )
+                elif command_name == "EndScan":
+                    attr_values.append(
+                        (
+                            "longRunningCommandResult",
+                            (
+                                f"{return_value[1][0]}",
+                                f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
+                            ),
+                            None,
+                            1,
+                        )
+                    )
+                continue
 
             attr_values.append(
                 (
@@ -731,6 +768,8 @@ class TestCbfSubarray:
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                     ),
+                    None,
+                    1,
                 )
             )
 
@@ -745,7 +784,6 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
         [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
@@ -808,6 +846,7 @@ class TestCbfSubarray:
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                 ),
+                min_n_events=1,
             )
 
         # Second round of observation
@@ -868,7 +907,6 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors",
         [("ConfigureScan_basic_CORR.json", ["SKA001"])],
@@ -949,7 +987,6 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
         [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
@@ -1036,7 +1073,6 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors",
         [("ConfigureScan_basic_CORR.json", ["SKA001"])],
@@ -1095,7 +1131,6 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
         [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
@@ -1157,7 +1192,6 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors",
         [("ConfigureScan_basic_CORR.json", ["SKA001"])],
@@ -1217,7 +1251,6 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
         [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
