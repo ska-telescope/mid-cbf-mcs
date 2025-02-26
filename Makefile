@@ -31,7 +31,7 @@ PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src TANGO_HOST=$(TANGO_HOST)
 PYTHON_TEST_FILE = ./tests/unit
 # additional pytest flags; use -k to isolate particular tests, e.g. -k test_Scan
 PYTHON_VARS_AFTER_PYTEST =
-PYTHON_RUNNER = python3 -m
+PYTHON_RUNNER =
 
 python-pre-lint:
 	@pip3 install black isort flake8 pylint_junit typing_extensions
