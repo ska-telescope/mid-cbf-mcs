@@ -44,22 +44,22 @@ python-pre-build:
 ################
 
 # release that all Kubernetes resources will be labelled with
-HELM_RELEASE = test
-HELM_CHART = ska-mid-cbf-umbrella
+HELM_RELEASE ?= test
+HELM_CHART ?= ska-mid-cbf-umbrella
 
 ###############
 # --- k8s --- #
 ###############
 
-CI_REGISTRY = gitlab.com/ska-telescope/ska-mid-cbf-mcs
-CI_PROJECT_DIR = .
+CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-mcs
+CI_PROJECT_DIR ?= .
 
 # --- Taranta config --- #
 # Enable jive
-JIVE = false
+JIVE ?= false
 # Enable Taranta
-TARANTA = false
-DASHBOARD = webjive-dash.dump
+TARANTA ?= false
+DASHBOARD ?= webjive-dash.dump
 
 TARANTA_PARAMS = --set ska-taranta.enabled=$(TARANTA) \
 				 --set ska-taranta-auth.enabled=$(TARANTA) \
@@ -75,22 +75,22 @@ endif
 
 # --- k8s config --- #
 
-CLUSTER_DOMAIN = cluster.local
+CLUSTER_DOMAIN ?= cluster.local
 # this assumes host and talon board 1g ethernet is on the 192.168 subnet
 HOST_IP = $(shell ip a 2> /dev/null | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | grep 192.168)
-MINIKUBE = true
+MINIKUBE ?= true
 # Expose All Tango Services to the external network (enable Loadbalancer service)
-EXPOSE_All_DS = false
-SKA_TANGO_OPERATOR = true
+EXPOSE_All_DS ?= false
+SKA_TANGO_OPERATOR ?= true
 # ITango enabled in ska-tango-base
-ITANGO_ENABLED = true
+ITANGO_ENABLED ?= true
 
-K8S_CHART = $(HELM_CHART)
-K8S_UMBRELLA_CHART_PATH = ./charts/ska-mid-cbf-umbrella
+K8S_CHART ?= $(HELM_CHART)
+K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 # defines the Kubernetes Namespace that will be deployed to using Helm
-KUBE_NAMESPACE = ska-mid-cbf
+KUBE_NAMESPACE ?= ska-mid-cbf
 # SDP namespace to be used
-SDP_KUBE_NAMESPACE = ska-mid-cbf-sdp
+SDP_KUBE_NAMESPACE ?= ska-mid-cbf-sdp
 
 TANGO_DATABASE = tango-databaseds-$(HELM_RELEASE)
 TANGO_HOST = $(TANGO_DATABASE):10000
@@ -103,9 +103,9 @@ K8S_VARS_BEFORE_PYTEST = TANGO_HOST=$(TANGO_HOST)
 K8S_VARS_AFTER_PYTEST = -s --verbose
 
 # base64 encoded kubectl credentials for KUBECONFIG
-KUBE_CONFIG_BASE64 =
+KUBE_CONFIG_BASE64 ?=
 # KUBECONFIG location
-KUBECONFIG = /etc/deploy/config
+KUBECONFIG ?= /etc/deploy/config
 
 ifneq ($(strip $(CI_JOB_ID)),)
 K8S_TEST_IMAGE_TO_TEST = $(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs/ska-mid-cbf-mcs:$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
@@ -127,7 +127,7 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 	${K8S_TEST_TANGO_IMAGE_PARAMS} \
 	${TARANTA_PARAMS}
 
-K8S_TEST_TEST_COMMAND = $(K8S_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
+K8S_TEST_TEST_COMMAND ?= $(K8S_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
 						pytest $(K8S_VARS_AFTER_PYTEST) $(K8S_TEST_FILE) \
 						| tee pytest.stdout
 
