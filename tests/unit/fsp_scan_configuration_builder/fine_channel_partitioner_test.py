@@ -103,7 +103,6 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
         wideband_shift=parameters["wideband_shift"],
         band_name=parameters["band_name"],
     )
-    print(results)
     # assert we get the same number of fsp configs for the given fsp ids
     assert len(parameters["fsp_ids"]) == len(results)
     assert parameters["fsp_ids"] == list(results.keys())

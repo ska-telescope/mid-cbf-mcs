@@ -86,7 +86,6 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        print(msg)
         assert "Scan configuration is valid." in msg
         assert success is True
 
@@ -109,7 +108,6 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        print(msg)
         assert f"subarray_id {subarray_id} not supported." in msg
         assert success is False
 
@@ -134,7 +132,6 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        print(msg)
         assert (
             f"AA 1.0 only support fsp_ids with array length of 1-8,size of the fsp_ids given: {len(fsp_ids)}"
             in msg
@@ -163,7 +160,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = f"AA 1.0 Requirement: {(FspModes.CORR).name} Supports only FSP {[1, 2, 3, 4]}."
-        print(msg)
         assert expected_msg in msg
         assert success is False
 
@@ -233,7 +229,6 @@ class TestScanConfigurationValidator:
             )
         )
         success, msg = validator.validate_input()
-        print(msg)
         assert success is False
 
     @pytest.mark.parametrize(
@@ -264,7 +259,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = f"{midcbf_key} Currently Not Supported In AA 0.5/AA 1.0"
-        print(msg)
         assert expected_msg in msg
         assert success is False
 
@@ -292,7 +286,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "The Processing Region is not within the range for the [0-1981808640] that is accepted by MCS"
-        print(msg)
         assert expected_msg in msg
         assert success is False
 
@@ -352,7 +345,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "Scan configuration is valid."
-        print(msg)
         assert expected_msg in msg
         assert success is True
 
@@ -378,7 +370,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "Not enough FSP assigned in the processing region to process the range of the requested spectrum"
-        print(msg)
         assert expected_msg in msg
         assert success is False
 
@@ -407,7 +398,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "Too many FSP assigned in the processing region to process the range of the requested spectrum"
-        print(msg)
         assert expected_msg in msg
         assert success is False
 
@@ -457,7 +447,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = f"Invalid value for channel_width:{channel_width}"
-        print(msg)
         assert expected_msg in msg
         assert success is False
 
@@ -484,7 +473,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "Invalid value for channel_count"
-        print(msg)
         assert expected_msg in msg
         assert success is False
 
@@ -601,7 +589,6 @@ class TestScanConfigurationValidator:
         expected_msg = (
             "difference between output_host values must be a multiple of 20"
         )
-        print(msg)
         assert expected_msg in msg[1]
         assert success is False
 
@@ -727,7 +714,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "Scan configuration is valid."
-        print(msg)
         assert expected_msg in msg
         assert success is True
 
@@ -763,7 +749,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "There are over 20 channels assigned to a specific port within a single host "
-        print(msg)
         assert expected_msg in msg
         assert success is False
 
@@ -790,7 +775,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "output_port exceeds the max allowable channel "
-        print(msg)
         assert expected_msg in msg
         assert success is False
 
@@ -813,7 +797,6 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "search_window Not Supported in AA 0.5 and AA 1.0"
-        print(msg)
         assert expected_msg in msg
         assert success is False
 
@@ -836,6 +819,5 @@ class TestScanConfigurationValidator:
         )
         success, msg = validator.validate_input()
         expected_msg = "vlbi Currently Not Supported In AA 0.5/AA 1.0"
-        print(msg)
         assert expected_msg in msg
         assert success is False

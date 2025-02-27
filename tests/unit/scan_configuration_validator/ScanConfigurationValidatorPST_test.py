@@ -84,7 +84,6 @@ class TestScanConfigurationValidatorPST:
             )
         )
         success, msg = validator.validate_input()
-        print(msg)
         assert "Scan configuration is valid." in msg
         assert success is True
 
@@ -148,7 +147,6 @@ class TestScanConfigurationValidatorPST:
         )
         success, msg = validator.validate_input()
         expected_msg = f"AA 1.0 Requirement: {(FspModes.PST).name} Supports only FSP {[5, 6, 7, 8]}."
-        print(msg)
         assert expected_msg in msg
         assert success is False
 
