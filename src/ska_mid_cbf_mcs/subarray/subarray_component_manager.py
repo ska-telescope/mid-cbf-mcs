@@ -1932,9 +1932,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 status=TaskStatus.FAILED,
                 result=(
                     ResultCode.FAILED,
-                    "Failed to validate schema for Scan input JSON",
+                    "Failed to validate Scan input JSON",
                 ),
             )
+            return
 
         scan = json.loads(argin)
 
