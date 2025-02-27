@@ -193,7 +193,6 @@ DEFAULT_COUNT_SUBARRAY = 1
             },  # must be FSP IDs and FspMode values in ConfigureScan JSON
         },
     ],
-    
 )
 def subarray_test_parameters(request: pytest.FixtureRequest) -> dict[any]:
     """

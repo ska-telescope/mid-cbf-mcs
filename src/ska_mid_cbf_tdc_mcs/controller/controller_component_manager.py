@@ -551,7 +551,7 @@ class ControllerComponentManager(CbfComponentManager):
 
             self.talondx_config_json = {"config_commands": all_config_commands}
 
-        self.logger.info(f"Talon-DX config JSON: {self.talondx_config_json}")
+        self.logger.debug(f"Talon-DX config JSON: {self.talondx_config_json}")
 
         # Set the used FQDNs by talondx config
         self._set_used_fqdns()

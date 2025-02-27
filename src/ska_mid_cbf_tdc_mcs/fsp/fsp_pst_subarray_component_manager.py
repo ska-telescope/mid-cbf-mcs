@@ -104,24 +104,19 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         :return: None
         """
-        self.logger.info("Entering FSP Subarray Configure Scan")
         # Set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
             "ConfigureScan", task_callback, task_abort_event
         ):
-            self.logger.info("task_abort_event_is_set failed")
             return
 
         # Release previously assigned VCCs
         self._deconfigure()
-        self.logger.info("self._deconfigure() done")
         configuration = json.loads(argin)
 
         # Assign newly specified VCCs
         self._assign_vcc(configuration["bf_vcc_ids"])
-        self.logger.info("VCC Assigned")
-        self.logger.info(f"Sim Mode:{self.simulation_mode}")
 
         # Issue ConfigureScan to HPS FSP PST controller
         if not self.simulation_mode:
@@ -149,11 +144,9 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         # Update obsState callback
         self._update_component_state(configured=True)
-        self.logger.info("self._update_component_state")
 
         task_callback(
             result=(ResultCode.OK, "ConfigureScan completed OK"),
             status=TaskStatus.COMPLETED,
         )
-        self.logger.info("ConfigureScan completed OK")
         return

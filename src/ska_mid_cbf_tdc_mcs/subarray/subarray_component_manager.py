@@ -291,7 +291,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
             return
-        self.logger.info("_init_controller_proxy Exit")
+
         subelement_success = self._init_subelement_proxies()
         if not subelement_success:
             self.logger.error("Failed to initialize subelement proxies.")
@@ -299,7 +299,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
             return
-        self.logger.info("_init_subelement_proxies Exit")
+
         super()._start_communicating()
         self._update_component_state(power=PowerState.ON)
 
@@ -1325,8 +1325,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         """
 
         all_fsp_configs = []
-        self.logger.info("Entering Building FSP Configs")
-        self.logger.info(configuration)
         # CORR
         if "correlation" in configuration:
             corr_config = configuration["correlation"]
@@ -1347,8 +1345,6 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 raise ValueError(msg)
 
             all_fsp_configs.extend(corr_fsp_configs)
-            self.logger.info("Built Corr FSP Config")
-            self.logger.info(corr_fsp_configs)
 
         # PST
         if "pst_bf" in configuration:
@@ -1370,11 +1366,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 raise ValueError(msg)
 
             all_fsp_configs.extend(pst_fsp_configs)
-            self.logger.info("Built PST FSP Configs")
-            self.logger.info(pst_fsp_configs)
 
-        self.logger.info("Exit Building FSP Configs")
-        self.logger.info(all_fsp_configs)
         return all_fsp_configs
 
     def _build_fsp_config(
