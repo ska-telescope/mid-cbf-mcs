@@ -15,8 +15,8 @@ metadata:
 {{ toYaml $annotations | indent 4 }}
 {{- end }}
 spec:
-  storageClassName: {{ .Values.artifactsPvc.storageClassName }}
-  volumeMode: {{ .Values.artifactsPvc.volumeMode }}
+  storageClassName: {{ .Values.pvc.storageClassName }}
+  volumeMode: {{ .Values.pvc.volumeMode }}
   accessModes:
     - ReadWriteMany
   resources:
