@@ -107,6 +107,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fqdn_vcc = []
         self._fqdn_fsp = []
         self._fqdn_fsp_corr = []
+        self._fqdn_fsp_pst = []
 
         self._fqdn_talon_board_device = talon_board
         self._fqdn_vis_slim_device = vis_slim
@@ -1560,24 +1561,24 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     if not fsp_success:
                         return False
 
-                    # Parameter named "pst_vcc_ids" used by HPS contains the
+                    # Parameter named "bf_vcc_ids" used by HPS contains the
                     # subset of the subarray VCCs for which the correlation
                     # results are requested to be used in Mid.CBF output
                     # products (visibilities); dishes may not be specified in
                     # the configuration at all, or the list may be empty
-                    fsp_config["pst_vcc_ids"] = []
+                    fsp_config["bf_vcc_ids"] = []
                     receptors_pst = self._get_receptors_from_pst_fsp(
                         fsp_config
                     )
                     if len(receptors_pst) == 0:
                         # In this case by the ICD, all subarray allocated
                         # resources should be used.
-                        fsp_config["pst_vcc_ids"] = fsp_config[
+                        fsp_config["bf_vcc_ids"] = fsp_config[
                             "subarray_vcc_ids"
                         ].copy()
                     else:
                         for dish in sorted(receptors_pst):
-                            fsp_config["pst_vcc_ids"].append(
+                            fsp_config["bf_vcc_ids"].append(
                                 self._dish_utils.dish_id_to_vcc_id[dish]
                             )
 

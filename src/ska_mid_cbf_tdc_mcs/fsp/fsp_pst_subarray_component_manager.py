@@ -119,7 +119,7 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
         configuration = json.loads(argin)
 
         # Assign newly specified VCCs
-        self._assign_vcc(configuration["pst_vcc_ids"])
+        self._assign_vcc(configuration["bf_vcc_ids"])
         self.logger.info("VCC Assigned")
         self.logger.info(f"Sim Mode:{self.simulation_mode}")
 

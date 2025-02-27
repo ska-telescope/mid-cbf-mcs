@@ -325,7 +325,6 @@ def get_coarse_channels(
         (end_freq - wb_shift + const.HALF_FS_BW) / const.FS_BW
     )
     coarse_channels = list(range(coarse_channel_low, coarse_channel_high + 1))
-    print(coarse_channels)
     return coarse_channels
 
 

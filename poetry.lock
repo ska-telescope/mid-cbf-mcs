@@ -3294,13 +3294,13 @@ reference = "PyPI-public"
 
 [[package]]
 name = "prettytable"
-version = "3.14.0"
+version = "3.15.0"
 description = "A simple Python library for easily displaying tabular data in a visually appealing ASCII table format"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "prettytable-3.14.0-py3-none-any.whl", hash = "sha256:61d5c68f04a94acc73c7aac64f0f380f5bed4d2959d59edc6e4cbb7a0e7b55c4"},
-    {file = "prettytable-3.14.0.tar.gz", hash = "sha256:b804b8d51db23959b96b329094debdbbdf10c8c3aa75958c5988cfd7f78501dd"},
+    {file = "prettytable-3.15.0-py3-none-any.whl", hash = "sha256:49429c06e6721dcca25f08ede3e9401abe2afd35d87e4336a72ee89b09a53c68"},
+    {file = "prettytable-3.15.0.tar.gz", hash = "sha256:c72dff9c1ede57f9a511fddc8f10af3c8a86dd293f5adf75825a5e6bf81ff73b"},
 ]
 
 [package.dependencies]
@@ -5022,13 +5022,13 @@ reference = "PyPI-public"
 
 [[package]]
 name = "setuptools"
-version = "75.8.0"
+version = "75.8.2"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "setuptools-75.8.0-py3-none-any.whl", hash = "sha256:e3982f444617239225d675215d51f6ba05f845d4eec313da4418fdbb56fb27e3"},
-    {file = "setuptools-75.8.0.tar.gz", hash = "sha256:c5afc8f407c626b8313a86e10311dd3f661c6cd9c09d4bf8c15c0e11f9f2b0e6"},
+    {file = "setuptools-75.8.2-py3-none-any.whl", hash = "sha256:558e47c15f1811c1fa7adbd0096669bf76c1d3f433f58324df69f3f5ecac4e8f"},
+    {file = "setuptools-75.8.2.tar.gz", hash = "sha256:4880473a969e5f23f2a2be3646b2dfd84af9028716d398e46192f84bc36900d2"},
 ]
 
 [package.extras]

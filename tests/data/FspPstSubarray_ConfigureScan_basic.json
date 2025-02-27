@@ -5,7 +5,7 @@
     "fsp_id": 1,
     "function_mode": "PST",
     "subarray_vcc_ids": [1,2,4],
-    "pst_vcc_ids": [1,4],
+    "bf_vcc_ids": [1,4],
     "frequency_slice_id": 1,
     "fsp_start_channel_id": 5522,
     "frequency_band_offset_stream1": 0,
