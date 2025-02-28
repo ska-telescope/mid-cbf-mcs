@@ -181,6 +181,10 @@ k8s-do-test:
 	@echo "k8s-test: the test run exit code is ($$(cat build/status))"
 	@exit `cat build/status`
 
+# Remove exported requirements file
+k8s-post-test:
+	rm tests/k8s-test-requirements.txt
+
 #########################
 # --- Miscellaneous --- #
 #########################
@@ -202,4 +206,4 @@ help: ## show this help.
 # Defines a default make target so that help is printed if make is called
 # without a target
 .DEFAULT_GOAL := help
-.PHONY: k8s-do-test python-pre-lint python-pre-build jive rebuild-reinstall help
+.PHONY: k8s-pre-test k8s-do-test k8s-post-test python-pre-lint python-pre-build jive rebuild-reinstall help
