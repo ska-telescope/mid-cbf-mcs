@@ -23,6 +23,9 @@ UNRELEASED CHANGES
 * CIP-3612: CreateDescriptor command input changed to JSON string input for Spead-Descriptor v1.7.0
 * SKB-803: Updated the artifacts PVC so that storageClassName and volumeMode can be configured from values
 * SKB-800: Subarray Scan command returns failure when receiving an invalid input JSON
+* CIP-3382
+  * Add numSubarray, numVcc, numFsp chart values to dynamically scale MCS deployment
+  * Reduce image size based on ska-tango-images-tango-python image
 
 1.1.1
 **********
