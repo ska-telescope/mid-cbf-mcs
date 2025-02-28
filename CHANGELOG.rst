@@ -5,6 +5,9 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+UNRELEASED CHANGES
+******************
+
 1.1.3
 *****
 * SKB-803: Updated the artifacts and SV PVC so that storageClassName and volumeMode can be configured from values
