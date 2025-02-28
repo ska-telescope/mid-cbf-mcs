@@ -5,6 +5,15 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning http://semver.org/>`_.
 
+UNRELEASED CHANGES
+******************
+* CIP-2813: Implement Subarray for PST
+  * Added support for Scan Configuration 5.0 and processing PST-BF Processing Region Configurations; bump ska-telemodel to 1.20.0
+  * Seperated out FspScanConfigurationBuilder into CORR and PST specific child classes; Added support to build PST FSP HPS configurations
+  * Updated Controller to default to 4 CORR 4 PST configuration when SimulationMode is True
+  * Updated Subarray to process and manage FspPstSubarray when requested
+  * Update Unit and Integration Tests to support PST changes
+
 1.1.3
 *****
 * SKB-803: Updated the artifacts and SV PVC so that storageClassName and volumeMode can be configured from values

@@ -29,7 +29,7 @@ PYTHON_TEST_FILE = ./tests/unit/
 K8S_TEST_FILE = ./tests/integration/controller ./tests/integration/subarray
 
 # additional pytest flags; use -k to isolate particular tests, e.g. -k test_Scan
-PYTHON_VARS_AFTER_PYTEST = --forked -k CbfSubarray_test.py
+PYTHON_VARS_AFTER_PYTEST = --forked
 K8S_VARS_AFTER_PYTEST = -s
 
 CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-tdc-mcs
