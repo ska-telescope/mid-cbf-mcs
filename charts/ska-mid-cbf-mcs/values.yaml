@@ -56,6 +56,10 @@ resources:
     memory: 128Mi  
     ephemeral-storage: 256Mi
 
+pvc:
+  storageClassName: nfss1
+  volumeMode: Filesystem
+
 nodeSelector: {}
 
 affinity: {}

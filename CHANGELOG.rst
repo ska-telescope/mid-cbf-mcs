@@ -21,6 +21,8 @@ UNRELEASED CHANGES
   * Controller skips attempting to power ON/OFF LRUs if they are all already in the correct state
   * Added HPS master healthStateReport attr to TalonBoard
 * CIP-3612: CreateDescriptor command input changed to JSON string input for Spead-Descriptor v1.7.0
+* SKB-803: Updated the artifacts PVC so that storageClassName and volumeMode can be configured from values
+* SKB-800: Subarray Scan command returns failure when receiving an invalid input JSON
 
 1.1.1
 **********
