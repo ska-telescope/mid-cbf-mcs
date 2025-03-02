@@ -149,14 +149,12 @@ class FspScanConfigurationBuilderCorr(FspScanConfigurationBuilder):
         # Build individual fsp configs
         fsp_configs = []
 
-        for fsp_id in calculated_fsp_infos.keys():
+        for fsp_id, calculated_fsp_info in calculated_fsp_infos.items():
             fsp_config = {}
             # Required values
             fsp_config["fsp_id"] = fsp_id
             fsp_config["function_mode"] = self._function_mode.name
-            fsp_config["frequency_slice_id"] = calculated_fsp_infos[fsp_id][
-                "fs_id"
-            ]
+            fsp_config["frequency_slice_id"] = calculated_fsp_info["fs_id"]
             fsp_config["integration_factor"] = processing_region_config[
                 "integration_factor"
             ]
@@ -164,9 +162,9 @@ class FspScanConfigurationBuilderCorr(FspScanConfigurationBuilder):
 
             # The 0-14880 channel number where we want to start processing in
             # the FS, which is the fsp_start_ch value
-            fsp_config["fs_start_channel_offset"] = calculated_fsp_infos[
-                fsp_id
-            ]["fsp_start_ch"]
+            fsp_config["fs_start_channel_offset"] = calculated_fsp_info[
+                "fsp_start_ch"
+            ]
 
             # spead / fsp channel_offset
             # this offset flows down to SPEAD into value channel_id.
@@ -184,8 +182,8 @@ class FspScanConfigurationBuilderCorr(FspScanConfigurationBuilder):
             # start_channel_ids together.
             fsp_config["spead_channel_offset"] = ctypes.c_uint32(
                 processing_region_config["sdp_start_channel_id"]
-                + calculated_fsp_infos[fsp_id]["start_channel_id"]
-                - calculated_fsp_infos[fsp_id]["fsp_start_ch"]
+                + calculated_fsp_info["start_channel_id"]
+                - calculated_fsp_info["fsp_start_ch"]
             ).value
 
             fsp_config[

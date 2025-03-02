@@ -129,6 +129,25 @@ def _find_end_channel_for_spead_stream(start: int, end: int) -> int:
     return neareset
 
 
+def _find_end_channel_for_pst_stream(start: int, end: int) -> int:
+    """
+    Determine the nearest end channel that will result in the number of
+    channels being a multiple of the const.NUM_CHANNELS_PER_PST_STREAM.
+
+    :param start: the starting channel id
+    :param end: the last channel
+    :return: the new end channel that results in the channel count being a
+             multiple of the const.NUM_CHANNELS_PER_SPEAD_STREAM
+    """
+    num_channels = end - start + 1
+    remainder = num_channels % const.NUM_CHANNELS_PER_PST_STREAM
+    if remainder >= (const.NUM_CHANNELS_PER_PST_STREAM // 2):
+        neareset = end + (const.NUM_CHANNELS_PER_PST_STREAM - remainder)
+    else:
+        neareset = end - remainder
+    return neareset
+
+
 def _round_to_nearest(
     value: int, nearest: int = const.NUM_CHANNELS_PER_SPEAD_STREAM
 ) -> int:
@@ -168,6 +187,77 @@ def partition_spectrum_to_frequency_slices(
     :raises ValueError: if input values are not provided or valid
     :return: structure with information about fsp boundaries, see:
         https://confluence.skatelescope.org/display/SE/Processing+Regions+for+CORR+-+Identify+and+Select+Fine+Channels#ProcessingRegionsforCORRIdentifyandSelectFineChannels-ExampleCalculatedFrequencySliceBoundaryInformation
+    """
+    if channel_width is None:
+        raise ValueError("channel_width cannot be None")
+    if channel_width <= 0:
+        raise ValueError("channel_width cannot be negative or zero")
+    if channel_count is None:
+        raise ValueError("channel_count cannot be None")
+    if channel_count <= 0:
+        raise ValueError("channel_count cannot be negative")
+    if k_value is None:
+        raise ValueError("k_value cannot be None")
+    if k_value < const.K_VALUE_RANGE[0] or k_value > const.K_VALUE_RANGE[1]:
+        raise ValueError(
+            f"k_value must be between {const.K_VALUE_RANGE[0]} - {const.K_VALUE_RANGE[1]}"
+        )
+    if fsp_ids is None:
+        raise ValueError("fsp_ids cannot be None")
+    if len(fsp_ids) == 0:
+        raise ValueError("fsp_ids cannot be empty")
+    band_names = list(freq_band_dict().keys())
+    if band_name not in band_names:
+        raise ValueError(f"band_name not in {band_names}")
+
+    match fsp_mode:
+        case FspModes.CORR:
+            return partition_spectrum_to_frequency_slices_corr(
+                fsp_ids,
+                start_freq,
+                channel_width,
+                channel_count,
+                k_value,
+                wideband_shift,
+                band_name,
+            )
+        case FspModes.PST:
+            return partition_spectrum_to_frequency_slices_pst(
+                fsp_ids,
+                start_freq,
+                channel_width,
+                channel_count,
+                k_value,
+                wideband_shift,
+                band_name,
+            )
+        case _:
+            return {}
+
+
+def partition_spectrum_to_frequency_slices_corr(
+    fsp_ids: list[int],
+    start_freq: int,
+    channel_width: int,
+    channel_count: int,
+    k_value: int,
+    wideband_shift: int,
+    band_name: str,
+) -> dict:
+    """
+    determine the channelization information for Corr Configurations based on the calculations in
+    https://confluence.skatelescope.org/pages/viewpage.action?pageId=265843120
+
+    :param fsp_ids: list of available fsp's to assign fs channels to (1-based index)
+    :param start_freq: the center frequency (Hz) of the first channel
+    :param channel_width: the width (Hz) of a fine channel
+    :param channel_count: the number of channels in the processing region
+    :param k_value: the channelization coefficient value
+    :param wideband_shift: the wideband shift (Hz) to apply to the processing region
+    :param band_name: the name of the frequency band
+    :raises ValueError: if input values are not provided or valid
+    :return: structure with information about fsp boundaries, see:
+        https://confluence.skatelescope.org/display/SE/Processing+Regions+for+CORR+-+Identify+and+Select+Fine+Channels#ProcessingRegionsforCORRIdentifyandSelectFineChannels-ExampleCalculatedFrequencySliceBoundaryInformation
 
     example output:
     {
@@ -195,34 +285,11 @@ def partition_spectrum_to_frequency_slices(
     }
     """
 
-    if channel_width is None:
-        raise ValueError("channel_width cannot be None")
-    if channel_width <= 0:
-        raise ValueError("channel_width cannot be negative or zero")
-    if channel_count is None:
-        raise ValueError("channel_count cannot be None")
-    if channel_count <= 0:
-        raise ValueError("channel_count cannot be negative")
-    if k_value is None:
-        raise ValueError("k_value cannot be None")
-    if k_value < const.K_VALUE_RANGE[0] or k_value > const.K_VALUE_RANGE[1]:
-        raise ValueError(
-            f"k_value must be between {const.K_VALUE_RANGE[0]} - {const.K_VALUE_RANGE[1]}"
-        )
-    if fsp_ids is None:
-        raise ValueError("fsp_ids cannot be None")
-    if len(fsp_ids) == 0:
-        raise ValueError("fsp_ids cannot be empty")
-    band_names = list(freq_band_dict().keys())
-    if band_name not in band_names:
-        raise ValueError(f"band_name not in {band_names}")
-
     end_freq = ((channel_count * channel_width) + start_freq) - channel_width
     coarse_channels = get_coarse_channels(
         start_freq=start_freq,
         end_freq=end_freq,
         wb_shift=wideband_shift,
-        fsp_mode=fsp_mode,
     )
     if len(fsp_ids) != len(coarse_channels):
         raise ValueError(
@@ -374,33 +441,247 @@ def partition_spectrum_to_frequency_slices(
     return fsp_infos
 
 
+# TODO: Need to work out the details when setting up the "Visibiltiy Transport" in CIP-3202
+def partition_spectrum_to_frequency_slices_pst(
+    fsp_ids: list[int],
+    start_freq: int,
+    channel_width: int,
+    channel_count: int,
+    k_value: int,
+    wideband_shift: int,
+    band_name: str,
+) -> dict:
+    """
+    determine the channelization information for PST Configurations.
+    Currently values for PST are hardcoded, based on the calculation found here:
+    https://confluence.skatelescope.org/display/SE/Processing+Regions+for+PST+-+Identify+and+Select+Fine+Channels
+    (under `start_freq` in Parameters and Ranges table)
+
+
+    :param fsp_ids: list of available fsp's to assign fs channels to (1-based index)
+    :param start_freq: the center frequency (Hz) of the first channel
+    :param channel_width: the width (Hz) of a fine channel
+    :param channel_count: the number of channels in the processing region
+    :param k_value: the channelization coefficient value
+    :param wideband_shift: the wideband shift (Hz) to apply to the processing region
+    :param band_name: the name of the frequency band
+    :raises ValueError: if input values are not provided or valid
+    :return: structure with information about fsp boundaries
+
+    example output:
+    {
+        "5": {
+            "alignment_shift_freq": -396361728,
+            "b_width": 198912000,
+            "end_ch": 9221,
+            "end_ch_freq": 495720960,
+            "freq_down_shift": -396180000.0,
+            "freq_scfo_shift": -181728,
+            "fs_id": 2,
+            "fsp_end_ch": 11071,
+            "fsp_id": 5,
+            "fsp_start_ch": 7372,
+            "num_channels": 3700,
+            "pst_end_channel_id": 3699,
+            "start_ch": 5522,
+            "start_ch_freq": 693224448,
+            "start_channel_id": 0,
+            "total_shift_freq": -396180000,
+            "vcc_downshift_freq": 181728
+        }
+    }
+    """
+
+    end_freq = ((channel_count * channel_width) + start_freq) - channel_width
+    coarse_channels = get_coarse_channels(
+        start_freq=start_freq,
+        end_freq=end_freq,
+        wb_shift=wideband_shift,
+        fsp_mode=FspModes.PST,
+    )
+    if len(fsp_ids) != len(coarse_channels):
+        raise ValueError(
+            f"Number of fsp_ids does not match the number of required coarse "
+            f"channels: {len(fsp_ids)} ids provided, require {len(coarse_channels)}"
+        )
+
+    freq_band_info = freq_band_dict()[band_name]
+    dish_sample_rate = _get_dish_sample_rate(freq_band_info, k_value)
+
+    fsp_infos = {}
+    first_pst_channel_id = 0
+    for index, fs in enumerate(coarse_channels):
+        fsp_info = {}
+        fsp_info["fs_id"] = fs
+        fsp_info["fsp_id"] = fsp_ids[index]
+
+        # Determine major shift
+        # vcc_downshift_freq = nominal_fsn_center_freq - _dish_dependent_fs_center_freq
+        fsp_info["vcc_downshift_freq"] = _nominal_fs_center_freq(
+            fs
+        ) - _dish_dependent_fs_center_freq(
+            fs, freq_band_info["total_num_FSs"], dish_sample_rate
+        )
+        start_ch, end_ch = const.PST_START_CH_END_CH_MAPPING[start_freq]
+        if index == 0:
+            # determine center frequency of first coarse channel
+            # need to base our start from the starting frequency
+            # NOTE: For AA1 this value is predetermined, as MCS only support 9 start_freq for PST
+            fsp_info["start_ch"] = start_ch
+            fsp_info["start_ch_freq"] = (
+                _nominal_fs_center_freq(fs)
+                + fsp_info["start_ch"] * channel_width
+            )
+
+            # determine minor shift
+            fsp_info["alignment_shift_freq"] = (
+                start_freq - wideband_shift - fsp_info["start_ch_freq"]
+            )
+        else:
+            # center frequency first ch FSn = one channel up from the previous
+            fsp_info["start_ch_freq"] = (
+                fsp_infos[fsp_ids[index - 1]]["end_ch_freq"] + channel_width
+            )
+
+            # determine start channel
+            fsp_info["start_ch_exact"] = (
+                fsp_info["start_ch_freq"] - _nominal_fs_center_freq(fs)
+            ) / channel_width
+            # round to nearest group of const.NUM_CHANNELS_PER_SPEAD_STREAM
+            fsp_info["start_ch"] = _round_to_nearest(
+                round(fsp_info["start_ch_exact"])
+            )
+
+            nearest_to_start_ch = _nominal_fs_center_freq(fs) + (
+                fsp_info["start_ch"] * channel_width
+            )
+
+            # Determine minor shift
+            fsp_info["alignment_shift_freq"] = (
+                fsp_info["start_ch_freq"] - nearest_to_start_ch
+            )
+
+        # Combine shift
+        fsp_info["total_shift_freq"] = (
+            fsp_info["vcc_downshift_freq"] + fsp_info["alignment_shift_freq"]
+        )
+
+        # determine end channel
+        if index == (len(coarse_channels) - 1):
+            # very last end channel is based off of the remaining channels we
+            # requested for the processing region
+            fsp_info["end_ch"] = (
+                channel_count
+                - (_sum_of_channels(fsp_infos) - fsp_info["start_ch"])
+                - 1
+            )
+        else:
+            # We go to the end of the FS slice
+            fsp_info["end_ch_exact"] = (
+                const.HALF_FS_BW - fsp_info["alignment_shift_freq"]
+            ) / channel_width
+            fsp_info["end_ch"] = round(fsp_info["end_ch_exact"])
+
+        # Change end channel so our number of channels will be a multiple of
+        # the const.NUM_CHANNELS_PER_SPEAD_STREAM
+        fsp_info["end_ch"] = _find_end_channel_for_pst_stream(
+            fsp_info["start_ch"], fsp_info["end_ch"]
+        )
+
+        # Determine number of channels for this FS
+        # AA1 - This should always equal 3700
+        fsp_info["num_channels"] = (
+            fsp_info["end_ch"] - fsp_info["start_ch"] + 1
+        )
+
+        # NOTE: For AA1 this value is predetermined, as MCS only support 9 start_freq for PST
+        # the last channel frequency
+        fsp_info["end_ch_freq"] = (
+            (fsp_info["end_ch"] * channel_width)
+            + _nominal_fs_center_freq(fs)
+            + fsp_info["alignment_shift_freq"]
+        )
+        # determine other things, (bandwidth, etc)
+        fsp_info["b_width"] = fsp_info["num_channels"] * channel_width
+
+        # determine first SDP channels
+        # Sequential from 0 from all channels for all processed fs's
+        fsp_info["start_channel_id"] = first_pst_channel_id
+        first_pst_channel_id += fsp_info["num_channels"]
+        fsp_info["pst_end_channel_id"] = first_pst_channel_id - 1
+
+        fsp_info["fsp_start_ch"] = (
+            fsp_info["start_ch"] + const.CENTRAL_FINE_CHANNELS_PST // 2
+        )
+        fsp_info["fsp_end_ch"] = (
+            fsp_info["end_ch"] + const.CENTRAL_FINE_CHANNELS_PST // 2
+        )
+
+        # freq_scfo_shift  - the frequency shift required due to SCFO sampling
+        # freq_down_shift  - the the shift to move the FS into the center of the
+        #                    digitized frequency
+        #
+        # See technote on these calculations:
+        # "Derivation of First Order Delay Polynomials... .docx" attatched to
+        # epic: CIP-2145 in JIRA
+        # https://jira.skatelescope.org/browse/CIP-2145
+        #
+        # Also note: that the freq_down_shift sign changes from the
+        # calculations in the technote (negative shift value) vs the firmware
+        # Jupiter Notebooks (positive shift value)
+        #
+        fsp_info["freq_scfo_shift"] = _dish_dependent_fs_center_freq(
+            fs, freq_band_info["total_num_FSs"], dish_sample_rate
+        ) - _nominal_fs_center_freq(fs)
+
+        fsp_info["freq_down_shift"] = (
+            -fs * dish_sample_rate / freq_band_info["total_num_FSs"]
+        )
+
+        # sort the keys
+        fs_info_Keys = list(fsp_info.keys())
+        fs_info_Keys.sort()
+        sorted_fs_info = {i: fsp_info[i] for i in fs_info_Keys}
+
+        fsp_infos.update({fsp_ids[index]: sorted_fs_info})
+
+    return fsp_infos
+
+
 # EXAMPLE INPUTS
 ##############################################################################
 if __name__ == "__main__":
-    fsp_ids = [1, 3, 5, 7]
-    START_FREQ = int(297271296)
+    fsp_ids = [5]
+    START_FREQ = int(296862720)
     # WB_SHIFT = int(
     #    52.7e6
     # )  # positive means move the start of the coarse channel up by this many Hz.
     WB_SHIFT = 0
-    FINE_CHANNEL_COUNT = 44740
+    FINE_CHANNEL_COUNT = 3700
     # we can get K from sysinit. example in doc assumes k=1000
     K_VALUE = 1000
 
+    FINE_CHANNEL_WIDTH = const.FINE_CHANNEL_WIDTH_PST
+
     # Derived from inputs
-    TOTAL_BWIDTH = FINE_CHANNEL_COUNT * const.FINE_CHANNEL_WIDTH
+    TOTAL_BWIDTH = FINE_CHANNEL_COUNT * FINE_CHANNEL_WIDTH
     STREAMS = TOTAL_BWIDTH / const.NUM_CHANNELS_PER_SPEAD_STREAM
     END_FREQ = get_end_frequency(
         START_FREQ, const.FINE_CHANNEL_WIDTH, FINE_CHANNEL_COUNT
     )
+
+    FSP_MODE = FspModes.PST
 
     print(f"With a wideband shift    : {WB_SHIFT} Hz")
     print(f"start_frequency          : {START_FREQ} Hz")
     print(f"center frequency of last : {END_FREQ} Hz")
     print(f"total bandwidth          : {TOTAL_BWIDTH} Hz")
     print(f"total streams            : {STREAMS}")
+    print(f"FSP Mode                 : {FSP_MODE.name}")
 
-    coarse_channels = get_coarse_channels(START_FREQ, END_FREQ, WB_SHIFT)
+    coarse_channels = get_coarse_channels(
+        START_FREQ, END_FREQ, WB_SHIFT, FSP_MODE
+    )
 
     # Use fs_ids to validate we have enough FSP's for the bandwidth
     print(f"coarse_channels = {coarse_channels}")
@@ -414,11 +695,12 @@ if __name__ == "__main__":
     results = partition_spectrum_to_frequency_slices(
         fsp_ids=fsp_ids,
         start_freq=START_FREQ,
-        channel_width=const.FINE_CHANNEL_WIDTH,
+        channel_width=FINE_CHANNEL_WIDTH,
         channel_count=FINE_CHANNEL_COUNT,
         k_value=K_VALUE,
         wideband_shift=WB_SHIFT,
         band_name="1",
+        fsp_mode=FSP_MODE,
     )
 
     sum_of_result_channels = 0
@@ -445,12 +727,14 @@ if __name__ == "__main__":
             f'fsp_id:{fsp_id} {coarse_ch:2}: start = ch {fsp_info["fsp_start_ch"]/20:6} => {start_f:12} Hz (exp:{expect_start_f:12} Hz), end = ch {fsp_info["fsp_end_ch"]/20:3.2f} => {end_f:12} Hz'
         )
 
-        assert (
-            fsp_info["start_ch"]
-        ) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
-        assert (
-            fsp_info["end_ch"] + 1
-        ) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
+        # AA1: PST Start Channels doesn't align with its channel per packet count
+        if FSP_MODE != FspModes.PST:
+            assert (
+                fsp_info["start_ch"]
+            ) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
+            assert (
+                fsp_info["end_ch"] + 1
+            ) % const.NUM_CHANNELS_PER_SPEAD_STREAM == 0
 
         expect_start_f = end_f + const.FINE_CHANNEL_WIDTH
 

@@ -19,15 +19,50 @@ COUNT_FSP = 8
 
 # TODO: Refactor out CORR only test.  Make it so that this file contains the common tests for all FSP modes
 # Example: The Scan configuration this test validatates are ones with multiple FSP mode processing regions
-class TestScanConfigurationValidator:
+class TestScanConfigurationValidatorCorr:
     logger = getLogger()
 
     # Shared self.full_configuration, to be set in before_each
     full_configuration = {}
 
+    @pytest.fixture(
+        autouse=True,
+        params=[
+            {
+                "configure_scan_file": "ConfigureScan_4_1_CORR.json",
+                "sub_id": 1,
+                "dish_ids": [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+            }
+        ],
+    )
+    def validator_params(
+        self: TestScanConfigurationValidatorCorr,
+        request: pytest.FixtureRequest,
+    ) -> dict[any]:
+        """
+        Before Each fixture, to setup the CbfSubarrayComponentManager and the Scan Configuration
+        """
+        params = request.param
+
+        with open(FILE_PATH + params["configure_scan_file"]) as file:
+            json_str = file.read().replace("\n", "")
+
+        self.full_configuration = json.loads(json_str)
+
+        return params
+
     @pytest.mark.parametrize("fsp_ids", [[], [1, 2, 3, 4, 5, 6, 7, 8, 9]])
     def test_Invalid_FSP_IDs(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         fsp_ids: int,
     ):
@@ -54,7 +89,7 @@ class TestScanConfigurationValidator:
 
     @pytest.mark.parametrize("fsp_ids", [[5, 6, 7, 8], [15, 19, 23, 27]])
     def test_Invalid_FSP_IDs_CORR(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         fsp_ids: int,
     ):
@@ -79,7 +114,7 @@ class TestScanConfigurationValidator:
 
     @pytest.mark.parametrize("fsp_id", [1, 2, 3, 4])
     def test_Invalid_Duplicate_FSP_IDs_in_single_subarray(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         fsp_id: int,
     ):
@@ -118,7 +153,7 @@ class TestScanConfigurationValidator:
         "start_freq_value", [0, 6719, 1981815360, 1281860161]
     )
     def test_Invalid_start_freq(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         start_freq_value: int,
     ):
@@ -151,7 +186,7 @@ class TestScanConfigurationValidator:
         ],
     )
     def test_Valid_start_freq(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         start_freq_value: int,
         channel_count_value: int,
@@ -202,7 +237,7 @@ class TestScanConfigurationValidator:
 
     @pytest.mark.parametrize("fsp_ids", [[1], [1, 2], [1, 2, 3]])
     def test_Invalid_fsp_ids_amount_too_few_for_requested_bandwidth(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         fsp_ids: list[int],
     ):
@@ -227,7 +262,7 @@ class TestScanConfigurationValidator:
 
     @pytest.mark.parametrize("fsp_ids", [[1, 2], [1, 2, 3], [1, 2, 3, 4]])
     def test_Invalid_fsp_ids_amount_too_many_for_requested_bandwidth(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         fsp_ids: list[int],
     ):
@@ -278,7 +313,7 @@ class TestScanConfigurationValidator:
         ],
     )
     def test_Invalid_channel_width(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         channel_width: list[int],
     ):
@@ -304,7 +339,7 @@ class TestScanConfigurationValidator:
 
     @pytest.mark.parametrize("channel_count", [-1, 1, 0, 30, 58982, 59000])
     def test_Invalid_channel_count(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         channel_count: int,
     ):
@@ -329,7 +364,7 @@ class TestScanConfigurationValidator:
         assert success is False
 
     def test_Invalid_sdp_start_channel_id(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
     ):
         # All three output_x uses the same function.  Just test with one test case should be good enough
@@ -416,7 +451,7 @@ class TestScanConfigurationValidator:
         ],
     )
     def test_Invalid_output_host_non_multiple_20(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         output_host: list[list[int, str]],
     ):
@@ -462,7 +497,7 @@ class TestScanConfigurationValidator:
         ],
     )
     def test_Invalid_output_host(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         output_host: list[list[int, str]],
     ):
@@ -497,7 +532,7 @@ class TestScanConfigurationValidator:
         ],
     )
     def test_Invalid_output_port_increment(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
         output_port: list[list[int, int]],
     ):
@@ -532,7 +567,7 @@ class TestScanConfigurationValidator:
         assert success is False
 
     def test_Valid_channel_map_increment(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
     ):
         self.full_configuration["midcbf"]["correlation"]["processing_regions"][
@@ -570,7 +605,7 @@ class TestScanConfigurationValidator:
         assert success is True
 
     def test_invalid_channel_map_count_to_single_host(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
     ):
         sdp_start_channel_id = self.full_configuration["midcbf"][
@@ -605,7 +640,7 @@ class TestScanConfigurationValidator:
         assert success is False
 
     def test_invalid_more_channel_in_channel_maps_than_channel_count(
-        self: TestScanConfigurationValidator,
+        self: TestScanConfigurationValidatorCorr,
         validator_params: dict[any],
     ):
         channel_count = self.full_configuration["midcbf"]["correlation"][

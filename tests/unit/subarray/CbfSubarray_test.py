@@ -683,6 +683,20 @@ class TestCbfSubarray:
         [
             ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json"),
             ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan_invalid.json"),
+            (
+                "ConfigureScan_CORR_PST_8_receptor_5_FSP.json",
+                [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+                "Scan1_basic.json",
+            ),
         ],
     )
     def test_Scan(

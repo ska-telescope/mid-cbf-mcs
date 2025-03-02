@@ -11,12 +11,10 @@
 """Contain the tests for the FspScanConfigurationBuilderCorr"""
 from __future__ import annotations
 
-import copy
 import json
 import os
 
 import pytest
-from ska_telmodel import channel_map
 
 from ska_mid_cbf_tdc_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes
@@ -157,12 +155,6 @@ class TestFspScanConfigurationBuilder:
             fsp_to_pr[pr_index].append(fsp)
 
             assert fsp["function_mode"] == FspModes.PST.name
-            assert (
-                # Given MCS only supports 1 link mapping of link = 1, we should
-                # always get [[0,1]] for all fsp output_link_maps
-                fsp["output_link_map"]
-                == [[fsp["fs_start_channel_offset"], 1]]
-            )
 
             assert fsp["fsp_id"] in all_fsp_ids
             all_fsp_ids.remove(fsp["fsp_id"])
@@ -173,55 +165,11 @@ class TestFspScanConfigurationBuilder:
         ), "There are PRs that didn't get any configured FSP"
 
         for pr_index, pr_config in enumerate(pst_config["processing_regions"]):
-            # Assert all ports accounted for in configured FSP's
-            if "output_port" in pr_config:
-                expected_output_ports = copy.deepcopy(pr_config["output_port"])
-                expected_ports = [
-                    output_port[1] for output_port in expected_output_ports
-                ]
-                for fsp_config in fsp_to_pr[pr_index]:
-                    actual_output_ports = fsp_config["output_port"]
-
-                    for port in actual_output_ports:
-                        # we expect the port in the PR config ports
-                        fsp_id = fsp_config["fsp_id"]
-                        assert (
-                            port[1] in expected_ports
-                        ), f"Assigned output_port in FSP: {fsp_id}, was not expected for PR index {index}, or was duplicated from another FSP"
-                        index_of_port = expected_ports.index(port[1])
-                        expected_ports.pop(index_of_port)
-
-                        # the port is assigned to an output host
-                        # and matches the pr output_host config
-                        if "output_host" in fsp_config:
-                            fsp_ip = channel_map.channel_map_at(
-                                fsp_config["output_host"], port[0]
-                            )
-
-                            # trick, we want the absolute sdp_start_channel_id,
-                            # but we can get it from the channel_offset
-                            # and the fs_start_channel_offset
-                            fsp_sdp_start_channel_id = (
-                                fsp_config["spead_channel_offset"]
-                                + fsp_config["fs_start_channel_offset"]
-                            )
-
-                            # shift the channel by the absolute sdp_start_channel_id
-                            # and look up the channel_id in the pr.output_host map
-                            pr_ip = channel_map.channel_map_at(
-                                pr_config["output_host"],
-                                port[0] + fsp_sdp_start_channel_id,
-                            )
-
-                            # They should result in the same mapped ip value
-                            assert (
-                                fsp_ip == pr_ip
-                            ), f"output_port {port} of fsp_id: {fsp_id} does not map to the same fsp ip {fsp_ip} as the processing region ip {fsp_ip}"
-                assert (
-                    len(expected_ports) == 0
-                ), f"There are unassigned output_ports for PR index {index}"
-
             for fsp_config in fsp_to_pr[pr_index]:
+                assert (
+                    fsp_config["fsp_start_channel_id"]
+                    == pr_config["pst_start_channel_id"]
+                )
                 # Assert VCC to RDT shift and 16k FC gain values set for all
                 # subarray receptors
                 for receptor in subarray_dish_ids:

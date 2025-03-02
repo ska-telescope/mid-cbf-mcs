@@ -24,11 +24,13 @@ class Const:
         self.TOTAL_FINE_CHANNELS = 16384
         # number of central fine channels with appropriate quality for visibility output products
         self.CENTRAL_FINE_CHANNELS = 14880
+        self.CENTRAL_FINE_CHANNELS_PST = 3700
         self.DEFAULT_FINE_CHANNEL_BW_HZ = 13440
 
         # Number of Fine channels per SPEAD stream;
         # TODO: NUM_CHANNELS_PER_SPEAD_STREAM = 20 for TDC (AA0.5, AA1) only; for Mid.CBF (AA2+) it will be set to 1
         self.NUM_CHANNELS_PER_SPEAD_STREAM = 20
+        self.NUM_CHANNELS_PER_PST_STREAM = 185
         self.NUM_PHASE_BINS = 1024
         self.NUM_OUTPUT_LINKS = 80
         self.DELTA_F = 1800  # Hz
@@ -65,6 +67,7 @@ class Const:
 
         # Fine channel width for the Correlation function mode [Hz]
         self.FINE_CHANNEL_WIDTH = 13440
+        self.FINE_CHANNEL_WIDTH_PST = 53760
         self.K_VALUE_RANGE = (1, 2222)
 
         # Mappings for PST Processing Region Start Frequencies to FS IDs to be used
@@ -86,6 +89,20 @@ class Const:
             1485980160: 8,
             1684139520: 9,
             1882352640: 10,
+        }
+
+        self.PST_START_CH_END_CH_MAPPING = {
+            -99456000: (-1850, 1849),
+            98703360: (1836, 5535),
+            296862720: (5522, 9221),
+            495075840: (9209, 12908),
+            693235200: (12895, 16594),
+            891448320: (16582, 20281),
+            1089607680: (20268, 23967),
+            1287767040: (23954, 27653),
+            1485980160: (27641, 31340),
+            1684139520: (31327, 35026),
+            1882352640: (35014, 38713),
         }
 
 
