@@ -144,9 +144,6 @@ class TestFspPstSubarray:
 
         return device_under_test.adminMode == AdminMode.ONLINE
 
-    @pytest.mark.skip(
-        reason=" Cannot poll healthState when FSP PST Subarray currently hardcoded to be in SimulationMode.True for CIP-2815."
-    )
     def test_healthState_pass(
         self: TestFspPstSubarray,
         device_under_test: context.DeviceProxy,
@@ -170,9 +167,6 @@ class TestFspPstSubarray:
             attribute_value=HealthState.OK,
         )
 
-    @pytest.mark.skip(
-        reason=" Cannot poll healthState when FSP PST Subarray currently hardcoded to be in SimulationMode.True for CIP-2815."
-    )
     def test_healthState_fail(
         self: TestFspPstSubarray,
         device_under_test_unhealthy: context.DeviceProxy,

@@ -9,23 +9,24 @@
     "pst": {},
     "transaction_id": "txn-....-00001",
     "midcbf": {
+        "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
         "pst_bf": {
             "processing_regions": [{
                 "fsp_ids": [5],
-                "start_freq": 495075840,
+                "start_freq": 296862720,
                 "channel_count": 3700,
-                "pst_start_channel_id": 9209,
+                "pst_start_channel_id": 5522,
                 "timing_beams": [{
                     "timing_beam_id": 1,
                     "receptors": ["SKA081"],
                     "output_link_map": [
-                        [9209, 1]
+                        [5522, 1]
                     ],
                     "output_host": [
-                        [9209, "192.168.178.26"]
+                        [5522, "192.168.178.26"]
                     ],
                     "output_port": [
-                        [9209, 20000]
+                        [5522, 20000]
                     ]
                 }]
             }]

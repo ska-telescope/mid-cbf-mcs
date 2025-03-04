@@ -8,11 +8,11 @@
     },
     "pst": {},
     "transaction_id": "txn-....-00001",
-    "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
     "midcbf": {
+        "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
         "pst_bf": {
             "processing_regions": [{
-                "fsp_ids": [5],
+                "fsp_ids": [6],
                 "start_freq": 1089607680,
                 "channel_count": 3700,
                 "pst_start_channel_id": 20268,

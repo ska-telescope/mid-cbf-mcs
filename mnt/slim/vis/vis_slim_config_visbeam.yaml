@@ -1,0 +1,9 @@
+links_to_vis1:
+  - talondx-001/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx0
+  - talondx-002/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx1
+  - talondx-003/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx2
+  - talondx-004/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx3
+  - talondx-005/slim-tx-rx/vis-tx0 -> talondx-008/slim-tx-rx/vis-rx0
+  - talondx-006/slim-tx-rx/vis-tx0 -> talondx-008/slim-tx-rx/vis-rx1
+  - talondx-007/slim-tx-rx/vis-tx0 -> talondx-008/slim-tx-rx/vis-rx2
+  - talondx-008/slim-tx-rx/vis-tx0 -> talondx-008/slim-tx-rx/vis-rx3
