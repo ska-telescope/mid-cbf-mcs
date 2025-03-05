@@ -797,7 +797,7 @@ class SubarrayScanConfigurationValidator:
 
         max_channel_count = scan_configuration_supported_value(
             "processing_region"
-        )[fsp_mode]["output_port"]["max_channel_per"]
+        )[fsp_mode]["output_port"]["max_channels_per_port_per_host"]
 
         for channel in range(
             sdp_start_channel_id, sdp_start_channel_id + channel_count

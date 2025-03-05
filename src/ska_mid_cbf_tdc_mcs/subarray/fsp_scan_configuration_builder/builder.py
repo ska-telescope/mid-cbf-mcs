@@ -11,6 +11,7 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import copy
+from typing import Callable
 
 from ska_telmodel import channel_map
 
@@ -97,23 +98,36 @@ class FspScanConfigurationBuilder:
 
         return fsp_configurations
 
-    def _calculate_vcc_id_to_fc_gain(
+    ###############################################
+    # Functions for inversing the vcc:fsp parings
+    # from partition_spectrum_to_frequency_slices()
+    ###############################################
+
+    def _inverse_vcc_to_fs_infos(
         self: FspScanConfigurationBuilder,
         calculated_fsp_ids: list,
         vcc_to_fs_infos: dict,
+        function: Callable[[int, str, dict], any],
     ) -> dict:
         """
-        Calculate vcc_id_to_fc_gain values
+        Inverses the vcc to fs pairing in the given vcc_to_fs_infos and maps the values
+        based on the given `function`
 
-        vcc_id_to_fc_gain is the gain values needed by the 16k fine channelizer
-        to correct for ripple in the signal created by VCC frequency response
+        Think of this as a mapping function that also inverses the vcc:fs pairing to fs:vcc.
+        https://docs.python.org/3/library/functions.html#map
 
-        See CIP-2622, or parent epic CIP-2145
+        The argument `function` takes the following arguments:
+            vcc_id: The ID value of a VCC
+            fsp_id: The ID value of a FSP
+            vcc_to_fs_infos: Given with _inverse_vcc_to_fs_infos's arguments
+        This functions is what we want the "mapper" to act on at the specifc vcc:fsp index
 
         :param calculated_fsp_ids: list of required FSP IDs for the given Scan Configuration
         :param vcc_to_fs_infos: A dictionary that maps dish ids to a dictionary with information about fsp boundaries
                                 More info regarding the fsp boundaries dictionary:
                                 https://confluence.skatelescope.org/display/SE/Processing+Regions+for+CORR+-+Identify+and+Select+Fine+Channels#ProcessingRegionsforCORRIdentifyandSelectFineChannels-ExampleCalculatedFrequencySliceBoundaryInformation
+        :param function: a function that process the value(s) at vcc_to_fs_infos[vcc_id][fsp_id],
+                         and then store the process info at inversed_vcc_to_fs_infos[fsp_id][vcc_id_str]
 
         :return: dictionary that contains a mapping of FSP IDs to its respective Fine Channelizer Gain corrections values
         :rtype: dict
@@ -147,36 +161,63 @@ class FspScanConfigurationBuilder:
         #     vcc 2:
         #          shift values D
 
-        vcc_id_to_fc_gain = {}
+        inversed_vcc_to_fs_infos = {}
         for fsp_id in calculated_fsp_ids:
-            vcc_id_to_fc_gain[fsp_id] = {}
+            inversed_vcc_to_fs_infos[fsp_id] = {}
             for vcc_id in vcc_to_fs_infos.keys():
                 # HPS wants vcc id to be a string value, not int
                 vcc_id_str = str(vcc_id)
-
-                # SCFO shift is needed by both the RDT and FC
-                scfo_fsft = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
-
-                # k value needed to calculate gain
-                dish_id = self._dish_utils.vcc_id_to_dish_id[vcc_id]
-                freq_offset_k = self._dish_utils.dish_id_to_k[dish_id]
-                vcc_id_to_fc_gain[fsp_id][vcc_id_str] = {}
-                vcc_id_to_fc_gain[fsp_id][
-                    vcc_id_str
-                ] = get_vcc_ripple_correction(
-                    freq_band=self._frequency_band,
-                    scfo_fsft=scfo_fsft,
-                    freq_offset_k=freq_offset_k,
+                inversed_vcc_to_fs_infos[fsp_id][vcc_id_str] = {}
+                inversed_vcc_to_fs_infos[fsp_id][vcc_id_str] = function(
+                    fsp_id, vcc_id, vcc_to_fs_infos
                 )
-        return vcc_id_to_fc_gain
+
+        return inversed_vcc_to_fs_infos
+
+    def _calculate_vcc_id_to_fc_gain(
+        self: FspScanConfigurationBuilder,
+        fsp_id: int,
+        vcc_id: int,
+        vcc_to_fs_infos: dict,
+    ) -> list:
+        """
+        An function point for _inverse_vcc_to_fs_infos()
+        Calculate vcc_id_to_fc_gain values for the given fsp_id and vcc_id
+
+        vcc_id_to_fc_gain is the gain values needed by the 16k fine channelizer
+        to correct for ripple in the signal created by VCC frequency response
+        :param vcc_id: The ID value of a VCC
+        :param fsp_id: The ID value of a FSP
+        :param vcc_to_fs_infos: A dictionary that maps dish ids to a dictionary with information about fsp boundaries
+                                More info regarding the fsp boundaries dictionary:
+                                https://confluence.skatelescope.org/display/SE/Processing+Regions+for+CORR+-+Identify+and+Select+Fine+Channels#ProcessingRegionsforCORRIdentifyandSelectFineChannels-ExampleCalculatedFrequencySliceBoundaryInformation
+
+        :return: a list that contains Fine Channelizer Gain corrections values for the given FSP ID and VCC ID
+        :rtype: list
+
+        """
+        # SCFO shift is needed by both the RDT and FC
+        scfo_fsft = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
+
+        # k value needed to calculate gain
+        dish_id = self._dish_utils.vcc_id_to_dish_id[vcc_id]
+        freq_offset_k = self._dish_utils.dish_id_to_k[dish_id]
+
+        return get_vcc_ripple_correction(
+            freq_band=self._frequency_band,
+            scfo_fsft=scfo_fsft,
+            freq_offset_k=freq_offset_k,
+        )
 
     def _calculate_vcc_id_to_rdt_freq_shifts(
         self: FspScanConfigurationBuilder,
-        calculated_fsp_ids: list,
+        fsp_id: int,
+        vcc_id: int,
         vcc_to_fs_infos: dict,
     ) -> dict:
         """
-        Calculate vcc_id_to_rdt_freq_shifts values
+        An function point for _inverse_vcc_to_fs_infos()
+        Calculates vcc_id_to_rdt_freq_shifts values
 
         vcc_id_to_rdt_freq_shifts are the shift values needed by the
         Resampler Delay Tracker (rdt) for each vcc of the FSP:
@@ -189,67 +230,36 @@ class FspScanConfigurationBuilder:
 
         See CIP-2622, or parent epic CIP-2145
 
-        :param calculated_fsp_ids: list of required FSP IDs for the given Scan Configuration
+        :param vcc_id: The ID value of a VCC
+        :param fsp_id: The ID value of a FSP
         :param vcc_to_fs_infos: A dictionary that maps dish ids to a dictionary with information about fsp boundaries
                                 More info regarding the fsp boundaries dictionary:
                                 https://confluence.skatelescope.org/display/SE/Processing+Regions+for+CORR+-+Identify+and+Select+Fine+Channels#ProcessingRegionsforCORRIdentifyandSelectFineChannels-ExampleCalculatedFrequencySliceBoundaryInformation
 
-        :return: dictionary that contains a mapping of FSP IDs to its respective Resampler Delay Tracker correction values
+        :return: dictionary that contains Resampler Delay Tracker correction values for the given FSP and VCC
         :rtype: dict
 
         """
-        # to explain the loops below, I'm moving from a per-vcc config in
-        # vcc_to_fs_infos to a per-fsp config, as well as rename the fields to
-        # match what HPS wants.
-
-        # essentially I have in vcc_to_fs_infos:
-        # vcc1:
-        #     fsp_1:
-        #           shift values A
-        #     fsp_2:
-        #           shift values B
-        # vcc2:
-        #     fsp_1:
-        #           shift values C
-        #     fsp_2:
-        #           shift values D
-
-        # But I need them sent down to HPS as:
-        # fsp_1:
-        #     vcc 1:
-        #          shift values A
-        #     vcc 2:
-        #          shift values C
-        # fsp_2:
-        #     vcc 1:
-        #          shift values B
-        #     vcc 2:
-        #          shift values D
-
         vcc_id_to_rdt_freq_shifts = {}
-        for fsp_id in calculated_fsp_ids:
-            vcc_id_to_rdt_freq_shifts[fsp_id] = {}
-            for vcc_id in vcc_to_fs_infos.keys():
-                # HPS wants vcc id to be a string value, not int
-                vcc_id_str = str(vcc_id)
-                vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str] = {}
-                vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
-                    "freq_down_shift"
-                ] = vcc_to_fs_infos[vcc_id][fsp_id]["freq_down_shift"]
-                vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
-                    "freq_align_shift"
-                ] = vcc_to_fs_infos[vcc_id][fsp_id]["alignment_shift_freq"]
-                vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
-                    "freq_wb_shift"
-                ] = self._wideband_shift
+        vcc_id_to_rdt_freq_shifts[fsp_id] = {}
 
-                # SCFO shift is needed by both the RDT and FC
-                scfo_fsft = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
-                vcc_id_to_rdt_freq_shifts[fsp_id][vcc_id_str][
-                    "freq_scfo_shift"
-                ] = scfo_fsft
+        down_shift = vcc_to_fs_infos[vcc_id][fsp_id]["alignment_shift_freq"]
+        vcc_id_to_rdt_freq_shifts["freq_down_shift"] = down_shift
+
+        align_shift = vcc_to_fs_infos[vcc_id][fsp_id]["alignment_shift_freq"]
+        vcc_id_to_rdt_freq_shifts["freq_align_shift"] = align_shift
+        vcc_id_to_rdt_freq_shifts["freq_wb_shift"] = self._wideband_shift
+
+        # SCFO shift is needed by both the RDT and FC
+        scfo_fsft = vcc_to_fs_infos[vcc_id][fsp_id]["freq_scfo_shift"]
+        vcc_id_to_rdt_freq_shifts["freq_scfo_shift"] = scfo_fsft
 
         return vcc_id_to_rdt_freq_shifts
+
+    ####################################################
+    # End of functions for inversing the vcc:fsp parings
+    # from partition_spectrum_to_frequency_slices()
+    ####################################################
 
     def _process_start_channel_id(
         self: FspScanConfigurationBuilder,

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import ctypes
 
@@ -14,21 +16,21 @@ from ska_mid_cbf_tdc_mcs.subarray.fsp_scan_configuration_builder.fine_channel_pa
 class FspScanConfigurationBuilderCorr(FspScanConfigurationBuilder):
 
     """
-    Correlation FSP Mode specific class for FspScanConfigurationBuilder
+    Correlation FSP Mode specific class for FspScanConfigurationBuilderCorr
     """
 
     def __init__(
-        self: FspScanConfigurationBuilder,
+        self: FspScanConfigurationBuilderCorr,
         function_configuration: dict,
         dish_utils: DISHUtils,
         subarray_dish_ids: set,
         wideband_shift: int,
         frequency_band: str,
     ):
-        """Constructor for the FspScanConfigurationBuilder. Constructs FSP
+        """Constructor for the FspScanConfigurationBuilderCorr. Constructs FSP
         Configurations from a Corr FSP Mode configuration.
 
-        :param self: FspScanConfigurationBuilder object
+        :param self: FspScanConfigurationBuilderCorr object
         :param function_configuration: dictionary of the Function mode configuration from the input ConfigureScan configuration
         :param dish_utils: DISHUtils that contains the dish_id, vcc_id, and k_value information
         :param subarray_dish_ids: List of dish_ids that are a member of the subarray
@@ -37,7 +39,6 @@ class FspScanConfigurationBuilderCorr(FspScanConfigurationBuilder):
         :raises ValueError: If the function_configuration does not contain a "processing_regions" key in
         """
 
-        self._function_mode = FspModes.CORR
         super().__init__(
             function_configuration,
             dish_utils,
@@ -46,8 +47,10 @@ class FspScanConfigurationBuilderCorr(FspScanConfigurationBuilder):
             frequency_band,
         )
 
+        self._function_mode = FspModes.CORR
+
     def _fsp_config_from_processing_region(
-        self: FspScanConfigurationBuilder,
+        self: FspScanConfigurationBuilderCorr,
         processing_region_config: dict,
     ) -> list[dict]:
         """Create a list of FSP configurations for a given processing region config
@@ -100,13 +103,15 @@ class FspScanConfigurationBuilderCorr(FspScanConfigurationBuilder):
         calculated_fsp_ids = list(calculated_fsp_infos.keys())
 
         # Calculate vcc_id_to_fc_gain and vcc_id_to_rdt_freq_shifts values
-        vcc_id_to_rdt_freq_shifts: dict = (
-            self._calculate_vcc_id_to_rdt_freq_shifts(
-                calculated_fsp_ids, vcc_to_fs_infos
-            )
+        vcc_id_to_rdt_freq_shifts: dict = self._inverse_vcc_to_fs_infos(
+            calculated_fsp_ids,
+            vcc_to_fs_infos,
+            self._calculate_vcc_id_to_rdt_freq_shifts,
         )
-        vcc_id_to_fc_gain: dict = self._calculate_vcc_id_to_fc_gain(
-            calculated_fsp_ids, vcc_to_fs_infos
+        vcc_id_to_fc_gain: dict = self._inverse_vcc_to_fs_infos(
+            calculated_fsp_ids,
+            vcc_to_fs_infos,
+            self._calculate_vcc_id_to_fc_gain,
         )
 
         # Adjust the start_channel_ids based on

@@ -8,7 +8,7 @@
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
 
-"""Contain the tests for the FspScanConfigurationBuilderCorr"""
+"""Contain the tests for the FspScanConfigurationBuilderPst"""
 from __future__ import annotations
 
 import json

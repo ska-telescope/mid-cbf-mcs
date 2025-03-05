@@ -210,12 +210,13 @@ def scan_configuration_supported_value(parameter: str) -> any:
                 "channel_count": {"range": (1, 58982), "multiple": 20},
                 "output_host": {
                     "difference_multiple": 20,
-                    "max_channel_per": 20,
                 },
-                "output_port": {"increment": 20, "max_channel_per": 20},
+                "output_port": {
+                    "increment": 20,
+                    "max_channels_per_port_per_host": 20,
+                },
                 "output_link_map": {
                     "difference_multiple": 20,
-                    "max_channel_per": 20,
                     "values": [1],
                 },
             },
@@ -229,17 +230,15 @@ def scan_configuration_supported_value(parameter: str) -> any:
                 },
                 "output_host": {
                     "difference_multiple": 185,
-                    "max_channel_per": 3700,
                     "max_entry": 1,
                 },
                 "output_port": {
                     "increment": 185,
-                    "max_channel_per": 3700,
+                    "max_channels_per_port_per_host": 3700,
                     "max_entry": 1,
                 },
                 "output_link_map": {
                     "difference_multiple": 185,
-                    "max_channel_per": 3700,
                     "values": [1],
                     "max_entry": 1,
                 },
