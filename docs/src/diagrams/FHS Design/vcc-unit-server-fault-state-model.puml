@@ -20,11 +20,9 @@ skinparam database {
 title VCC Unit State Model (Server Fault)\n
 ' participant "LMC\n" as lmc #Thistle
 box "\nMCS\n"
-  participant "Mid.CBF\nController" as controller
   participant "VCC\nUnit" as vcc_unit
-  participant "Switch\n400Gb" as switch
+  ' participant "Switch\n400Gb" as switch
   participant "Terabox\n" as terabox
-  participant "Power\nSwitch" as ps
 end box
 ' participant "Local\nCache" as cache #Salmon
 ' participant "PDU\n" as pdu #Orange
@@ -39,23 +37,23 @@ box "\nFHS\n"
     collections "FHS\nFPGA" as fhs_fpga
 end box
 
-note over controller, fhs_fpga #PaleGreen  : AdminMode: ONLINE\nOpState: ON\nHealthState: OK
+note over vcc_unit, fhs_fpga #PaleGreen  : AdminMode: ONLINE\nOpState: ON\nHealthState: OK
 
 note over fhs_cpu #FFAAAA        : Fault !
-note over fhs_cpu                  : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState.FAILED
+note over fhs_cpu                  : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState: FAILED
 
 fhs_cont           <--  fhs_cpu    : HealthState.FAILED
-fhs_cont           ->  fhs_fpga    : HealthState.UNKNOWN
-note over fhs_fpga                 : HealthState: UNKNOWN
-note over fhs_cont                 : OpState: FAULT\nHealthState.FAILED
+fhs_cont           ->  fhs_fpga    : OpState.UNKNOWN
+note over fhs_fpga                 : OpState: UNKNOWN
+note over fhs_cont                 : OpState: FAULT\nHealthState: FAILED
 
 terabox            <--  fhs_cont   : HealthState.FAILED
-note over terabox                  : OpState: FAULT\nHealthState.FAILED
+note over terabox                  : OpState: FAULT\nHealthState: FAILED
 vcc_unit           <--  terabox    : HealthState.FAILED
-note over vcc_unit                 : HealthState.DEGRADED
-vcc_unit            ->  vcc_cont1  : HealthStateCallback()
-vcc_unit            ->  vcc_cont2  : HealthStateCallback()
-note over vcc_cont1, vcc_cont2     : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState.FAILED
+note over vcc_unit                 : HealthState: DEGRADED
+vcc_unit            ->  vcc_cont1  : AdminMode.NOT_FITTED
+vcc_unit            ->  vcc_cont2  : AdminMode.NOT_FITTED
+note over vcc_cont1, vcc_cont2     : AdminMode: NOT_FITTED
 
 ' vcc_unit            <-  switch     : HealthState.OK
 ' vcc_unit            <-  ps         : HealthState.OK

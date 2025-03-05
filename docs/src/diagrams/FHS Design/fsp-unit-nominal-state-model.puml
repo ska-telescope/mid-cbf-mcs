@@ -1,0 +1,108 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title FSP Unit State Model (Nominal)\n
+participant "LMC\n" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nController" as controller
+  participant "FSP\nUnit" as fsp_unit
+  participant "FSP\nControl" as fsp_cont_mcs
+  participant "Switch\n400Gb" as switch
+  collections "Terabox\n" as terabox
+  collections "Power\nSwitch" as ps
+end box
+' participant "Local\nCache" as cache #Salmon
+' participant "PDU\n" as pdu #Orange
+participant "FHS\nBMC" as fhs_bmc #Grey
+' participant "FPGA\nBMC" as fpga_bmc #Grey
+box "\nFHS\n"
+    collections "FHS FSP\nController" as fsp_cont
+
+    participant "FHS\nController" as fhs_cont
+    participant "FHS\nServer" as fhs_cpu
+    collections "FHS\nFPGA" as fhs_fpga
+end box
+
+note over controller, ps #BurlyWood  : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState: UNKNOWN
+
+lmc             ->  controller      : AdminMode.ONLINE
+group #LightCyan For each FSP Unit in configuration:
+    controller      ->  fsp_unit        : AdminMode.ONLINE
+    fsp_unit        ->  terabox         : AdminMode.ONLINE
+    note over           terabox     #Tomato    : AdminMode.ONLINE\nOpState: OFF
+    note over           fsp_unit    #Tomato    : AdminMode.ONLINE\nOpState: OFF
+end group
+note over           controller   #Tomato   : AdminMode.ONLINE\nOpState: OFF
+
+lmc             ->  controller      : On()
+group #LightCyan For each FSP Unit in configuration:
+    controller      ->  fsp_unit        : On()
+    fsp_unit        ->  fsp_cont_mcs    : AdminMode.ONLINE
+    note over           fsp_cont_mcs      #BurlyWood    : AdminMode.ONLINE\nOpState.ON\nHealthState:UNKNOWN
+    fsp_unit        ->  switch          : AdminMode.ONLINE
+    note over           switch      #PaleGreen    : AdminMode.ONLINE\nOpState.ON\nHealthState:OK
+    fsp_unit        ->  terabox         : On()
+    terabox         ->  ps              : AdminMode.ONLINE
+    note over           ps          #PaleGreen    : AdminMode.ONLINE\nOpState.ON\nHealthState:OK
+    terabox         ->  ps              : TurnOutletOn()
+    terabox         ->  fhs_bmc         : TurnServerOn()
+    note over fsp_cont, fhs_fpga    #BurlyWood    : **Init Worker Node**\nAdminMode: OFFLINE\nOpState: DISABLE\nHealthState: UNKNOWN
+    terabox       ->  fsp_cont          : AdminMode.ONLINE
+    terabox       ->  fhs_cont          : AdminMode.ONLINE
+    terabox       ->  fhs_cpu           : AdminMode.ONLINE
+    terabox       ->  fhs_fpga          : AdminMode.ONLINE
+    note over fsp_cont, fhs_fpga     #PaleGreen   : AdminMode: ONLINE\nOpState: ON\nHealthState: OK
+    note over terabox   #PaleGreen      : OpState: ON\nHealthState: OK
+    fsp_cont     -->  fsp_cont_mcs      : HealthState.OK
+    note over fsp_cont_mcs   #PaleGreen : HealthState: OK
+    note over fsp_unit  #PaleGreen      : OpState: ON\nHealthState: OK
+end group
+note over controller    #PaleGreen      : OpState: ON\nHealthState: OK
+
+lmc             ->  controller      : Off()
+group #LightCyan For each FSP Unit in configuration:
+    controller      ->  fsp_unit        : Off()
+    fsp_unit        ->  fsp_cont_mcs    : AdminMode.OFFLINE
+    note over fsp_cont_mcs  #BurlyWood  : AdminMode.OFFLINE\nOpState.DISABLE\nHealthState:UNKNOWN
+    fsp_unit        ->  switch          : AdminMode.OFFLINE
+    note over  switch       #BurlyWood  : AdminMode.OFFLINE\nOpState.DISABLE\nHealthState:UNKNOWN
+    fsp_unit        ->  terabox         : Off()
+    terabox         ->  fhs_bmc         : TurnServerOff()
+    terabox       ->  fsp_cont          : AdminMode.OFFLINE
+    terabox       ->  fhs_cont          : AdminMode.OFFLINE
+    terabox       ->  fhs_cpu           : AdminMode.OFFLINE
+    terabox       ->  fhs_fpga          : AdminMode.OFFLINE
+    note over fsp_cont, fhs_fpga    #BurlyWood    : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState: UNKNOWN
+    terabox         ->  ps              : TurnOutletOff()
+    terabox         ->  ps              : AdminMode.OFFLINE
+    note over           ps          #BurlyWood    : AdminMode.OFFLINE\nOpState.DISABLE\nHealthState:UNKNOWN 
+    note over terabox   #Tomato      : OpState: OFF\nHealthState: UNKNOWN
+    note over fsp_unit  #Tomato      : OpState: OFF\nHealthState: UNKNOWN
+end group
+note over controller    #Tomato      : OpState: OFF\nHealthState: UNKNOWN
+
+lmc             ->  controller      : AdminMode.OFFLINE
+group #LightCyan For each FSP Unit in configuration:
+    controller      ->  fsp_unit        : AdminMode.OFFLINE
+    fsp_unit        ->  terabox         : AdminMode.OFFLINE
+end group
+note over controller, ps #BurlyWood  : AdminMode: OFFLINE\nOpState: DISABLE
+
+
+@enduml

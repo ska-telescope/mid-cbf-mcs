@@ -1,0 +1,87 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title FSP Unit State Model (Server Fault)\n
+' participant "LMC\n" as lmc #Thistle
+box "\nMCS\n"
+  participant "FSP\nUnit" as fsp_unit
+  participant "FSP\nControl" as fsp_cont_mcs
+  participant "Switch\n400Gb" as switch
+  collections "Terabox\n" as terabox
+end box
+' participant "Local\nCache" as cache #Salmon
+' participant "PDU\n" as pdu #Orange
+' participant "FHS\nBMC" as fhs_bmc #Grey
+' participant "FPGA\nBMC" as fpga_bmc #Grey
+box "\nFHS 1\n"
+    collections "FHS FSP\nController" as fsp_cont1
+    participant "FHS\nController" as fhs_cont1
+    participant "FHS\nServer" as fhs_cpu1
+    collections "FHS\nFPGA" as fhs_fpga1
+end box
+
+box "\nFHS 2-5\n"
+    collections "FHS FSP\nController" as fsp_cont
+    participant "FHS\nController" as fhs_cont
+    participant "FHS\nServer" as fhs_cpu
+    collections "FHS\nFPGA" as fhs_fpga
+end box
+
+note over fsp_unit, fhs_fpga #PaleGreen  : AdminMode: ONLINE\nOpState: ON\nHealthState: OK
+
+note over fhs_cpu1 #FFAAAA        : Fault !
+note over fhs_cpu1                  : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState: FAILED
+
+fhs_cont1           <--  fhs_cpu1    : HealthState.FAILED
+fhs_cont1           ->  fhs_fpga1    : OpState.UNKNOWN
+note over fhs_fpga1                 : OpState: UNKNOWN
+note over fhs_cont1                 : OpState: FAULT\nHealthState: FAILED
+
+terabox            <--  fhs_cont1   : HealthState.FAILED
+note over terabox                  : OpState: FAULT\nHealthState: FAILED
+fsp_unit           <--  terabox    : HealthState.FAILED
+fsp_unit            ->  fsp_cont_mcs  : AdminMode.NOT_FITTED
+
+fsp_cont_mcs            ->  fsp_cont1  : AdminMode.NOT_FITTED
+note over fsp_cont1                  : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState: FAILED
+fsp_cont_mcs            ->  fsp_cont  : AdminMode.NOT_FITTED
+note over fsp_cont                  : AdminMode: NOT_FITTED
+
+note over fsp_cont_mcs                  : AdminMode: NOT_FITTED
+
+fsp_unit            ->  switch  : AdminMode.NOT_FITTED
+note over switch                  : AdminMode: NOT_FITTED
+
+
+fsp_unit            ->  terabox  : AdminMode.NOT_FITTED
+terabox             ->  fhs_cont1  : AdminMode.NOT_FITTED
+note over fhs_cont1                  : AdminMode: NOT_FITTED
+terabox             ->  fhs_cont  : AdminMode.NOT_FITTED
+note over fhs_cont                  : AdminMode: NOT_FITTED
+fhs_cont             ->  fhs_cpu  : AdminMode.NOT_FITTED
+fhs_cont             ->  fhs_fpga  : AdminMode.NOT_FITTED
+note over fhs_cpu, fhs_fpga       : AdminMode: NOT_FITTED
+note over terabox                  : AdminMode: NOT_FITTED
+
+
+
+note over fsp_unit                 : HealthState: FAILED
+
+
+@enduml

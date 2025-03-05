@@ -42,21 +42,21 @@ end box
 note over controller, fhs_fpga #PaleGreen  : AdminMode: ONLINE\nOpState: ON\nHealthState: OK
 
 note over ps #FFAAAA         : Fault !
-note over ps                   : AdminMode: NOT_FITTED?\nOpState: FAULT?\nHealthState.FAILED
+note over ps                   : AdminMode: NOT_FITTED?\nOpState: FAULT?\nHealthState: FAILED
 
 terabox           <--  ps     : HealthState.FAILED
 terabox           ->  fhs_cont     : AdminMode.OFFLINE
 
 fhs_cont           ->  fhs_cpu     : AdminMode.OFFLINE
 fhs_cont           ->  fhs_fpga    : AdminMode.OFFLINE
-note over fhs_cont, fhs_fpga       : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState.UNKNOWN
-note over terabox                 : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState.UNKNOWN
+note over fhs_cont, fhs_fpga       : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState: UNKNOWN
+note over terabox                 : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState: UNKNOWN
 
 
 
 vcc_unit            ->  vcc_cont1  : HealthStateCallback()
 vcc_unit            ->  vcc_cont2  : HealthStateCallback()
-note over vcc_cont1, vcc_cont2     : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState.UNKNOWN
+note over vcc_cont1, vcc_cont2     : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState: UNKNOWN
 
 vcc_unit           ->  terabox    : AdminMode.OFFLINE
 ' terabox            ->   ps        : AdminMode.OFFLINE
@@ -65,9 +65,9 @@ terabox            ->  fhs_cont   : AdminMode.OFFLINE
 
 fhs_cont           ->  fhs_cpu     : AdminMode.OFFLINE
 fhs_cont           ->  fhs_fpga    : AdminMode.OFFLINE
-note over fhs_cont, fhs_fpga       : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState.UNKNOWN
-note over terabox                 : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState.UNKNOWN
-note over vcc_unit               : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState.FAILED
+note over fhs_cont, fhs_fpga       : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState: UNKNOWN
+note over terabox                 : AdminMode: OFFLINE\nOpState: DISABLE\nHealthState: UNKNOWN
+note over vcc_unit               : AdminMode: NOT_FITTED\nOpState: FAULT\nHealthState: FAILED
 
 
 @enduml
