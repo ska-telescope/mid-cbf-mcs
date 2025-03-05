@@ -1579,8 +1579,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                         (fsp_pst_proxy, json.dumps(fsp_config), FspModes.PST)
                     )
 
-                    # Store FSP parameters to configure visibility transport
-                    self._vis_fsp_config.append(fsp_config)
+                    # TODO: Implemented this for CIP-3202, probably create a different varible to store
+                    # pst fsp configs
+                    # Store FSP parameters to configure packet transport
+                    # self._vis_fsp_config.append(fsp_config)
 
                 case _:
                     self.logger.error(
@@ -1975,20 +1977,23 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     receptors_per_region.append(len(region["receptors"]))
                 else:
                     receptors_per_region.append(len(self.dish_ids))
-
-        # TODO
-        # Route visibilities from each FSP to the outputting board
-        if not self.simulation_mode:
-            self.logger.info("Configuring visibility transport")
-            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-            self._vis_transport.configure(
-                subarray_id=self._subarray_id,
-                fsp_config=self._vis_fsp_config,
-                vis_slim_yaml=vis_slim_yaml,
-                number_of_regions=number_of_regions,
-                ports_per_region=ports_per_region,
-                receptors_per_region=receptors_per_region,
-            )
+            # TODO
+            # Route visibilities from each FSP to the outputting board
+            if not self.simulation_mode:
+                self.logger.info("Configuring visibility transport")
+                vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+                self._vis_transport.configure(
+                    subarray_id=self._subarray_id,
+                    fsp_config=self._vis_fsp_config,
+                    vis_slim_yaml=vis_slim_yaml,
+                    number_of_regions=number_of_regions,
+                    ports_per_region=ports_per_region,
+                    receptors_per_region=receptors_per_region,
+                )
+        # TODO: Add LUT stage 1 and stage 2 configuration for PST mode ( CIP-3202)
+        if "pst_bf" in configuration:
+            msg = "PST packet routing and LUT Stage 1 and 2 configuration not implemented for PST"
+            self.logger.warning(msg)
 
         # Update obsState callback
         self._update_component_state(configured=True)
@@ -2082,10 +2087,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        # Enable visibility transport output
+        # Enable packet transport output
+        # TODO: Implement for PST (CIP-3202)
         if not self.simulation_mode:
-            self.logger.info("Visibility transport enable output")
-            self._vis_transport.enable_output(self._subarray_id)
+            if len(self._vis_fsp_config) > 0:
+                self.logger.info("Visibility transport enable output")
+                self._vis_transport.enable_output(self._subarray_id)
 
         self.scan_id = scan_id
 
@@ -2142,9 +2149,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        # Enable packet transport output
+        # TODO: Implement for PST (CIP-3202)
         if not self.simulation_mode:
-            self.logger.info("Visibility transport disable output")
-            self._vis_transport.disable_output()
+            if len(self._vis_fsp_config) > 0:
+                self.logger.info("Visibility transport disable output")
+                self._vis_transport.disable_output()
 
         # Update obsState callback
         self._update_component_state(scanning=False)

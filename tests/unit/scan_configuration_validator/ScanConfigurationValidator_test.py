@@ -27,6 +27,7 @@ class TestScanConfigurationValidator:
         autouse=True,
         params=[
             {
+                # Tconfigure_scan_file isn't used in the common test, but kept in to keep it consistant with the FSP Mode specific tests
                 "configure_scan_file": "ConfigureScan_4_1_CORR.json",
                 "sub_id": 1,
                 "dish_ids": [
@@ -63,9 +64,11 @@ class TestScanConfigurationValidator:
         [
             "ConfigureScan_4_1_CORR.json",
             "ConfigureScan_CORR_PST_8_receptor_5_FSP.json",
+            "ConfigureScan_basic_PST_band1.json",
+            "ConfigureScan_4_PR_PST.json",
         ],
     )
-    def test_Valid_Configuration_Version(
+    def test_Valid_Configuration(
         self: TestScanConfigurationValidator,
         validator_params: dict[any],
         config_file_name: str,

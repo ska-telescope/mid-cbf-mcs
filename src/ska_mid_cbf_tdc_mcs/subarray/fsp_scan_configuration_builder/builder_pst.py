@@ -158,8 +158,6 @@ class FspScanConfigurationBuilderPst(FspScanConfigurationBuilder):
             fsp_config["function_mode"] = self._function_mode.name
             fsp_config["frequency_slice_id"] = calculated_fsp_info["fs_id"]
 
-            # TODO: Need to reconciled why there is a difference in field name between Scan Config and what
-            # the FSP HPS App is expecting
             fsp_config["fsp_start_channel_id"] = processing_region_config[
                 "pst_start_channel_id"
             ]

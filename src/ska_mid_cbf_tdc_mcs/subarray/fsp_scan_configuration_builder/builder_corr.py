@@ -136,7 +136,7 @@ class FspScanConfigurationBuilderCorr(FspScanConfigurationBuilder):
             ]
 
         # No need to check for output_link_map as at least one is required
-        # (as of Scan Configuration 5.0)
+        # (as of Scan Configuration 3.0)
         output_mappings["output_link_map"] = processing_region_config[
             "output_link_map"
         ]

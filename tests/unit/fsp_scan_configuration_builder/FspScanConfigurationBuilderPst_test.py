@@ -93,10 +93,6 @@ class TestFspScanConfigurationBuilder:
         "config_name",
         [
             "ConfigureScan_basic_PST_band1.json",
-            # "ConfigureScan_4_1_CORR.json",
-            # "ConfigureScan_AA4_values.json",
-            # "ConfigureScan_CORR_2_non_overlapping_band_2_PRs.json",
-            # "ConfigureScan_CORR_2_overlapping_band_2_PRs.json",
         ],
     )
     def test_build_pst(self: TestFspScanConfigurationBuilder, config_name):

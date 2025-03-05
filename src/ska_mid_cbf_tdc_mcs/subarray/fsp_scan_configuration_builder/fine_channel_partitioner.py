@@ -171,7 +171,7 @@ def partition_spectrum_to_frequency_slices(
     k_value: int,
     wideband_shift: int,
     band_name: str,
-    fsp_mode=FspModes.CORR,
+    fsp_mode: FspModes = FspModes.CORR,
 ) -> dict:
     """
     determine the channelization information based on the calculations in
@@ -184,7 +184,10 @@ def partition_spectrum_to_frequency_slices(
     :param k_value: the channelization coefficient value
     :param wideband_shift: the wideband shift (Hz) to apply to the processing region
     :param band_name: the name of the frequency band
+    :param fsp_mode: the FSP Mode Value for the FSPs in fsp_ids
+
     :raises ValueError: if input values are not provided or valid
+
     :return: structure with information about fsp boundaries, see:
         https://confluence.skatelescope.org/display/SE/Processing+Regions+for+CORR+-+Identify+and+Select+Fine+Channels#ProcessingRegionsforCORRIdentifyandSelectFineChannels-ExampleCalculatedFrequencySliceBoundaryInformation
     """

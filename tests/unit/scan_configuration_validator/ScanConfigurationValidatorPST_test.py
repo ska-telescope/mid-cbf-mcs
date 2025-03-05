@@ -62,32 +62,6 @@ class TestScanConfigurationValidatorPST:
         return params
 
     @pytest.mark.parametrize(
-        "config_file_name",
-        ["ConfigureScan_basic_PST_band1.json", "ConfigureScan_4_PR_PST.json"],
-    )
-    def test_Valid_Configuration_Version(
-        self: TestScanConfigurationValidatorPST,
-        validator_params: dict[any],
-        config_file_name: str,
-    ):
-        path_to_test_json = os.path.join(FILE_PATH, config_file_name)
-        with open(path_to_test_json) as file:
-            json_str = file.read().replace("\n", "")
-
-        validator: SubarrayScanConfigurationValidator = (
-            SubarrayScanConfigurationValidator(
-                scan_configuration=json_str,
-                dish_ids=validator_params["dish_ids"],
-                subarray_id=validator_params["sub_id"],
-                logger=self.logger,
-                count_fsp=COUNT_FSP,
-            )
-        )
-        success, msg = validator.validate_input()
-        assert "Scan configuration is valid." in msg
-        assert success is True
-
-    @pytest.mark.parametrize(
         "fsp_ids,error_msg",
         [
             (
