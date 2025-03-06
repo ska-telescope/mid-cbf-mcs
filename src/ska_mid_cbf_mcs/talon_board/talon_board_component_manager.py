@@ -26,9 +26,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
 from ska_mid_cbf_mcs.talon_board.influxdb_query_client import (
     InfluxdbQueryClient,
 )
-from ska_mid_cbf_mcs.talon_board.talon_board_simulator import (
-    SimulatedValues,
-)
+from ska_mid_cbf_mcs.talon_board.talon_board_simulator import SimulatedValues
 
 # Eth100g, HPS Master polling period in seconds
 POLLING_PERIOD = 2

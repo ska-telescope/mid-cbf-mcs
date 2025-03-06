@@ -387,10 +387,9 @@ class ControllerComponentManager(CbfComponentManager):
                     attr_name="state",
                     callback=self.op_state_callback,
                 )
-            # TODO: Untangle adminMode init. For now, skip setting FSP/VCC online as should be handled by subarray.
-            if fqdn in self._fsp_fqdn | self._vcc_fqdn:
-                return True
+
             return self._set_proxy_online(fqdn)
+
         else:
             return self._set_proxy_not_fitted(fqdn)
 
@@ -424,11 +423,11 @@ class ControllerComponentManager(CbfComponentManager):
             if not self._init_device_proxy(fqdn=fqdn, subscribe_results=True):
                 init_success = False
 
-        for fqdn in self._fsp_fqdns_all:
-            if not self._init_device_proxy(fqdn=fqdn, subscribe_results=True):
+        for fqdn in self._vcc_fqdns_all:
+            if not self._init_device_proxy(fqdn=fqdn):
                 init_success = False
 
-        for fqdn in self._vcc_fqdns_all:
+        for fqdn in self._fsp_fqdns_all:
             if not self._init_device_proxy(fqdn=fqdn):
                 init_success = False
 
@@ -442,63 +441,13 @@ class ControllerComponentManager(CbfComponentManager):
 
         return init_success
 
-    def _set_fsp_function_mode(
-        self: ControllerComponentManager, to_idle: bool = False
-    ) -> bool:
-        """
-        Set FSP function mode based on talondx_config JSON
-
-        :param to_idle: set to True if return FSPs to IDLE mode; defaults to False
-        :return: True if the FSP function mode is successfully set, False otherwise.
-        """
-        self.blocking_command_ids = set()
-        for config_command in self.talondx_config_json["config_commands"]:
-            if to_idle:
-                fsp_mode = "IDLE"
-            else:
-                fsp_mode = config_command["fpga_bitstream_fsp_mode"].upper()
-
-            target = int(config_command["target"])
-            fsp_fqdn = f"mid_csp_cbf/fsp/{target:02d}"
-            if fsp_fqdn not in self._fsp_fqdn:
-                self.logger.error(
-                    f"{fsp_fqdn} was requested but is not part of CBF capabilities; available FSPs: {self._fsp_fqdn}"
-                )
-                return False
-
-            self.logger.info(f"Setting {fsp_fqdn} function mode to {fsp_mode}")
-
-            fsp_proxy = self._proxies[fsp_fqdn]
-
-            try:
-                [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
-                    fsp_mode
-                )
-                if result_code == ResultCode.REJECTED:
-                    raise tango.DevFailed("SetFunctionMode command rejected")
-            except tango.DevFailed as df:
-                self.logger.error(f"Error in assigning FSP Mode: {df}")
-                return False
-
-            self.blocking_command_ids.add(command_id)
-
-        lrc_status = self.wait_for_blocking_results()
-        if lrc_status != TaskStatus.COMPLETED:
-            self.logger.error(
-                "All Fsp.SetFunctionMode() LRC calls failed/timed out. Check Fsp logs."
-            )
-            return False
-
-        self.logger.info("Successfully set all FSP function modes")
-        return True
-
     def _start_communicating(
         self: ControllerComponentManager, *args, **kwargs
     ) -> None:
         """
         Thread for start_communicating operation.
         """
-        self.logger.info(
+        self.logger.debug(
             "Entering ControllerComponentManager._start_communicating"
         )
 
@@ -553,10 +502,8 @@ class ControllerComponentManager(CbfComponentManager):
 
         self.logger.debug(f"Talon-DX config JSON: {self.talondx_config_json}")
 
-        # Set the used FQDNs by talondx config
-        self._set_used_fqdns()
+        self._set_used_fqdns()  # Set the used FQDNs by talondx config
 
-        # Initialize device proxies
         if not self._init_device_proxies():
             self.logger.error("Failed to initialize proxies.")
             self._update_communication_state(
@@ -567,13 +514,6 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.info(
             f"event_ids after subscribing = {len(self.event_ids)}"
         )
-
-        # Set FSP function mode
-        if not self._set_fsp_function_mode():
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
 
         # Waits for subscribed sub devices transition to DevState.OFF before proceeding.
         task_status = self.wait_for_op_state_change(tango.DevState.OFF)
@@ -595,13 +535,6 @@ class ControllerComponentManager(CbfComponentManager):
         self.logger.debug(
             "Entering ControllerComponentManager._stop_communicating"
         )
-
-        # Set FSPs to IDLE
-        if not self._set_fsp_function_mode(to_idle=True):
-            self._update_communication_state(
-                communication_state=CommunicationStatus.NOT_ESTABLISHED
-            )
-            return
 
         # Order of operations for sub devices:
         # 1. Set the sub devices to AdminMode.OFFLINE to trigger transition to DevState.DISABLE

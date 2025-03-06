@@ -18,9 +18,7 @@ from tango.server import attribute, command, device_property
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.device.base_device import CbfDevice, CbfFastCommand
-from ska_mid_cbf_mcs.slim.slim_component_manager import (
-    SlimComponentManager,
-)
+from ska_mid_cbf_mcs.slim.slim_component_manager import SlimComponentManager
 
 __all__ = ["Slim", "main"]
 
