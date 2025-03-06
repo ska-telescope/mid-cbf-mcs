@@ -132,15 +132,27 @@ class TestCbfController:
                 )
 
         # Validate FSP function mode
-        for device in fsp:
-            # CIP-2550: in SimulationMode.TRUE, controller is hard-coded to only
-            # set CORR function mode
+        # AA1.0 Configurations: 4 CORR board 1-4, 4 PST board 5-8
+        # NOTE: fsp are 1-index, but the fsp proxy list is 0-index
+        for fsp_index in range(controller_params["num_board"] // 2):
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
-                device_name=device,
+                device_name=fsp[fsp_index],
                 attribute_name="functionMode",
                 attribute_value=FspModes.CORR.value,
+                previous_value=FspModes.IDLE.value,
+                min_n_events=1,
+            )
+        for fsp_index in range(
+            controller_params["num_board"] // 2, controller_params["num_board"]
+        ):
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=fsp[fsp_index],
+                attribute_name="functionMode",
+                attribute_value=FspModes.PST.value,
                 previous_value=FspModes.IDLE.value,
                 min_n_events=1,
             )
@@ -629,16 +641,28 @@ class TestCbfController:
         controller.adminMode = AdminMode.OFFLINE
 
         # Validate FSP function mode
-        for device in fsp:
-            # CIP-2550: in SimulationMode.TRUE, controller is hard-coded to only
-            # set CORR function mode
+        # AA1.0 Configurations: 4 CORR board 1-4, 4 PST board 5-8
+        # NOTE: fsp are 1-index, but the fsp proxy list is 0-index
+        for fsp_index in range(controller_params["num_board"] // 2):
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
-                device_name=device,
+                device_name=fsp[fsp_index],
                 attribute_name="functionMode",
                 attribute_value=FspModes.IDLE.value,
                 previous_value=FspModes.CORR.value,
+                min_n_events=1,
+            )
+        for fsp_index in range(
+            controller_params["num_board"] // 2, controller_params["num_board"]
+        ):
+            assert_that(event_tracer).within_timeout(
+                test_utils.EVENT_TIMEOUT
+            ).has_change_event_occurred(
+                device_name=fsp[fsp_index],
+                attribute_name="functionMode",
+                attribute_value=FspModes.IDLE.value,
+                previous_value=FspModes.PST.value,
                 min_n_events=1,
             )
 

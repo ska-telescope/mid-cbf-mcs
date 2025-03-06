@@ -24,11 +24,13 @@ class Const:
         self.TOTAL_FINE_CHANNELS = 16384
         # number of central fine channels with appropriate quality for visibility output products
         self.CENTRAL_FINE_CHANNELS = 14880
+        self.CENTRAL_FINE_CHANNELS_PST = 3700
         self.DEFAULT_FINE_CHANNEL_BW_HZ = 13440
 
         # Number of Fine channels per SPEAD stream;
         # TODO: NUM_CHANNELS_PER_SPEAD_STREAM = 20 for TDC (AA0.5, AA1) only; for Mid.CBF (AA2+) it will be set to 1
         self.NUM_CHANNELS_PER_SPEAD_STREAM = 20
+        self.NUM_CHANNELS_PER_PST_STREAM = 185
         self.NUM_PHASE_BINS = 1024
         self.NUM_OUTPUT_LINKS = 80
         self.DELTA_F = 1800  # Hz
@@ -65,7 +67,43 @@ class Const:
 
         # Fine channel width for the Correlation function mode [Hz]
         self.FINE_CHANNEL_WIDTH = 13440
+        self.FINE_CHANNEL_WIDTH_PST = 53760
         self.K_VALUE_RANGE = (1, 2222)
+
+        # Mappings for PST Processing Region Start Frequencies to FS IDs to be used
+        # NOTE: Temp for AA 1.0, where the bandwidth required for a PST FS is greater
+        # than ones requested by Corr.  This will cause the existing algo to calculate
+        # partition and coarse channels selection to fail.
+        # For AA 1.0, there is a strict restriction that a PST PR must have only 1 FSP
+        # and only certain start frequencies are allowed, hence partitioning for each FSP
+        # should not be required
+        self.PST_FS_ID_MAPPING = {
+            -99456000: 0,
+            98703360: 1,
+            296862720: 2,
+            495075840: 3,
+            693235200: 4,
+            891448320: 5,
+            1089607680: 6,
+            1287767040: 7,
+            1485980160: 8,
+            1684139520: 9,
+            1882352640: 10,
+        }
+
+        self.PST_START_CH_END_CH_MAPPING = {
+            -99456000: (-1850, 1849),
+            98703360: (1836, 5535),
+            296862720: (5522, 9221),
+            495075840: (9209, 12908),
+            693235200: (12895, 16594),
+            891448320: (16582, 20281),
+            1089607680: (20268, 23967),
+            1287767040: (23954, 27653),
+            1485980160: (27641, 31340),
+            1684139520: (31327, 35026),
+            1882352640: (35014, 38713),
+        }
 
 
 const = Const()
@@ -157,7 +195,7 @@ def scan_configuration_supported_value(parameter: str) -> any:
         "frequency": (0, 1981808640),
         "function_modes": {FspModes.IDLE, FspModes.CORR},
         "subarray_id": [1],
-        "fsp_ids": (1, 4),
+        "fsp_ids": (1, 8),
         "band_5_tuning": False,
         "frequency_band": {"1", "2"},
         "frequency_band_offset_stream1": False,
@@ -172,15 +210,56 @@ def scan_configuration_supported_value(parameter: str) -> any:
                 "channel_count": {"range": (1, 58982), "multiple": 20},
                 "output_host": {
                     "difference_multiple": 20,
-                    "max_channel_per": 20,
                 },
-                "output_port": {"increment": 20, "max_channel_per": 20},
+                "output_port": {
+                    "increment": 20,
+                    "max_channels_per_port_per_host": 20,
+                },
                 "output_link_map": {
                     "difference_multiple": 20,
-                    "max_channel_per": 20,
                     "values": [1],
                 },
-            }
+            },
+            FspModes.PST: {
+                "fsp_id": [5, 6, 7, 8],
+                "max_fsp_id_per_pr": 1,
+                "channel_width": {53760},
+                "channel_count": {
+                    "range": (3700, 3700),
+                    "multiple": 1,
+                },
+                "output_host": {
+                    "difference_multiple": 185,
+                    "max_entry": 1,
+                },
+                "output_port": {
+                    "increment": 185,
+                    "max_channels_per_port_per_host": 3700,
+                    "max_entry": 1,
+                },
+                "output_link_map": {
+                    "difference_multiple": 185,
+                    "values": [1],
+                    "max_entry": 1,
+                },
+                "max_timing_beams": 1,
+                "timing_beam_id_supported_range": (1, 16),
+                "support_start_frequency_by_band": {
+                    "1": {
+                        296862720,
+                        495075840,
+                        693235200,
+                        891448320,
+                    },
+                    "2": {
+                        891448320,
+                        1089607680,
+                        1287767040,
+                        1485980160,
+                        1684139520,
+                    },
+                },
+            },
         },
     }
 
@@ -237,7 +316,7 @@ def calculate_dish_sample_rate(
 
 
 def get_coarse_channels(
-    start_freq: int, end_freq: int, wb_shift: int
+    start_freq: int, end_freq: int, wb_shift: int, fsp_mode=FspModes.CORR
 ) -> list[int]:
     """
     Determine the coarse frequency Slices that contain the processing region
@@ -249,6 +328,8 @@ def get_coarse_channels(
 
     :raise ValueError: if start_freq is greater than end_freq
     """
+    if fsp_mode == FspModes.PST:
+        return [const.PST_FS_ID_MAPPING[start_freq]]
     if start_freq > end_freq:
         raise ValueError("start_freq must be <= end_freq")
 

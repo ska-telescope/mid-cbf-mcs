@@ -175,7 +175,7 @@ class FspModeSubarrayComponentManager(CbfObsComponentManager):
         self: FspModeSubarrayComponentManager, argin: list[int]
     ) -> None:
         """
-        Assign specified VCCs to the FSP CORR subarray.
+        Assign specified VCCs to the FSP Mode subarray.
 
         :param argin: IDs of VCCs to add.
         """

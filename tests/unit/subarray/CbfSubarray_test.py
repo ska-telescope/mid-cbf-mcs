@@ -58,24 +58,50 @@ class TestCbfSubarray:
                 "mid_csp_cbf/vcc/002",
                 "mid_csp_cbf/vcc/003",
                 "mid_csp_cbf/vcc/004",
+                "mid_csp_cbf/vcc/005",
+                "mid_csp_cbf/vcc/006",
+                "mid_csp_cbf/vcc/007",
+                "mid_csp_cbf/vcc/008",
             ],
             FSP=[
                 "mid_csp_cbf/fsp/01",
                 "mid_csp_cbf/fsp/02",
                 "mid_csp_cbf/fsp/03",
                 "mid_csp_cbf/fsp/04",
+                "mid_csp_cbf/fsp/05",
+                "mid_csp_cbf/fsp/06",
+                "mid_csp_cbf/fsp/07",
+                "mid_csp_cbf/fsp/08",
             ],
             FspCorrSubarray=[
                 "mid_csp_cbf/fspCorrSubarray/01_01",
                 "mid_csp_cbf/fspCorrSubarray/02_01",
                 "mid_csp_cbf/fspCorrSubarray/03_01",
                 "mid_csp_cbf/fspCorrSubarray/04_01",
+                "mid_csp_cbf/fspCorrSubarray/05_01",
+                "mid_csp_cbf/fspCorrSubarray/06_01",
+                "mid_csp_cbf/fspCorrSubarray/07_01",
+                "mid_csp_cbf/fspCorrSubarray/08_01",
+            ],
+            FspPstSubarray=[
+                "mid_csp_cbf/fspPstSubarray/01_01",
+                "mid_csp_cbf/fspPstSubarray/02_01",
+                "mid_csp_cbf/fspPstSubarray/03_01",
+                "mid_csp_cbf/fspPstSubarray/04_01",
+                "mid_csp_cbf/fspPstSubarray/05_01",
+                "mid_csp_cbf/fspPstSubarray/06_01",
+                "mid_csp_cbf/fspPstSubarray/07_01",
+                "mid_csp_cbf/fspPstSubarray/08_01",
             ],
             TalonBoard=[
                 "mid_csp_cbf/talon_board/001",
                 "mid_csp_cbf/talon_board/002",
                 "mid_csp_cbf/talon_board/003",
                 "mid_csp_cbf/talon_board/004",
+                "mid_csp_cbf/talon_board/005",
+                "mid_csp_cbf/talon_board/006",
+                "mid_csp_cbf/talon_board/007",
+                "mid_csp_cbf/talon_board/008",
             ],
             VisSLIM=["mid_csp_cbf/slim/slim-vis"],
             DeviceID="1",
@@ -148,7 +174,7 @@ class TestCbfSubarray:
             attribute_value=DevState.ON,
         )
 
-        with open(test_data_path + "sys_param_4_boards.json") as f:
+        with open(test_data_path + "sys_param_8_boards.json") as f:
             sys_param = f.read()
         device_under_test.sysParam = sys_param
 
@@ -656,7 +682,40 @@ class TestCbfSubarray:
         "config_file_name, receptors, scan_file_name",
         [
             ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json"),
+            (
+                "ConfigureScan_basic_PST_band1.json",
+                ["SKA081"],
+                "Scan1_basic.json",
+            ),
             ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan_invalid.json"),
+            (
+                "ConfigureScan_CORR_PST_8_receptor_5_FSP.json",
+                [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+                "Scan1_basic.json",
+            ),
+            (
+                "ConfigureScan_CORR_PST_8_receptor_8_FSP.json",
+                [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+                "Scan1_basic.json",
+            ),
         ],
     )
     def test_Scan(
@@ -786,7 +845,42 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
-        [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
+        [
+            ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json"),
+            (
+                "ConfigureScan_basic_PST_band1.json",
+                ["SKA081"],
+                "Scan1_basic.json",
+            ),
+            (
+                "ConfigureScan_CORR_PST_8_receptor_5_FSP.json",
+                [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+                "Scan1_basic.json",
+            ),
+            (
+                "ConfigureScan_CORR_PST_8_receptor_8_FSP.json",
+                [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+                "Scan1_basic.json",
+            ),
+        ],
     )
     def test_Scan_reconfigure(
         self: TestCbfSubarray,
@@ -909,7 +1003,23 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, receptors",
-        [("ConfigureScan_basic_CORR.json", ["SKA001"])],
+        [
+            ("ConfigureScan_basic_CORR.json", ["SKA001"]),
+            ("ConfigureScan_basic_PST_band1.json", ["SKA081"]),
+            (
+                "ConfigureScan_CORR_PST_8_receptor_8_FSP.json",
+                [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+            ),
+        ],
     )
     def test_Abort_from_ready(
         self: TestCbfSubarray,
@@ -989,7 +1099,42 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
-        [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
+        [
+            ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json"),
+            (
+                "ConfigureScan_basic_PST_band1.json",
+                ["SKA081"],
+                "Scan1_basic.json",
+            ),
+            (
+                "ConfigureScan_CORR_PST_8_receptor_5_FSP.json",
+                [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+                "Scan1_basic.json",
+            ),
+            (
+                "ConfigureScan_CORR_PST_8_receptor_8_FSP.json",
+                [
+                    "SKA001",
+                    "SKA036",
+                    "SKA063",
+                    "SKA100",
+                    "SKA081",
+                    "SKA046",
+                    "SKA077",
+                    "SKA048",
+                ],
+                "Scan1_basic.json",
+            ),
+        ],
     )
     def test_Abort_from_scanning(
         self: TestCbfSubarray,
@@ -1075,7 +1220,10 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, receptors",
-        [("ConfigureScan_basic_CORR.json", ["SKA001"])],
+        [
+            ("ConfigureScan_basic_CORR.json", ["SKA001"]),
+            ("ConfigureScan_basic_PST_band1.json", ["SKA081"]),
+        ],
     )
     def test_ObsReset_abort_from_ready(
         self: TestCbfSubarray,
@@ -1133,7 +1281,14 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
-        [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
+        [
+            ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json"),
+            (
+                "ConfigureScan_basic_PST_band1.json",
+                ["SKA081"],
+                "Scan1_basic.json",
+            ),
+        ],
     )
     def test_ObsReset_abort_from_scanning(
         self: TestCbfSubarray,
@@ -1194,7 +1349,10 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, receptors",
-        [("ConfigureScan_basic_CORR.json", ["SKA001"])],
+        [
+            ("ConfigureScan_basic_CORR.json", ["SKA001"]),
+            ("ConfigureScan_basic_PST_band1.json", ["SKA081"]),
+        ],
     )
     def test_Abort_Restart_from_ready(
         self: TestCbfSubarray,
@@ -1253,7 +1411,14 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, receptors, scan_file_name",
-        [("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json")],
+        [
+            ("ConfigureScan_basic_CORR.json", ["SKA001"], "Scan1_basic.json"),
+            (
+                "ConfigureScan_basic_PST_band1.json",
+                ["SKA081"],
+                "Scan1_basic.json",
+            ),
+        ],
     )
     def test_Abort_Restart_from_scanning(
         self: TestCbfSubarray,

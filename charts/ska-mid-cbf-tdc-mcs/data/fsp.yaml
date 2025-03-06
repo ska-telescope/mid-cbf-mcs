@@ -2,7 +2,7 @@ name: fsp
 function: fsp-processing
 domain: signal-processing
 command: "FspMulti"
-instances: ["fsp-01", "fsp-02", "fsp-03", "fsp-04"]
+instances: ["fsp-01", "fsp-02", "fsp-03", "fsp-04","fsp-05", "fsp-06", "fsp-07", "fsp-08"]
 depends_on:
   - device: sys/database/2
 readinessProbe:
@@ -344,6 +344,326 @@ server:
             values:
             - "{{ .Values.fspTimeout }}"
 
+  - name: "fsp-05"
+    classes:
+    - name: "Fsp"
+      devices:
+      - name: "mid_csp_cbf/fsp/05"
+        properties:
+          - name: "DeviceID"
+            values:
+            - "5"
+          - name: "FspCorrSubarray"
+            values:
+            - "mid_csp_cbf/fspCorrSubarray/05_01"
+            - "mid_csp_cbf/fspCorrSubarray/05_02"
+            - "mid_csp_cbf/fspCorrSubarray/05_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/05_01"
+            - "mid_csp_cbf/fspPstSubarray/05_02"
+            - "mid_csp_cbf/fspPstSubarray/05_03"
+          - name: "HpsFspControllerAddress"
+            values:
+            - "talondx-005/fsp-app/fsp-controller"
+
+    - name: "FspCorrSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspCorrSubarray/05_01"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-005/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/05_02"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-005/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/05_03"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-005/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+          
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/05_01"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-005/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspPstSubarray/05_02"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-005/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspPstSubarray/05_03"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-005/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+  - name: "fsp-06"
+    classes:
+    - name: "Fsp"
+      devices:
+      - name: "mid_csp_cbf/fsp/06"
+        properties:
+          - name: "DeviceID"
+            values:
+            - "6"
+          - name: "FspCorrSubarray"
+            values:
+            - "mid_csp_cbf/fspCorrSubarray/06_01"
+            - "mid_csp_cbf/fspCorrSubarray/06_02"
+            - "mid_csp_cbf/fspCorrSubarray/06_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/06_01"
+            - "mid_csp_cbf/fspPstSubarray/06_02"
+            - "mid_csp_cbf/fspPstSubarray/06_03"
+          - name: "HpsFspControllerAddress"
+            values:
+            - "talondx-006/fsp-app/fsp-controller"
+
+    - name: "FspCorrSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspCorrSubarray/06_01"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-006/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/06_02"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-006/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/06_03"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-006/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+          
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/06_01"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-006/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspPstSubarray/06_02"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-006/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspPstSubarray/06_03"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-006/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+  - name: "fsp-07"
+    classes:
+    - name: "Fsp"
+      devices:
+      - name: "mid_csp_cbf/fsp/07"
+        properties:
+          - name: "DeviceID"
+            values:
+            - "7"
+          - name: "FspCorrSubarray"
+            values:
+            - "mid_csp_cbf/fspCorrSubarray/07_01"
+            - "mid_csp_cbf/fspCorrSubarray/07_02"
+            - "mid_csp_cbf/fspCorrSubarray/07_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/07_01"
+            - "mid_csp_cbf/fspPstSubarray/07_02"
+            - "mid_csp_cbf/fspPstSubarray/07_03"
+          - name: "HpsFspControllerAddress"
+            values:
+            - "talondx-007/fsp-app/fsp-controller"
+
+    - name: "FspCorrSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspCorrSubarray/07_01"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-007/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/07_02"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-007/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/07_03"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-007/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+          
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/07_01"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-007/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspPstSubarray/07_02"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-007/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspPstSubarray/07_03"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-007/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+  - name: "fsp-08"
+    classes:
+    - name: "Fsp"
+      devices:
+      - name: "mid_csp_cbf/fsp/08"
+        properties:
+          - name: "DeviceID"
+            values:
+            - "8"
+          - name: "FspCorrSubarray"
+            values:
+            - "mid_csp_cbf/fspCorrSubarray/08_01"
+            - "mid_csp_cbf/fspCorrSubarray/08_02"
+            - "mid_csp_cbf/fspCorrSubarray/08_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/08_01"
+            - "mid_csp_cbf/fspPstSubarray/08_02"
+            - "mid_csp_cbf/fspPstSubarray/08_03"
+          - name: "HpsFspControllerAddress"
+            values:
+            - "talondx-008/fsp-app/fsp-controller"
+
+    - name: "FspCorrSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspCorrSubarray/08_01"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-008/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/08_02"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-008/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/08_03"
+        properties:
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-008/fsp-app/fsp-corr-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+          
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/08_01"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-008/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspPstSubarray/08_02"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-008/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
+
+      - name: "mid_csp_cbf/fspPstSubarray/08_03"
+        properties:
+          - name: "HpsFspPstControllerAddress"
+            values:
+            - "talondx-008/fsp-app/fsp-pst-controller"
+          - name: "LRCTimeout"
+            values:
+            - "{{ .Values.fspTimeout }}"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

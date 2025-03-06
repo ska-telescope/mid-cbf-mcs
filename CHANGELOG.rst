@@ -7,6 +7,19 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-2813: Implement Subarray for PST
+  
+  * Added support for Scan Configuration 5.0 and InitSysParam 1.1; bump ska-telemodel to 1.20.0
+  
+  * Added processing for PST-BF Processing Region Configurations during Subarray ConfigureScan command 
+  
+  * Seperated out FspScanConfigurationBuilder into CORR and PST specific child classes; Added builder for PST FSP HPS configurations
+  
+  * Updated Controller to default to 4 CORR 4 PST FSP configuration when SimulationMode is True during On command
+  
+  * Updated Subarray to assign FspPstSubarray devices when requested during configuration
+  
+  * Update Unit and Integration Tests to support PST changes
 
 1.1.3
 *****

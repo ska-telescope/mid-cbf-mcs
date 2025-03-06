@@ -84,6 +84,9 @@ class CbfObsComponentManager(CbfComponentManager):
         """
         self.logger.debug("Checking if ConfigureScan is allowed.")
         if not self.is_communicating:
+            self.logger.warning(
+                "ConfigureScan not allowed when device is not communicating"
+            )
             return False
         if self.obs_state not in [
             ObsState.IDLE,

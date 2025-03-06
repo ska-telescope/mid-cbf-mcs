@@ -1,0 +1,50 @@
+{
+  "interface": "https://schema.skao.int/ska-mid-csp-delaymodel/3.0",
+  "start_validity_sec": 11000000.0,
+  "cadence_sec": 400.0,
+  "validity_period_sec": 30.0,
+  "config_id": "delaymodel-001",
+  "subarray": 1,
+  "receptor_delays": [
+    {
+      "receptor": "SKA001",
+      "xypol_coeffs_ns": [1.1, 1.2, 1.3, 1.4, 1.5, 1.6],
+      "ypol_offset_ns": 0.6
+    },
+    {
+      "receptor": "SKA036",
+      "xypol_coeffs_ns": [3.1, 3.2, 3.3, 3.4, 3.5, 3.6],
+      "ypol_offset_ns": 0.6
+    },
+    {
+      "receptor": "SKA063",
+      "xypol_coeffs_ns": [4.1, 4.2, 4.3, 4.4, 4.5, 4.6],
+      "ypol_offset_ns": 0.6
+    },
+    {
+      "receptor": "SKA100",
+      "xypol_coeffs_ns": [2.1, 2.2, 2.3, 2.4, 2.5, 2.6],
+      "ypol_offset_ns": 0.6
+    },
+    {
+      "receptor": "SKA081",
+      "xypol_coeffs_ns": [1.1, 1.2, 1.3, 1.4, 1.5, 1.6],
+      "ypol_offset_ns": 0.6
+    },
+    {
+      "receptor": "SKA046",
+      "xypol_coeffs_ns": [3.1, 3.2, 3.3, 3.4, 3.5, 3.6],
+      "ypol_offset_ns": 0.6
+    },
+    {
+      "receptor": "SKA077",
+      "xypol_coeffs_ns": [4.1, 4.2, 4.3, 4.4, 4.5, 4.6],
+      "ypol_offset_ns": 0.6
+    },
+    {
+      "receptor": "SKA048",
+      "xypol_coeffs_ns": [2.1, 2.2, 2.3, 2.4, 2.5, 2.6],
+      "ypol_offset_ns": 0.6
+    }
+  ]
+}

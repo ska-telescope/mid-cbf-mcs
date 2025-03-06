@@ -103,7 +103,6 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
         wideband_shift=parameters["wideband_shift"],
         band_name=parameters["band_name"],
     )
-
     # assert we get the same number of fsp configs for the given fsp ids
     assert len(parameters["fsp_ids"]) == len(results)
     assert parameters["fsp_ids"] == list(results.keys())
@@ -144,7 +143,7 @@ def test_partition_spectrum_to_frequency_slices_valid(parameters: dict):
         # Assert that start/end channel frequencies are correct
         assert start_frequency == expected_start_frequency
         assert end_frequency == expected_end_frequency
-        assert fsp_config["sdp_start_channel_id"] == total_channels
+        assert fsp_config["start_channel_id"] == total_channels
 
         total_channels += fsp_config["num_channels"]
         expected_start_frequency = end_frequency + const.FINE_CHANNEL_WIDTH

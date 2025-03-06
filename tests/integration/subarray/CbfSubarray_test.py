@@ -92,13 +92,13 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-        for fsp_id in fsp:
+        for fsp_id, fsp_mode in subarray_params["fsp_modes"].items():
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=fsp[fsp_id],
                 attribute_name="functionMode",
-                attribute_value=FspModes.CORR.value,
+                attribute_value=fsp_mode,
                 previous_value=FspModes.IDLE.value,
                 min_n_events=1,
             )
@@ -182,10 +182,9 @@ class TestCbfSubarray:
                     min_n_events=n,
                 )
 
-        # --- Subarray checks --- #
-
+        sorted_dish_ids = (list(dish_ids)).sort()
         expected_events = [
-            ("receptors", tuple(dish_ids), (), 1),
+            ("receptors", sorted_dish_ids, (), 1),
             ("obsState", ObsState.RESOURCING, ObsState.EMPTY, 1),
             ("obsState", ObsState.IDLE, ObsState.RESOURCING, 1),
             (
@@ -218,7 +217,7 @@ class TestCbfSubarray:
         controller: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         fsp: dict[int, context.DeviceProxy],
-        fsp_corr: dict[int, context.DeviceProxy],
+        fsp_mode_all: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
         vcc: dict[int, context.DeviceProxy],
@@ -229,7 +228,7 @@ class TestCbfSubarray:
         :param controller: DeviceProxy to CbfController device
         :param event_tracer: TangoEventTracer
         :param fsp: dict of DeviceProxy to Fsp devices
-        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_mode_all: dict of DeviceProxy to FspModeSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         :param vcc: dict of DeviceProxy to Vcc devices
@@ -274,15 +273,23 @@ class TestCbfSubarray:
 
         # --- FSP checks --- #
         fsp_to_function_mode = {}
-        for processing_region in configuration["midcbf"]["correlation"][
-            "processing_regions"
-        ]:
-            for fsp_id in processing_region["fsp_ids"]:
-                fsp_to_function_mode.update({fsp_id: FspModes.CORR})
+        if "correlation" in configuration["midcbf"]:
+            for processing_region in configuration["midcbf"]["correlation"][
+                "processing_regions"
+            ]:
+                for fsp_id in processing_region["fsp_ids"]:
+                    fsp_to_function_mode.update({fsp_id: FspModes.CORR})
 
-        # TODO: Add fsp_ids that are in PST processing regions when ready
+        if "pst_bf" in configuration["midcbf"]:
+            for processing_region in configuration["midcbf"]["pst_bf"][
+                "processing_regions"
+            ]:
+                for fsp_id in processing_region["fsp_ids"]:
+                    fsp_to_function_mode.update({fsp_id: FspModes.PST})
 
-        for fsp_id, function_mode in fsp_to_function_mode.items():
+        # TODO: Add fsp_ids that are in PSS processing regions when ready
+
+        for fsp_id in subarray_params["fsp_modes"].keys():
             expected_events = [
                 (
                     "subarrayMembership",
@@ -316,7 +323,7 @@ class TestCbfSubarray:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
+                    device_name=fsp_mode_all[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
@@ -356,7 +363,7 @@ class TestCbfSubarray:
     def test_delay_model_READY(
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
-        fsp_corr: dict[int, context.DeviceProxy],
+        fsp_mode_all: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
         tm: context.DeviceProxy,
     ) -> None:
@@ -364,7 +371,7 @@ class TestCbfSubarray:
         Test sending CbfSubarray delay model JSON in ObsState.READY.
 
         :param event_tracer: TangoEventTracer
-        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_mode_all: dict of DeviceProxy to FspModeSubarray devices
         :param subarray_params: dict containing all test input parameters
         :tm: DeviceProxy to TmCspSubarrayLeafNodeTest device
         """
@@ -394,7 +401,7 @@ class TestCbfSubarray:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
+                    device_name=fsp_mode_all[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
@@ -408,7 +415,7 @@ class TestCbfSubarray:
     def test_Scan(
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
-        fsp_corr: dict[int, context.DeviceProxy],
+        fsp_mode_all: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
         vcc: dict[int, context.DeviceProxy],
@@ -417,7 +424,7 @@ class TestCbfSubarray:
         Test CbfSubarrays's Scan command.
 
         :param event_tracer: TangoEventTracer
-        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_mode_all: dict of DeviceProxy to FspModeSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         :param vcc: dict of DeviceProxy to Vcc devices
@@ -451,7 +458,7 @@ class TestCbfSubarray:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
-                device_name=fsp_corr[fsp_id],
+                device_name=fsp_mode_all[fsp_id],
                 attribute_name="obsState",
                 attribute_value=ObsState.SCANNING,
                 previous_value=ObsState.READY,
@@ -490,7 +497,7 @@ class TestCbfSubarray:
     def test_delay_model_SCANNING(
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
-        fsp_corr: dict[int, context.DeviceProxy],
+        fsp_mode_all: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
         tm: context.DeviceProxy,
     ) -> None:
@@ -498,7 +505,7 @@ class TestCbfSubarray:
         Test sending CbfSubarray delay model JSON in ObsState.SCANNING.
 
         :param event_tracer: TangoEventTracer
-        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_mode_all: dict of DeviceProxy to FspModeSubarray devices
         :param subarray_params: dict containing all test input parameters
         :tm: DeviceProxy to TmCspSubarrayLeafNodeTest device
         """
@@ -533,7 +540,7 @@ class TestCbfSubarray:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
+                    device_name=fsp_mode_all[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
@@ -547,7 +554,7 @@ class TestCbfSubarray:
     def test_EndScan(
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
-        fsp_corr: dict[int, context.DeviceProxy],
+        fsp_mode_all: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
         vcc: dict[int, context.DeviceProxy],
@@ -556,7 +563,7 @@ class TestCbfSubarray:
         Test CbfSubarrays's EndScan command.
 
         :param event_tracer: TangoEventTracer
-        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_mode_all: dict of DeviceProxy to FspModeSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         :param vcc: dict of DeviceProxy to Vcc devices
@@ -586,7 +593,7 @@ class TestCbfSubarray:
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
-                device_name=fsp_corr[fsp_id],
+                device_name=fsp_mode_all[fsp_id],
                 attribute_name="obsState",
                 attribute_value=ObsState.READY,
                 previous_value=ObsState.SCANNING,
@@ -626,7 +633,7 @@ class TestCbfSubarray:
         self: TestCbfSubarray,
         event_tracer: TangoEventTracer,
         fsp: dict[int, context.DeviceProxy],
-        fsp_corr: dict[int, context.DeviceProxy],
+        fsp_mode_all: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
         vcc: dict[int, context.DeviceProxy],
@@ -636,7 +643,7 @@ class TestCbfSubarray:
 
         :param event_tracer: TangoEventTracer
         :param fsp: dict of DeviceProxy to Fsp devices
-        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_mode_all: dict of DeviceProxy to FspModeSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         :param vcc: dict of DeviceProxy to Vcc devices
@@ -667,7 +674,7 @@ class TestCbfSubarray:
 
         # --- FSP checks --- #
 
-        for fsp_id, fsp_mode in subarray_params["fsp_modes"].items():
+        for fsp_id in subarray_params["fsp_modes"].keys():
             expected_events = [
                 ("obsState", ObsState.IDLE, ObsState.READY, 1),
                 ("state", DevState.DISABLE, DevState.ON, 1),
@@ -677,7 +684,7 @@ class TestCbfSubarray:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
+                    device_name=fsp_mode_all[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
@@ -903,9 +910,9 @@ class TestCbfSubarray:
                 )
 
         # --- Subarray checks --- #
-
+        sorted_dish_ids = (list(subarray_params["dish_ids"])).sort()
         expected_events = [
-            ("receptors", (), tuple(subarray_params["dish_ids"]), 1),
+            ("receptors", (), sorted_dish_ids, 1),
             ("obsState", ObsState.RESOURCING, ObsState.IDLE, 1),
             ("obsState", ObsState.EMPTY, ObsState.RESOURCING, 1),
             (
@@ -997,14 +1004,14 @@ class TestCbfSubarray:
                 min_n_events=n,
             )
 
-        for fsp_id in fsp:
+        for fsp_id, fsp_mode in subarray_params["fsp_modes"].items():
             assert_that(event_tracer).within_timeout(
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=fsp[fsp_id],
                 attribute_name="functionMode",
                 attribute_value=FspModes.IDLE.value,
-                previous_value=FspModes.CORR.value,
+                previous_value=fsp_mode,
                 min_n_events=1,
             )
 
@@ -1017,7 +1024,7 @@ class TestCbfSubarray:
         controller: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         fsp: dict[int, context.DeviceProxy],
-        fsp_corr: dict[int, context.DeviceProxy],
+        fsp_mode_all: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
         vcc: dict[int, context.DeviceProxy],
@@ -1028,7 +1035,7 @@ class TestCbfSubarray:
         :param controller: DeviceProxy to CbfController device
         :param event_tracer: TangoEventTracer
         :param fsp: dict of DeviceProxy to Fsp devices
-        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_mode_all: dict of DeviceProxy to FspModeSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         :param vcc: dict of DeviceProxy to Vcc devices
@@ -1131,7 +1138,7 @@ class TestCbfSubarray:
             controller,
             event_tracer,
             fsp,
-            fsp_corr,
+            fsp_mode_all,
             subarray,
             subarray_params,
             vcc,
@@ -1197,7 +1204,7 @@ class TestCbfSubarray:
             ("state", None, DevState.DISABLE, DevState.ON, 1),
         ]
 
-        fsp_corr_expected_events = [
+        fsp_mode_expected_events = [
             ("obsState", ObsState.ABORTING, ObsState.READY, 1),
             ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
             ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
@@ -1214,12 +1221,14 @@ class TestCbfSubarray:
             controller,
             event_tracer,
             fsp,
-            fsp_corr,
+            fsp_mode_all,
             subarray,
             subarray_params,
             vcc,
         )
-        self.test_Scan(event_tracer, fsp_corr, subarray, subarray_params, vcc)
+        self.test_Scan(
+            event_tracer, fsp_mode_all, subarray, subarray_params, vcc
+        )
 
         [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
         assert result_code == ResultCode.QUEUED
@@ -1283,7 +1292,7 @@ class TestCbfSubarray:
             ]
         )
 
-        fsp_corr_expected_events.extend(
+        fsp_mode_expected_events.extend(
             [
                 ("obsState", ObsState.ABORTING, ObsState.SCANNING, 1),
                 ("obsState", ObsState.ABORTED, ObsState.ABORTING, 2),
@@ -1326,11 +1335,11 @@ class TestCbfSubarray:
                     previous_value=previous,
                     min_n_events=n,
                 )
-            for name, value, previous, n in fsp_corr_expected_events:
+            for name, value, previous, n in fsp_mode_expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
+                    device_name=fsp_mode_all[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
@@ -1368,7 +1377,7 @@ class TestCbfSubarray:
         controller: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         fsp: dict[int, context.DeviceProxy],
-        fsp_corr: dict[int, context.DeviceProxy],
+        fsp_mode_all: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
         vcc: dict[int, context.DeviceProxy],
@@ -1379,7 +1388,7 @@ class TestCbfSubarray:
         :param controller: DeviceProxy to CbfController device
         :param event_tracer: TangoEventTracer
         :param fsp: dict of DeviceProxy to Fsp devices
-        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_mode_all: dict of DeviceProxy to FspModeSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         :param vcc: dict of DeviceProxy to Vcc devices
@@ -1486,7 +1495,7 @@ class TestCbfSubarray:
             controller,
             event_tracer,
             fsp,
-            fsp_corr,
+            fsp_mode_all,
             subarray,
             subarray_params,
             vcc,
@@ -1555,7 +1564,7 @@ class TestCbfSubarray:
             ("state", None, DevState.DISABLE, DevState.ON, 1),
         ]
 
-        fsp_corr_expected_events = [
+        fsp_mode_expected_events = [
             ("obsState", ObsState.ABORTING, ObsState.READY, 1),
             ("obsState", ObsState.ABORTED, ObsState.ABORTING, 1),
             ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
@@ -1573,12 +1582,14 @@ class TestCbfSubarray:
             controller,
             event_tracer,
             fsp,
-            fsp_corr,
+            fsp_mode_all,
             subarray,
             subarray_params,
             vcc,
         )
-        self.test_Scan(event_tracer, fsp_corr, subarray, subarray_params, vcc)
+        self.test_Scan(
+            event_tracer, fsp_mode_all, subarray, subarray_params, vcc
+        )
 
         [[result_code], [abort_command_id]] = subarray[sub_id].Abort()
         assert result_code == ResultCode.QUEUED
@@ -1645,7 +1656,7 @@ class TestCbfSubarray:
             ]
         )
 
-        fsp_corr_expected_events.extend(
+        fsp_mode_expected_events.extend(
             [
                 ("obsState", ObsState.ABORTING, ObsState.SCANNING, 1),
                 ("obsState", ObsState.ABORTED, ObsState.ABORTING, 2),
@@ -1688,11 +1699,11 @@ class TestCbfSubarray:
                     previous_value=previous,
                     min_n_events=n,
                 )
-            for name, value, previous, n in fsp_corr_expected_events:
+            for name, value, previous, n in fsp_mode_expected_events:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
+                    device_name=fsp_mode_all[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
@@ -1727,7 +1738,7 @@ class TestCbfSubarray:
         controller: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         fsp: dict[int, context.DeviceProxy],
-        fsp_corr: dict[int, context.DeviceProxy],
+        fsp_mode_all: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
         vcc: dict[int, context.DeviceProxy],
@@ -1738,7 +1749,7 @@ class TestCbfSubarray:
         :param controller: DeviceProxy to CbfController device
         :param event_tracer: TangoEventTracer
         :param fsp: dict of DeviceProxy to Fsp devices
-        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_mode_all: dict of DeviceProxy to FspModeSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         :param vcc: dict of DeviceProxy to Vcc devices
@@ -1758,7 +1769,7 @@ class TestCbfSubarray:
             controller,
             event_tracer,
             fsp,
-            fsp_corr,
+            fsp_mode_all,
             subarray,
             subarray_params,
             vcc,
@@ -1785,7 +1796,7 @@ class TestCbfSubarray:
         # --- FSP checks --- #
 
         # First we check the original FSPs are IDLE
-        for fsp_id, fsp_mode in subarray_params["fsp_modes"].items():
+        for fsp_id in subarray_params["fsp_modes"].keys():
             expected_events = [
                 (
                     "subarrayMembership",
@@ -1818,7 +1829,7 @@ class TestCbfSubarray:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
+                    device_name=fsp_mode_all[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
@@ -1826,7 +1837,7 @@ class TestCbfSubarray:
                 )
 
         # Now we check the new FSPs are READY
-        for fsp_id, fsp_mode in alt_params["fsp_modes"].items():
+        for fsp_id in subarray_params["fsp_modes"].keys():
             expected_events = [
                 (
                     "subarrayMembership",
@@ -1860,7 +1871,7 @@ class TestCbfSubarray:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
+                    device_name=fsp_mode_all[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
@@ -1920,7 +1931,7 @@ class TestCbfSubarray:
 
         # --- Cleanup --- #
         self.test_GoToIdle(
-            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+            event_tracer, fsp, fsp_mode_all, subarray, subarray_params, vcc
         )
         self.test_RemoveAllReceptors(
             event_tracer, subarray, subarray_params, vcc
@@ -1938,7 +1949,7 @@ class TestCbfSubarray:
         controller: context.DeviceProxy,
         event_tracer: TangoEventTracer,
         fsp: dict[int, context.DeviceProxy],
-        fsp_corr: dict[int, context.DeviceProxy],
+        fsp_mode_all: dict[int, context.DeviceProxy],
         subarray: dict[int, context.DeviceProxy],
         subarray_params: dict[any],
         vcc: dict[int, context.DeviceProxy],
@@ -1949,7 +1960,7 @@ class TestCbfSubarray:
         :param controller: DeviceProxy to CbfController device
         :param event_tracer: TangoEventTracer
         :param fsp: dict of DeviceProxy to Fsp devices
-        :param fsp_corr: dict of DeviceProxy to FspCorrSubarray devices
+        :param fsp_mode_all: dict of DeviceProxy to FspModeSubarray devices
         :param subarray: list of proxies to subarray devices
         :param subarray_params: dict containing all test input parameters
         :param vcc: dict of DeviceProxy to Vcc devices
@@ -1969,21 +1980,21 @@ class TestCbfSubarray:
             controller,
             event_tracer,
             fsp,
-            fsp_corr,
+            fsp_mode_all,
             subarray,
             subarray_params,
             vcc,
         )
         self.test_Scan(
             event_tracer,
-            fsp_corr,
+            fsp_mode_all,
             subarray,
             subarray_params,
             vcc,
         )
         self.test_EndScan(
             event_tracer,
-            fsp_corr,
+            fsp_mode_all,
             subarray,
             subarray_params,
             vcc,
@@ -2041,7 +2052,7 @@ class TestCbfSubarray:
                 assert_that(event_tracer).within_timeout(
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
-                    device_name=fsp_corr[fsp_id],
+                    device_name=fsp_mode_all[fsp_id],
                     attribute_name=name,
                     attribute_value=value,
                     previous_value=previous,
@@ -2085,7 +2096,7 @@ class TestCbfSubarray:
 
         # --- Cleanup --- #
         self.test_GoToIdle(
-            event_tracer, fsp, fsp_corr, subarray, subarray_params, vcc
+            event_tracer, fsp, fsp_mode_all, subarray, subarray_params, vcc
         )
         self.test_RemoveAllReceptors(
             event_tracer, subarray, subarray_params, vcc
