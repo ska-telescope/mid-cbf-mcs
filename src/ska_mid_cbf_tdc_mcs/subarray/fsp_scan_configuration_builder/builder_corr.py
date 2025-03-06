@@ -103,12 +103,12 @@ class FspScanConfigurationBuilderCorr(FspScanConfigurationBuilder):
         calculated_fsp_ids = list(calculated_fsp_infos.keys())
 
         # Calculate vcc_id_to_fc_gain and vcc_id_to_rdt_freq_shifts values
-        vcc_id_to_rdt_freq_shifts: dict = self._inverse_vcc_to_fs_infos(
+        vcc_id_to_rdt_freq_shifts: dict = self._fs_to_vcc_infos_remap(
             calculated_fsp_ids,
             vcc_to_fs_infos,
             self._calculate_vcc_id_to_rdt_freq_shifts,
         )
-        vcc_id_to_fc_gain: dict = self._inverse_vcc_to_fs_infos(
+        vcc_id_to_fc_gain: dict = self._fs_to_vcc_infos_remap(
             calculated_fsp_ids,
             vcc_to_fs_infos,
             self._calculate_vcc_id_to_fc_gain,

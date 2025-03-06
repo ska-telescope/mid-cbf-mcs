@@ -103,33 +103,47 @@ class FspScanConfigurationBuilder:
     # from partition_spectrum_to_frequency_slices()
     ###############################################
 
-    def _inverse_vcc_to_fs_infos(
+    def _fs_to_vcc_infos_remap(
         self: FspScanConfigurationBuilder,
         calculated_fsp_ids: list,
         vcc_to_fs_infos: dict,
-        function: Callable[[int, str, dict], any],
+        function_ptr: Callable[[int, str, dict], any] | None = None,
     ) -> dict:
         """
-        Inverses the vcc to fs pairing in the given vcc_to_fs_infos and maps the values
-        based on the given `function`
+        Returns remapped_vcc_to_fs_infos, a remapped dictionary of the given vcc_to_fs_infos
+        that flips vcc_to_fs_infos[vcc_id][fsp_id] to remapped_vcc_to_fs_infos[fsp_id][vcc_id_str]
 
-        Think of this as a mapping function that also inverses the vcc:fs pairing to fs:vcc.
-        https://docs.python.org/3/library/functions.html#map
+        This function does two mapping action on the given vcc_to_fs_infos dictionary:
+           1.  With the given vcc_to_fs_infos, it remaps the VCC ID:FSP ID paring
+               to FSP ID:VCC ID (see code comenet for more detail on this remapping)
+           2a. If given a function pointer as an argument, it will perform the
+               function on vcc_to_fs_infos[vcc_id][fsp_id] and store it at
+               remapped_vcc_to_fs_infos[fsp_id][vcc_id_str]
+           2b. If no function pointer is given, or None is given, it will store
+               vcc_to_fs_infos[vcc_id][fsp_id] at remapped_vcc_to_fs_infos[fsp_id][vcc_id_str]
 
-        The argument `function` takes the following arguments:
+        If a function pointer is given, remapped_vcc_to_fs_infos[fsp_id][vcc_id_str]
+        does not store the original values given at vcc_to_fs_infos[vcc_id][fsp_id],
+        it will only store the value(s) returned by the function pointer.
+
+
+        Essentially this as a mapping function on the vcc_to_fs_infos dictionary.
+        Reference to mapping functions: https://docs.python.org/3/library/functions.html#map
+
+        The argument `function_ptr` takes the following arguments:
             vcc_id: The ID value of a VCC
             fsp_id: The ID value of a FSP
-            vcc_to_fs_infos: Given with _inverse_vcc_to_fs_infos's arguments
-        This functions is what we want the "mapper" to act on at the specifc vcc:fsp index
+            vcc_to_fs_infos: Given with _fs_to_vcc_infos_remap's arguments
 
         :param calculated_fsp_ids: list of required FSP IDs for the given Scan Configuration
         :param vcc_to_fs_infos: A dictionary that maps dish ids to a dictionary with information about fsp boundaries
                                 More info regarding the fsp boundaries dictionary:
                                 https://confluence.skatelescope.org/display/SE/Processing+Regions+for+CORR+-+Identify+and+Select+Fine+Channels#ProcessingRegionsforCORRIdentifyandSelectFineChannels-ExampleCalculatedFrequencySliceBoundaryInformation
-        :param function: a function that process the value(s) at vcc_to_fs_infos[vcc_id][fsp_id],
-                         and then store the process info at inversed_vcc_to_fs_infos[fsp_id][vcc_id_str]
+        :param function_ptr: a function pointer that process the value(s) at vcc_to_fs_infos[vcc_id][fsp_id],
+                             and then store the process info at inversed_vcc_to_fs_infos[fsp_id][vcc_id_str]
+                             (Optional, defaults to None)
 
-        :return: dictionary that contains a mapping of FSP IDs to its respective Fine Channelizer Gain corrections values
+        :return: A remapped vcc_to_fs_infos dictionary
         :rtype: dict
 
         """
@@ -140,39 +154,44 @@ class FspScanConfigurationBuilder:
         # essentially I have in vcc_to_fs_infos:
         # vcc1:
         #     fsp_1:
-        #           shift values A
+        #           values A
         #     fsp_2:
-        #           shift values B
+        #           values B
         # vcc2:
         #     fsp_1:
-        #           shift values C
+        #           values C
         #     fsp_2:
-        #           shift values D
+        #           values D
 
         # But I need them sent down to HPS as:
         # fsp_1:
         #     vcc 1:
-        #          shift values A
+        #          values A
         #     vcc 2:
-        #          shift values C
+        #          values C
         # fsp_2:
         #     vcc 1:
-        #          shift values B
+        #          values B
         #     vcc 2:
-        #          shift values D
+        #          values D
 
-        inversed_vcc_to_fs_infos = {}
+        remapped_fs_to_vcc_infos = {}
         for fsp_id in calculated_fsp_ids:
-            inversed_vcc_to_fs_infos[fsp_id] = {}
+            remapped_fs_to_vcc_infos[fsp_id] = {}
             for vcc_id in vcc_to_fs_infos.keys():
                 # HPS wants vcc id to be a string value, not int
                 vcc_id_str = str(vcc_id)
-                inversed_vcc_to_fs_infos[fsp_id][vcc_id_str] = {}
-                inversed_vcc_to_fs_infos[fsp_id][vcc_id_str] = function(
-                    fsp_id, vcc_id, vcc_to_fs_infos
-                )
+                remapped_fs_to_vcc_infos[fsp_id][vcc_id_str] = {}
+                if function_ptr is None:
+                    remapped_fs_to_vcc_infos[fsp_id][
+                        vcc_id_str
+                    ] = vcc_to_fs_infos[vcc_id][fsp_id]
+                else:
+                    remapped_fs_to_vcc_infos[fsp_id][
+                        vcc_id_str
+                    ] = function_ptr(fsp_id, vcc_id, vcc_to_fs_infos)
 
-        return inversed_vcc_to_fs_infos
+        return remapped_fs_to_vcc_infos
 
     def _calculate_vcc_id_to_fc_gain(
         self: FspScanConfigurationBuilder,
@@ -181,7 +200,7 @@ class FspScanConfigurationBuilder:
         vcc_to_fs_infos: dict,
     ) -> list:
         """
-        An function point for _inverse_vcc_to_fs_infos()
+        An function point for _fs_to_vcc_infos_remap()
         Calculate vcc_id_to_fc_gain values for the given fsp_id and vcc_id
 
         vcc_id_to_fc_gain is the gain values needed by the 16k fine channelizer
@@ -216,7 +235,7 @@ class FspScanConfigurationBuilder:
         vcc_to_fs_infos: dict,
     ) -> dict:
         """
-        An function point for _inverse_vcc_to_fs_infos()
+        An function point for _fs_to_vcc_infos_remap()
         Calculates vcc_id_to_rdt_freq_shifts values
 
         vcc_id_to_rdt_freq_shifts are the shift values needed by the
