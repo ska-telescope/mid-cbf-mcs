@@ -14,7 +14,7 @@ version_info = version.split(".")
 description = "A set of Mid MCS tango devices for the SKA Telescope."
 author = "Team CIPA"
 author_email = "taylor.huang@mda.space"
-url = "https://gitlab.com/ska-telescope/ska-mid-cbf-tdc-mcs"
+url = "https://gitlab.com/ska-telescope/ska-mid-cbf-mcs"
 license = "BSD-3-Clause"  # noqa: A001
 copyright = ""  # noqa: A001
 

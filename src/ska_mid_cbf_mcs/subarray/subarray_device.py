@@ -159,7 +159,7 @@ class CbfSubarray(CbfObsDevice):
         Set the sys param string in json format
         Should not be used by components external to Mid.CBF.
         To set the system parameters, refer to the CbfController Tango Commands:
-        https://developer.skao.int/projects/ska-mid-cbf-tdc-mcs/en/latest/guide/interfaces/lmc_mcs_interface.html#cbfcontroller-tango-commands or the CbfController api docs at https://developer.skao.int/projects/ska-mid-cbf-tdc-mcs/en/latest/api/CbfController/index.html
+        https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/guide/interfaces/lmc_mcs_interface.html#cbfcontroller-tango-commands or the CbfController api docs at https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/api/CbfController/index.html
 
         :param value: the sys param string in json format
         """

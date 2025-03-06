@@ -1,4 +1,4 @@
-ska-mid-cbf-tdc-mcs:
+ska-mid-cbf-mcs:
   fs_slim:    
     links_to_fsp1:
       - talondx-001/slim-tx-rx/fs-tx0 -> talondx-001/slim-tx-rx/fs-rx0 [x]

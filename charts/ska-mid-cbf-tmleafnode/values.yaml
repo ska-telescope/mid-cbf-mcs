@@ -11,7 +11,7 @@ subsystem: tmsimulator-mid
 telescope: SKA-mid
 
 labels:
-  app: ska-mid-cbf-tdc-mcs
+  app: ska-mid-cbf-mcs
 
 global:
   minikube: false
@@ -28,7 +28,7 @@ global:
 midcbf:
   image:
     registry: artefact.skao.int
-    image: ska-mid-cbf-tdc-mcs
+    image: ska-mid-cbf-mcs
     tag: 1.1.3
     pullPolicy: IfNotPresent
 

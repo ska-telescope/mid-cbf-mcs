@@ -1,4 +1,4 @@
-ska-mid-cbf-tdc-mcs:
+ska-mid-cbf-mcs:
   hw_config: 
     talon_board:
       "001": 192.168.8.1
