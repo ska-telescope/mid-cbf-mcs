@@ -6,7 +6,7 @@ from logging import getLogger
 
 import pytest
 
-from ska_mid_cbf_tdc_mcs.subarray.scan_configuration_validator.validator import (
+from ska_mid_cbf_mcs.subarray.scan_configuration_validator.validator import (
     SubarrayScanConfigurationValidator,
 )
 

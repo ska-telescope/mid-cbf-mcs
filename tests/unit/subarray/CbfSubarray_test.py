@@ -22,7 +22,7 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_tdc_mcs.subarray.subarray_device import CbfSubarray
+from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
 
 from ... import test_utils
 

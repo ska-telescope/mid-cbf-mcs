@@ -26,7 +26,7 @@ from ska_tango_testing.integration import TangoEventTracer
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango import DevState
 
-from ska_mid_cbf_tdc_mcs.talon_lru.talon_lru_device import TalonLRU
+from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
 
 from ... import test_utils
 

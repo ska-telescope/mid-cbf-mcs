@@ -7,7 +7,7 @@ set to 1 (this is the default). Prior to sending the On command to the ``CbfCont
 ``simulationMode`` should be set to 0 if it is desired to test the command with the Talon
 boards in the loop.
 
-.. autoclass:: ska_mid_cbf_tdc_mcs.controller.talondx_component_manager.TalonDxComponentManager
+.. autoclass:: ska_mid_cbf_mcs.controller.talondx_component_manager.TalonDxComponentManager
    :members:
    :private-members:
    :undoc-members:

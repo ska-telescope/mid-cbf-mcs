@@ -18,9 +18,9 @@ import os
 import pytest
 from ska_telmodel import channel_map
 
-from ska_mid_cbf_tdc_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes, const
-from ska_mid_cbf_tdc_mcs.subarray.fsp_scan_configuration_builder.builder_corr import (
+from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
+from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.builder_corr import (
     FspScanConfigurationBuilderCorr as fsp_builder,
 )
 

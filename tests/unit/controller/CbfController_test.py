@@ -25,7 +25,7 @@ from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
-from ska_mid_cbf_tdc_mcs.controller.controller_device import CbfController
+from ska_mid_cbf_mcs.controller.controller_device import CbfController
 
 from ... import test_utils
 
