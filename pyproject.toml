@@ -51,6 +51,7 @@ pyasn1 = "0.4.8"
 scipy = "1.13.0"
 beautifultable = "^1.1.0"
 pydantic = "^2.9.2"
+ska-mid-cbf-fhs-common = "0.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest-pydocstyle = "2.2.0"
