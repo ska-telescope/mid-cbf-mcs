@@ -107,12 +107,12 @@ venv.bak/
 .swp
 
 # helm charts
-charts/ska-mid-cbf-tdc-tmleafnode/Chart.lock
-charts/ska-mid-cbf-tdc-tmleafnode/charts/
-charts/ska-mid-cbf-tdc-umbrella/Chart.lock
-charts/ska-mid-cbf-tdc-umbrella/charts/
-charts/ska-mid-cbf-tdc-mcs/Chart.lock
-charts/ska-mid-cbf-tdc-mcs/charts/
+charts/ska-mid-cbf-tmleafnode/Chart.lock
+charts/ska-mid-cbf-tmleafnode/charts/
+charts/ska-mid-cbf-umbrella/Chart.lock
+charts/ska-mid-cbf-umbrella/charts/
+charts/ska-mid-cbf-mcs/Chart.lock
+charts/ska-mid-cbf-mcs/charts/
 
 # ssl certs for MDA network workaround
 certs/

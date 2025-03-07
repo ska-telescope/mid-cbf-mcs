@@ -16,7 +16,7 @@ import pytest
 from ska_tango_testing import context
 from ska_tango_testing.integration import TangoEventTracer
 
-from ska_mid_cbf_tdc_mcs.commons.global_enum import FspModes
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 # TODO: Update constants for AA2+
 

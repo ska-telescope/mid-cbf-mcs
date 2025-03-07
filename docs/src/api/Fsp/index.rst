@@ -2,7 +2,7 @@
 Fsp 
 ==================
 
-.. automodule:: ska_mid_cbf_tdc_mcs.fsp
+.. automodule:: ska_mid_cbf_mcs.fsp
 
 
 .. toctree::

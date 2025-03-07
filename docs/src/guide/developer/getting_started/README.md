@@ -8,13 +8,13 @@ This section follows the instructions on the SKA developer’s portal:
 # Git Repository
 
 The MCS Git Repository is available at the following page:
-[https://gitlab.com/ska-telescope/ska-mid-cbf-tdc-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-tdc-mcs)
+[https://gitlab.com/ska-telescope/ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-mcs)
 
 The README on the repository will guide users through cloning and initializing the repository.
 
 # Running the Mid CBF MCS
 
-The ska-mid-cbf-tdc-mcs Tango device servers are started and run via Kubernetes. 
+The ska-mid-cbf-mcs Tango device servers are started and run via Kubernetes. 
 
 Make sure Kubernetes/minikube and Helm have been installed (and verified) as 
 described in the 'Set up Kubernetes' section.
@@ -50,7 +50,7 @@ LoadBalancer service external IP addresses.
 
 ## 2.  From the root of the project, build the application image.
 ```
-cd ska-mid-cbf-tdc-mcs
+cd ska-mid-cbf-mcs
 eval $(minikube docker-env)   # to use the minikube's docker environment 
 make oci-image-build          # if building from local source and not artefact repository
 ```
@@ -169,7 +169,7 @@ To re-generate the documentation locally prior to checking in updates to Git:
 ```bash
 make docs-build html
 ```
-To see the generated documentation, open `/ska-mid-cbf-tdc-mcs/docs/build/html/index.html` in a browser -- e.g.,
+To see the generated documentation, open `/ska-mid-cbf-mcs/docs/build/html/index.html` in a browser -- e.g.,
 ```
 firefox docs/build/html/index.html &
 ```
@@ -180,17 +180,17 @@ For a new release (i.e. prior to merging a branch into main) update the
 following files by incrementing version/release/tag number fields to conform to 
 the semantic versioning convention:
 * `.release`: `release=` and `tag=`
-* `src/ska_mid_cbf_tdc_mcs/release.py`: `version = `
+* `src/ska_mid_cbf_mcs/release.py`: `version = `
 * `charts/ska-mid-cbf/Chart.yaml`: `version:` and `appVersion:`
 * `charts/ska-mid-cbf/values.yaml`: `midcbf:image:tag:`
-* `charts/ska-mid-cbf-tdc-tmleafnode/Chart.yaml`: `version:` and `appVersion:`
-* `charts/ska-mid-cbf-tdc-tmleafnode/values.yaml`: `midcbf:image:tag:`
+* `charts/ska-mid-cbf-tmleafnode/Chart.yaml`: `version:` and `appVersion:`
+* `charts/ska-mid-cbf-tmleafnode/values.yaml`: `midcbf:image:tag:`
 * `charts/mid-cbf-umbrella/Chart.yaml`: 
   * `version:` and `appVersion:`
-  * `version:` under `ska-mid-cbf` and `ska-mid-cbf-tdc-tmleafnode`
+  * `version:` under `ska-mid-cbf` and `ska-mid-cbf-tmleafnode`
 
 *Note*: `appVersion` represents the version of the application running, so it 
-corresponds to the ska-mid-cbf-tdc-mcs docker image version.
+corresponds to the ska-mid-cbf-mcs docker image version.
 
 Once a new release has been merged into main, create a new tag on GitLab and 
 run the manual "publish-chart" stage of the tag pipeline to publish the 

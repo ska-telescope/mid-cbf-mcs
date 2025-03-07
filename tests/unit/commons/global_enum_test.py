@@ -1,6 +1,6 @@
 import pytest
 
-from ska_mid_cbf_tdc_mcs.commons.global_enum import get_coarse_channels
+from ska_mid_cbf_mcs.commons.global_enum import get_coarse_channels
 
 # Start and end Frequency of coarse channels in Hz
 coarse_channel_boundaries = [

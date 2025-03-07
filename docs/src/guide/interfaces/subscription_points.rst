@@ -13,7 +13,7 @@ is implemented in the TMC CSP Subarray Leaf Node. It should be delivered via the
 publish-subscribe mechanism, published on the "DelayModel" attribute of the CSP Subarray leaf node. 
 
 ..
-    Go to ska-mid-cbf-tdc-mcs/docs/src/ska-mcs-sphinx/ska-tables.py to find code that generates the below table
+    Go to ska-mid-cbf-mcs/docs/src/ska-mcs-sphinx/ska-tables.py to find code that generates the below table
 ..
 
 .. generate-command-table:: Subscriptions

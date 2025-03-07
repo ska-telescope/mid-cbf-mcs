@@ -1,0 +1,11 @@
+ska-mid-cbf-mcs:
+  vis_slim:    
+    links_to_vis1:
+      - talondx-001/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx0 [x]
+      - talondx-002/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx1 [x]
+      - talondx-003/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx2 [x]
+      - talondx-004/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx3 [x]
+      - talondx-005/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx4 [x]
+      - talondx-006/slim-tx-rx/vis-tx0 -> talondx-008/slim-tx-rx/vis-rx0 [x]
+      - talondx-007/slim-tx-rx/vis-tx0 -> talondx-001/slim-tx-rx/vis-rx1 [x]
+      - talondx-008/slim-tx-rx/vis-tx0 -> talondx-008/slim-tx-rx/vis-rx2 [x]

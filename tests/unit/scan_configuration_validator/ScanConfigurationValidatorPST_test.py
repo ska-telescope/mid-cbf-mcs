@@ -7,11 +7,11 @@ from logging import getLogger
 
 import pytest
 
-from ska_mid_cbf_tdc_mcs.commons.global_enum import (
+from ska_mid_cbf_mcs.commons.global_enum import (
     FspModes,
     scan_configuration_supported_value,
 )
-from ska_mid_cbf_tdc_mcs.subarray.scan_configuration_validator.validator import (
+from ska_mid_cbf_mcs.subarray.scan_configuration_validator.validator import (
     SubarrayScanConfigurationValidator,
 )
 
