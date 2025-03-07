@@ -24,6 +24,8 @@ from ska_mid_cbf_mcs.commons.global_enum import const
 
 DEFAULT_COUNT_SUBARRAY = 1
 DEFAULT_COUNT_VCC = 8
+DEFAULT_COUNT_FSP = 8
+DEFAULT_COUNT_LRU = 4
 
 
 @pytest.fixture(
@@ -34,11 +36,15 @@ DEFAULT_COUNT_VCC = 8
             "sys_param_file": "sys_param_8_boards.json",
             "sys_param_from_file": True,
             "hw_config_file": "mnt/hw_config/hw_config.yaml",
+            "num_board": DEFAULT_COUNT_LRU * 2,
+            "num_lru": DEFAULT_COUNT_LRU,
         },
         {
             "sys_param_file": "source_init_sys_param.json",
             "sys_param_from_file": False,
             "hw_config_file": "mnt/hw_config/hw_config.yaml",
+            "num_board": DEFAULT_COUNT_LRU * 2,
+            "num_lru": DEFAULT_COUNT_LRU,
         },
         # TODO: this JSON causes the following exception:
         # "urllib.error.URLError: <urlopen error [Errno -5] No address associated with hostname>""
@@ -60,8 +66,8 @@ def controller_test_parameters(request: pytest.FixtureRequest) -> dict[any]:
     """
     with open(request.param["hw_config_file"]) as f:
         hw_config_dict = yaml.safe_load(f)
-    request.param["num_lru"] = len(hw_config_dict["talon_lru"])
-    request.param["num_board"] = len(hw_config_dict["talon_board"])
+    request.param["num_lru_total"] = len(hw_config_dict["talon_lru"])
+    request.param["num_board_total"] = len(hw_config_dict["talon_board"])
     request.param["num_pdu"] = len(hw_config_dict["power_switch"])
     return request.param
 
@@ -99,6 +105,19 @@ def subarray_proxies() -> list[context.DeviceProxy]:
     ]
 
 
+@pytest.fixture(name="fsp", scope="module", autouse=True)
+def fsp_proxies() -> list[context.DeviceProxy]:
+    """
+    Fixture that returns a list of proxies to FSP devices.
+
+    :return: list of DeviceProxy to Fsp devices
+    """
+    return [
+        context.DeviceProxy(device_name=f"mid_csp_cbf/fsp/{fsp_id:02}")
+        for fsp_id in range(1, DEFAULT_COUNT_FSP + 1)
+    ]
+
+
 @pytest.fixture(name="vcc", scope="module", autouse=True)
 def vcc_proxies() -> list[context.DeviceProxy]:
     """
@@ -128,6 +147,25 @@ def talon_lru_proxies(
     ]
 
 
+@pytest.fixture(name="talon_lru_not_fitted", scope="module", autouse=True)
+def talon_lru_not_fitted_proxies(
+    controller_params: dict[any],
+) -> list[context.DeviceProxy]:
+    """
+    Fixture that returns a list of proxies to Talon LRU devices that are NOT_FITTED.
+
+    :param controller_params: Input parameters for running different instances of the suite.
+    :return: list of DeviceProxy to TalonLRU devices
+    """
+    return [
+        context.DeviceProxy(device_name=f"mid_csp_cbf/talon_lru/{i:03}")
+        for i in range(
+            controller_params["num_lru"] + 1,
+            controller_params["num_lru_total"] + 1,
+        )
+    ]
+
+
 @pytest.fixture(name="talon_board", scope="module", autouse=True)
 def talon_board_proxies(
     controller_params: dict[any],
@@ -141,6 +179,25 @@ def talon_board_proxies(
     return [
         context.DeviceProxy(device_name=f"mid_csp_cbf/talon_board/{i:03}")
         for i in range(1, controller_params["num_board"] + 1)
+    ]
+
+
+@pytest.fixture(name="talon_board_not_fitted", scope="module", autouse=True)
+def talon_board_not_fitted_proxies(
+    controller_params: dict[any],
+) -> list[context.DeviceProxy]:
+    """
+    Fixture that returns a list of proxies to Talon board devices that are NOT_FITTED.
+
+    :param controller_params: Input parameters for running different instances of the suite.
+    :return: list of DeviceProxy to TalonBoard devices
+    """
+    return [
+        context.DeviceProxy(device_name=f"mid_csp_cbf/talon_board/{i:03}")
+        for i in range(
+            controller_params["num_board"] + 1,
+            controller_params["num_board_total"] + 1,
+        )
     ]
 
 
@@ -209,12 +266,15 @@ def slim_link_vis_proxies() -> list[context.DeviceProxy]:
 @pytest.fixture(name="event_tracer", scope="function", autouse=True)
 def tango_event_tracer(
     controller: context.DeviceProxy,
+    fsp: list[context.DeviceProxy],
     power_switch: list[context.DeviceProxy],
     slim_fs: context.DeviceProxy,
     slim_vis: context.DeviceProxy,
     subarray: list[context.DeviceProxy],
     talon_board: list[context.DeviceProxy],
+    talon_board_not_fitted: list[context.DeviceProxy],
     talon_lru: list[context.DeviceProxy],
+    talon_lru_not_fitted: list[context.DeviceProxy],
     vcc: list[context.DeviceProxy],
 ) -> Generator[TangoEventTracer, None, None]:
     """
@@ -237,9 +297,17 @@ def tango_event_tracer(
         tracer.subscribe_event(proxy, "obsState")
         tracer.subscribe_event(proxy, "sysParam")
 
+    for proxy in fsp:
+        tracer.subscribe_event(proxy, "adminMode")
+        tracer.subscribe_event(proxy, "state")
+        tracer.subscribe_event(proxy, "functionMode")
+
     for proxy in vcc + talon_board:
         tracer.subscribe_event(proxy, "adminMode")
         tracer.subscribe_event(proxy, "state")
         tracer.subscribe_event(proxy, "dishID")
+
+    for proxy in talon_board_not_fitted + talon_lru_not_fitted:
+        tracer.subscribe_event(proxy, "adminMode")
 
     return tracer

@@ -7,6 +7,19 @@ This project adheres to `Semantic Versioning http://semver.org/>`_.
 
 UNRELEASED CHANGES
 ******************
+* CIP-2813: Implement Subarray for PST
+  
+  * Added support for Scan Configuration 5.0 and InitSysParam 1.1; bump ska-telemodel to 1.20.0
+  
+  * Added processing for PST-BF Processing Region Configurations during Subarray ConfigureScan command 
+  
+  * Seperated out FspScanConfigurationBuilder into CORR and PST specific child classes; Added builder for PST FSP HPS configurations
+  
+  * Updated Controller to default to 4 CORR 4 PST FSP configuration when SimulationMode is True during On command
+  
+  * Updated Subarray to assign FspPstSubarray devices when requested during configuration
+  
+  * Update Unit and Integration Tests to support PST changes
 * CIP-2660 Added back FspPstSubarray to MCS
 * CIP-2790: Added error handling for CbfFastCommands processed within MCS
 * CIP-3213: Rolled up healthState from HPS VCC Band 1/2 and FSP Corr into MCS VCC and FspModeSubarray, respectively
@@ -15,11 +28,17 @@ UNRELEASED CHANGES
 * CIP-3344: Added State Attribute Wait Loop to Monitor State Change to Desired State; Added State Monitor in Controller's Start and Stop Communicating Functions.
 * CIP-2814: Implement FspPstSubarray for scan configuration and refactoring shared CORR and PST FSP Subarray code
 * SKB-729: Fix Off command and TalonBoard healthState monitoring
+  
   * SLIM Off command can run if SLIM was powered ON but failed configuration
+  
   * Controller re-tries TalonBoard start_communicating when re-trying On command to restart InfluxDB and HPS Master polling loop
+  
   * wait_for_blocking_results removes FAILED return codes as soon as they are received
+  
   * Controller skips attempting to power ON/OFF LRUs if they are all already in the correct state
+  
   * Added HPS master healthStateReport attr to TalonBoard
+  
 * CIP-3612: CreateDescriptor command input changed to JSON string input for Spead-Descriptor v1.7.0
 * SKB-803: Updated the artifacts PVC so that storageClassName and volumeMode can be configured from values
 * SKB-800: Subarray Scan command returns failure when receiving an invalid input JSON

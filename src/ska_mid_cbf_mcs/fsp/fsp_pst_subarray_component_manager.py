@@ -73,6 +73,14 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
         for timing_beam in hps_fsp_configuration["timing_beams"]:
             self._timing_beam_id.append(timing_beam["timing_beam_id"])
 
+    def _deconfigure(
+        self: FspPstSubarrayComponentManager,
+    ) -> None:
+        """Deconfigure scan configuration parameters."""
+        self._timing_beam_id = []
+
+        super()._deconfigure()
+
     # -------------
     # Fast Commands
     # -------------
@@ -96,7 +104,6 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         :return: None
         """
-
         # Set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
         if self.task_abort_event_is_set(
@@ -106,7 +113,6 @@ class FspPstSubarrayComponentManager(FspModeSubarrayComponentManager):
 
         # Release previously assigned VCCs
         self._deconfigure()
-
         configuration = json.loads(argin)
 
         # Assign newly specified VCCs

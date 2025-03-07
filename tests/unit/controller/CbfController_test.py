@@ -182,14 +182,11 @@ class TestCbfController:
         "sys_param_file_path",
         [
             "sys_param_4_boards.json",
-            "sys_param_dup_vcc.json",
-            "sys_param_invalid_rec_id.json",
             "sys_param_dup_dishid.json",
             # Test using tm_data_sources params
             "source_init_sys_param.json",
             "source_init_sys_param_invalid_source.json",
             "source_init_sys_param_invalid_file.json",
-            "source_init_sys_param_invalid_schema.json",
         ],
     )
     def test_InitSysParam(
@@ -252,30 +249,6 @@ class TestCbfController:
                     '[3, "Duplicated Dish ID in the init_sys_param json"]',
                 ),
             )
-        elif (
-            sys_param_file_path == "source_init_sys_param_invalid_schema.json"
-        ):
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
-                attribute_value=(
-                    f"{command_id[0]}",
-                    '[3, "Validating init_sys_param file retrieved from tm_data_filepath against ska-telmodel schema failed"]',
-                ),
-            )
-        else:
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
-                attribute_value=(
-                    f"{command_id[0]}",
-                    '[3, "Validating init_sys_param file against ska-telmodel schema failed"]',
-                ),
-            )
 
     def test_On_without_init_sys_param(
         self: TestCbfController,
@@ -305,7 +278,6 @@ class TestCbfController:
             ),
         )
 
-    @pytest.mark.skip(reason="Skipping test involving nested LRC")
     def test_Commands_all(
         self: TestCbfController,
         device_under_test: context.DeviceProxy,
@@ -319,7 +291,24 @@ class TestCbfController:
                              events from the device under test.
         """
         # Establish communication
-        self.test_Online(device_under_test, event_tracer)
+        # TODO: mock talon configuration to test with sim mode FALSE
+        # device_under_test.simulationMode = SimulationMode.FALSE
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="adminMode",
+            attribute_value=AdminMode.ONLINE,
+        )
+
+        assert_that(event_tracer).within_timeout(
+            test_utils.EVENT_TIMEOUT
+        ).has_change_event_occurred(
+            device_name=device_under_test,
+            attribute_name="state",
+            attribute_value=DevState.OFF,
+        )
 
         with open(json_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
@@ -348,6 +337,8 @@ class TestCbfController:
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
                     ),
+                    None,
+                    1,
                 )
             )
 

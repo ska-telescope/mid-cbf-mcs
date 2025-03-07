@@ -389,7 +389,6 @@ class ControllerComponentManager(CbfComponentManager):
                 )
 
             return self._set_proxy_online(fqdn)
-
         else:
             return self._set_proxy_not_fitted(fqdn)
 
@@ -478,15 +477,34 @@ class ControllerComponentManager(CbfComponentManager):
                 self.logger.error(f"Failed to decode talondx-config JSON: {e}")
                 return
         else:
-            self.talondx_config_json = {
-                "config_commands": [
-                    {"target": f"{t+1:03d}"}
-                    for t in range(len(self._talon_board_fqdns_all))
-                ]
-            }
+            # TODO: Currently setup for AA1.0 Supported Configurations for 8 board while in simulation mode.
+            # Board 1-4 configured as Corr
+            # Board 5-8 configured as PST
+            corr_config_commands = [
+                {
+                    "target": f"{t:03d}",
+                    "fpga_bitstream_fsp_mode": "corr",
+                }
+                for t in range(1, self._count_fsp // 2 + 1)
+            ]
+            pst_config_commands = [
+                {
+                    "target": f"{t:03d}",
+                    "fpga_bitstream_fsp_mode": "pst",
+                }
+                for t in range(self._count_fsp // 2 + 1, self._count_fsp + 1)
+            ]
 
-        self._set_used_fqdns()  # Set the used FQDNs by talondx config
+            all_config_commands = corr_config_commands + pst_config_commands
 
+            self.talondx_config_json = {"config_commands": all_config_commands}
+
+        self.logger.debug(f"Talon-DX config JSON: {self.talondx_config_json}")
+
+        # Set the used FQDNs by talondx config
+        self._set_used_fqdns()
+
+        # Initialize device proxies
         if not self._init_device_proxies():
             self.logger.error("Failed to initialize proxies.")
             self._update_communication_state(

@@ -47,8 +47,11 @@ from ska_mid_cbf_mcs.commons.validate_interface import validate_interface
 from ska_mid_cbf_mcs.component.obs_component_manager import (
     CbfObsComponentManager,
 )
-from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.builder import (
-    FspScanConfigurationBuilder,
+from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.builder_corr import (
+    FspScanConfigurationBuilderCorr,
+)
+from ska_mid_cbf_mcs.subarray.fsp_scan_configuration_builder.builder_pst import (
+    FspScanConfigurationBuilderPst,
 )
 from ska_mid_cbf_mcs.subarray.scan_configuration_validator.validator import (
     SubarrayScanConfigurationValidator,
@@ -71,6 +74,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         vcc: list[str],
         fsp: list[str],
         fsp_corr_sub: list[str],
+        fsp_pst_sub: list[str],
         talon_board: list[str],
         vis_slim: str,
         **kwargs: any,
@@ -99,9 +103,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fqdn_vcc_all = vcc
         self._fqdn_fsp_all = fsp
         self._fqdn_fsp_corr_all = fsp_corr_sub
+        self._fqdn_fsp_pst_all = fsp_pst_sub
         self._fqdn_vcc = []
         self._fqdn_fsp = []
         self._fqdn_fsp_corr = []
+        self._fqdn_fsp_pst = []
 
         self._fqdn_talon_board_device = talon_board
         self._fqdn_vis_slim_device = vis_slim
@@ -144,8 +150,10 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fsp_ids = set()
         self._all_fsp_proxies = {}
         self._all_fsp_corr_proxies = {}
+        self._all_fsp_pst_proxies = {}
         self._assigned_fsp_proxies = set()
         self._assigned_fsp_corr_proxies = set()
+        self._assigned_fsp_pst_proxies = set()
 
         self._all_talon_board_proxies = []
 
@@ -211,11 +219,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         self._fqdn_vcc = self._fqdn_vcc_all[: self._max_count_vcc]
         self._fqdn_fsp = self._fqdn_fsp_all[: self._max_count_fsp]
+
         self._fqdn_fsp_corr = self._fqdn_fsp_corr_all[: self._max_count_fsp]
+        self._fqdn_fsp_pst = self._fqdn_fsp_pst_all[: self._max_count_fsp]
 
         self.logger.debug(f"Active VCC FQDNs: {self._fqdn_vcc}")
         self.logger.debug(f"Active FSP FQDNs: {self._fqdn_fsp}")
         self.logger.debug(f"Active FSP CORR FQDNs: {self._fqdn_fsp_corr}")
+        self.logger.debug(f"Active FSP PST FQDNs: {self._fqdn_fsp_pst}")
 
         return True
 
@@ -232,14 +243,22 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     device_name=fqdn
                 )
 
-            for fsp_id, (fsp_fqdn, fsp_corr_fqdn) in enumerate(
-                zip(self._fqdn_fsp, self._fqdn_fsp_corr), 1
-            ):
+            for (
+                fsp_id,
+                fsp_fqdn,
+            ) in enumerate(self._fqdn_fsp, 1):
                 self._all_fsp_proxies[fsp_id] = context.DeviceProxy(
                     device_name=fsp_fqdn
                 )
+
+            for fsp_id, fsp_corr_fqdn in enumerate(self._fqdn_fsp_corr, 1):
                 self._all_fsp_corr_proxies[fsp_id] = context.DeviceProxy(
                     device_name=fsp_corr_fqdn
+                )
+
+            for fsp_id, fsp_pst_fqdn in enumerate(self._fqdn_fsp_pst, 1):
+                self._all_fsp_pst_proxies[fsp_id] = context.DeviceProxy(
+                    device_name=fsp_pst_fqdn
                 )
 
             for fqdn in self._fqdn_talon_board_device:
@@ -267,6 +286,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             self.logger.error(
                 "Failed to initialize max capabilities from controller."
             )
+
             self._update_communication_state(
                 communication_state=CommunicationStatus.NOT_ESTABLISHED
             )
@@ -399,9 +419,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # we lock the mutex while forwarding the configuration to fsp_corr devices
         with self._delay_model_lock:
             # TODO: for AA2+ update _max_count_fsp to take into account the number of FPGAs per FSP-UNIT
+            fsp_mode_proxies = list(self._assigned_fsp_corr_proxies) + list(
+                self._assigned_fsp_pst_proxies
+            )
             results_fsp = self.issue_group_command(
                 command_name="UpdateDelayModel",
-                proxies=list(self._assigned_fsp_corr_proxies),
+                proxies=fsp_mode_proxies,
                 max_workers=self._max_count_fsp,
                 argin=json.dumps(delay_model_json),
             )
@@ -951,8 +974,11 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             f"Issuing {command_name} command to all assigned resources..."
         )
         # TODO: support more function modes
+        # CIP 2815: 8 VCC supported.  PST FSP not supported
         assigned_resources = (
-            self._assigned_vcc_proxies | self._assigned_fsp_corr_proxies
+            self._assigned_vcc_proxies
+            | self._assigned_fsp_corr_proxies
+            | self._assigned_fsp_pst_proxies
         )
         if len(assigned_resources) == 0:
             self.logger.info("No resources currently assigned.")
@@ -1248,8 +1274,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for fsp in fsp_configurations:
             function_mode = fsp["function_mode"]
             fsp_cfg = {"fsp_id": fsp["fsp_id"], "function_mode": function_mode}
-            if function_mode == "CORR":
-                fsp_cfg["frequency_slice_id"] = fsp["frequency_slice_id"]
+            fsp_cfg["frequency_slice_id"] = fsp["frequency_slice_id"]
             reduced_fsp.append(fsp_cfg)
         config_dict["fsp"] = reduced_fsp
 
@@ -1292,20 +1317,19 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         regions and convert to individual FSP configurations.
 
         :param configuration: The Mid.CSP Function specific configurations
+        :param common_configuration: The common portion of the scan configuration
         :raises ValueError: if there is an exception processing any processing
         regions
         :return: list of Individual FSP configurations
         """
 
         all_fsp_configs = []
-
         # CORR
         if "correlation" in configuration:
             corr_config = configuration["correlation"]
 
             # TODO: set wideband shift when ready for implementation
-            fsp_config_builder = FspScanConfigurationBuilder(
-                function_mode=FspModes.CORR,
+            fsp_config_builder = FspScanConfigurationBuilderCorr(
                 function_configuration=corr_config,
                 dish_utils=self._dish_utils,
                 subarray_dish_ids=self.dish_ids,
@@ -1321,7 +1345,26 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
             all_fsp_configs.extend(corr_fsp_configs)
 
-        # TODO: build PST fsp configs and add to all_fsp_configs
+        # PST
+        if "pst_bf" in configuration:
+            pst_config = configuration["pst_bf"]
+
+            # TODO: set wideband shift when ready for implementation
+            fsp_config_builder = FspScanConfigurationBuilderPst(
+                function_configuration=pst_config,
+                dish_utils=self._dish_utils,
+                subarray_dish_ids=self.dish_ids,
+                wideband_shift=0,
+                frequency_band=common_configuration["frequency_band"],
+            )
+            try:
+                pst_fsp_configs = fsp_config_builder.build()
+            except ValueError as ve:
+                msg = f"Failure processing correlation configuration: {ve}"
+                self.logger.error(msg)
+                raise ValueError(msg)
+
+            all_fsp_configs.extend(pst_fsp_configs)
 
         return all_fsp_configs
 
@@ -1375,7 +1418,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         function_mode: str,
     ) -> bool:
         """
-        Set FSP function mode and add subarray membership
+        Check FSP function mode and add FSP to subarray membership
 
         :param fsp_id: ID of FSP to assign
         :param function_mode: target FSP function mode
@@ -1391,30 +1434,18 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     f"{fsp_proxy.dev_name()} is not fitted; skipping assignment."
                 )
                 return False
-            # Only set function mode if FSP is both IDLE and not configured for
-            # another mode
+
+            # Only assign if FSP is both IDLE and not configured for another mode
             current_function_mode = fsp_proxy.functionMode
             if current_function_mode != FspModes[function_mode].value:
                 if current_function_mode != FspModes.IDLE.value:
                     self.logger.error(
-                        f"Unable to configure FSP {fsp_proxy.dev_name()} for function mode {function_mode}, as it is currently configured for function mode {current_function_mode}"
+                        f"Unable to configure FSP {fsp_proxy.dev_name()} for function mode {function_mode}, as it is currently configured for function mode {FspModes(current_function_mode)}"
                     )
                     return False
 
-                # If FSP function mode is IDLE, turn on FSP and set function mode
-                fsp_proxy.simulationMode = self.simulation_mode
-                fsp_proxy.adminMode = AdminMode.ONLINE
-
-                [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
-                    function_mode
-                )
-                if result_code == ResultCode.REJECTED:
-                    self.logger.error(
-                        f"{fsp_proxy.dev_name()} SetFunctionMode command rejected"
-                    )
-                    return False
-
-                self.blocking_command_ids.add(command_id)
+            fsp_proxy.simulationMode = self.simulation_mode
+            fsp_proxy.adminMode = AdminMode.ONLINE
 
             # Add subarray membership, which powers on this FSP's function mode devices
             [[result_code], [command_id]] = fsp_proxy.AddSubarrayMembership(
@@ -1500,11 +1531,59 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     # Prepare CORR proxy and its configuration
                     fsp_corr_proxy = self._all_fsp_corr_proxies[fsp_id]
                     all_fsp_config.append(
-                        (fsp_corr_proxy, json.dumps(fsp_config))
+                        (fsp_corr_proxy, json.dumps(fsp_config), FspModes.CORR)
                     )
 
                     # Store FSP parameters to configure visibility transport
                     self._vis_fsp_config.append(fsp_config)
+
+                case "PST":
+                    # set function mode and add subarray membership
+                    fsp_proxy = self._all_fsp_proxies[fsp_id]
+                    self.attr_event_subscribe(
+                        proxy=fsp_proxy,
+                        attr_name="longRunningCommandResult",
+                        callback=self.results_callback,
+                    )
+                    self._assigned_fsp_proxies.add(fsp_proxy)
+                    self._fsp_ids.add(fsp_id)
+
+                    fsp_success = self._assign_fsp(fsp_proxy, "PST")
+                    if not fsp_success:
+                        return False
+
+                    # Parameter named "bf_vcc_ids" used by HPS contains the
+                    # subset of the subarray VCCs for which the correlation
+                    # results are requested to be used in Mid.CBF output
+                    # products (visibilities); dishes may not be specified in
+                    # the configuration at all, or the list may be empty
+                    fsp_config["bf_vcc_ids"] = []
+                    receptors_pst = self._get_receptors_from_pst_fsp(
+                        fsp_config
+                    )
+                    if len(receptors_pst) == 0:
+                        # In this case by the ICD, all subarray allocated
+                        # resources should be used.
+                        fsp_config["bf_vcc_ids"] = fsp_config[
+                            "subarray_vcc_ids"
+                        ].copy()
+                    else:
+                        for dish in sorted(receptors_pst):
+                            fsp_config["bf_vcc_ids"].append(
+                                self._dish_utils.dish_id_to_vcc_id[dish]
+                            )
+
+                    # Prepare PST proxy and its configuration
+                    fsp_pst_proxy = self._all_fsp_pst_proxies[fsp_id]
+                    all_fsp_config.append(
+                        (fsp_pst_proxy, json.dumps(fsp_config), FspModes.PST)
+                    )
+
+                    # TODO: Implemented this for CIP-3202, probably create a different varible to store
+                    # pst fsp configs
+                    # Store FSP parameters to configure packet transport
+                    # self._vis_fsp_config.append(fsp_config)
+
                 case _:
                     self.logger.error(
                         f"Function mode {fsp_config['function_mode']} currently unsupported."
@@ -1520,7 +1599,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         # Call ConfigureScan for all FSP function mode subarray devices
         # TODO: refactor for other function modes
         self.blocking_command_ids = set()
-        for fsp_mode_proxy, fsp_config_str in all_fsp_config:
+        for fsp_mode_proxy, fsp_config_str, fsp_mode in all_fsp_config:
             try:
                 self.attr_event_subscribe(
                     proxy=fsp_mode_proxy,
@@ -1538,7 +1617,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     )
                     return False
                 self.blocking_command_ids.add(command_id)
-                self._assigned_fsp_corr_proxies.add(fsp_mode_proxy)
+
+                match fsp_mode:
+                    case FspModes.CORR:
+                        self._assigned_fsp_corr_proxies.add(fsp_mode_proxy)
+                    case FspModes.PST:
+                        self._assigned_fsp_pst_proxies.add(fsp_mode_proxy)
+
             except tango.DevFailed as df:
                 self.logger.error(
                     f"Failed to issue ConfigureScan to {fsp_mode_proxy.dev_name()}; {df}"
@@ -1630,6 +1715,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                 self.logger.error(f"{df}")
                 return False
 
+        for proxy in self._assigned_fsp_pst_proxies:
+            try:
+                self.unsubscribe_all_events(proxy)
+            except tango.DevFailed as df:
+                self.logger.error(f"{df}")
+                return False
+
         for proxy in self._assigned_fsp_proxies:
             try:
                 self.unsubscribe_all_events(proxy)
@@ -1643,6 +1735,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         self._fsp_ids = set()
         self._assigned_fsp_proxies = set()
         self._assigned_fsp_corr_proxies = set()
+        self._assigned_fsp_pst_proxies = set()
         return True
 
     # TODO: split up deconfigure for safer flow in event of partial command failure
@@ -1723,10 +1816,13 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         # When configuring from READY, send any function mode subarrays in READY to IDLE
         self.blocking_command_ids = set()
-        # TODO: for AA2+ update _max_count_fsp to take into account the number of FPGAs per FSP-UNIT
+        # TODO: for AA2+ update _max_count_fsp to take into account) the number of FPGAs per FSP-UNIT
+        assigned_fsp_proxy = list(self._assigned_fsp_corr_proxies) + list(
+            self._assigned_fsp_pst_proxies
+        )
         for [[result_code], [command_id]] in self.issue_group_command(
             command_name="GoToIdle",
-            proxies=list(self._assigned_fsp_corr_proxies),
+            proxies=assigned_fsp_proxy,
             max_workers=self._max_count_fsp,
         ):
             if result_code in [ResultCode.REJECTED, ResultCode.FAILED]:
@@ -1828,11 +1924,14 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         if not fsp_configure_scan_success:
             # If unsuccessful, reset all assigned FSP devices
             for proxy in (
-                self._assigned_fsp_corr_proxies | self._assigned_fsp_proxies
+                self._assigned_fsp_corr_proxies
+                | self._assigned_fsp_pst_proxies
+                | self._assigned_fsp_proxies
             ):
                 self.unsubscribe_all_events(proxy)
             self._fsp_ids = set()
             self._assigned_fsp_corr_proxies = set()
+            self._assigned_fsp_pst_proxies = set()
             self._assigned_fsp_proxies = set()
             self.blocking_command_ids = set()
             task_callback(
@@ -1878,20 +1977,23 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     receptors_per_region.append(len(region["receptors"]))
                 else:
                     receptors_per_region.append(len(self.dish_ids))
-
-        # TODO
-        # Route visibilities from each FSP to the outputting board
-        if not self.simulation_mode:
-            self.logger.info("Configuring visibility transport")
-            vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
-            self._vis_transport.configure(
-                subarray_id=self._subarray_id,
-                fsp_config=self._vis_fsp_config,
-                vis_slim_yaml=vis_slim_yaml,
-                number_of_regions=number_of_regions,
-                ports_per_region=ports_per_region,
-                receptors_per_region=receptors_per_region,
-            )
+            # TODO
+            # Route visibilities from each FSP to the outputting board
+            if not self.simulation_mode:
+                self.logger.info("Configuring visibility transport")
+                vis_slim_yaml = self._proxy_vis_slim.meshConfiguration
+                self._vis_transport.configure(
+                    subarray_id=self._subarray_id,
+                    fsp_config=self._vis_fsp_config,
+                    vis_slim_yaml=vis_slim_yaml,
+                    number_of_regions=number_of_regions,
+                    ports_per_region=ports_per_region,
+                    receptors_per_region=receptors_per_region,
+                )
+        # TODO: Add LUT stage 1 and stage 2 configuration for PST mode ( CIP-3202)
+        if "pst_bf" in configuration:
+            msg = "PST packet routing and LUT Stage 1 and 2 configuration not implemented for PST"
+            self.logger.warning(msg)
 
         # Update obsState callback
         self._update_component_state(configured=True)
@@ -1985,10 +2087,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
-        # Enable visibility transport output
+        # Enable packet transport output
+        # TODO: Implement for PST (CIP-3202)
         if not self.simulation_mode:
-            self.logger.info("Visibility transport enable output")
-            self._vis_transport.enable_output(self._subarray_id)
+            if len(self._vis_fsp_config) > 0:
+                self.logger.info("Visibility transport enable output")
+                self._vis_transport.enable_output(self._subarray_id)
 
         self.scan_id = scan_id
 
@@ -2045,9 +2149,12 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             )
             return
 
+        # Enable packet transport output
+        # TODO: Implement for PST (CIP-3202)
         if not self.simulation_mode:
-            self.logger.info("Visibility transport disable output")
-            self._vis_transport.disable_output()
+            if len(self._vis_fsp_config) > 0:
+                self.logger.info("Visibility transport disable output")
+                self._vis_transport.disable_output()
 
         # Update obsState callback
         self._update_component_state(scanning=False)
@@ -2430,3 +2537,22 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             is_cmd_allowed=self.is_restart_allowed,
             task_callback=task_callback,
         )
+
+    def _get_receptors_from_pst_fsp(
+        self: CbfSubarrayComponentManager, pst_fsp_configuration: dict
+    ) -> list[str]:
+        """
+        Iterates through the timing beams in a PST FSP configurations and returns
+        a list of all the requested receptors.
+
+        :param pst_fsp_configuration: a PST FSP configurations that is to be sent down to the PST FSP HPS controller
+
+        :return: a list of dish IDs corresponding to the requested receptors, or list of none if no recepetors was requested
+        :rtype: list[str]
+        """
+        receptors = []
+        for timing_beam in pst_fsp_configuration["timing_beams"]:
+            if "receptors" in timing_beam:
+                receptors += timing_beam["receptors"]
+
+        return receptors
