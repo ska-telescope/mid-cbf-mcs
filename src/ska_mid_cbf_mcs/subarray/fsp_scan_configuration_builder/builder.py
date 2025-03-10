@@ -17,9 +17,7 @@ from ska_telmodel import channel_map
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
 from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
-from ska_mid_cbf_mcs.commons.vcc_gain_utils import (
-    get_vcc_ripple_correction,
-)
+from ska_mid_cbf_mcs.commons.vcc_gain_utils import get_vcc_ripple_correction
 
 
 class FspScanConfigurationBuilder:

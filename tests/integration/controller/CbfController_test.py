@@ -24,7 +24,6 @@ from ska_tango_testing.integration import TangoEventTracer
 from tango import DevState
 
 from ska_mid_cbf_mcs.commons.dish_utils import DISHUtils
-from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 from ... import test_utils
 
@@ -597,7 +596,7 @@ class TestCbfController:
         """
         # Trigger stop_communicating by setting the AdminMode to OFFLINE
         controller.adminMode = AdminMode.OFFLINE
-        
+
         expected_events = [
             ("state", DevState.DISABLE, DevState.ON, 1),
             ("adminMode", AdminMode.OFFLINE, AdminMode.ONLINE, 1),

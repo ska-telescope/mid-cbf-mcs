@@ -1444,8 +1444,20 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     )
                     return False
 
-            fsp_proxy.simulationMode = self.simulation_mode
-            fsp_proxy.adminMode = AdminMode.ONLINE
+                # If FSP function mode is IDLE, turn on FSP and set function mode
+                fsp_proxy.simulationMode = self.simulation_mode
+                fsp_proxy.adminMode = AdminMode.ONLINE
+
+                [[result_code], [command_id]] = fsp_proxy.SetFunctionMode(
+                    function_mode
+                )
+                if result_code == ResultCode.REJECTED:
+                    self.logger.error(
+                        f"{fsp_proxy.dev_name()} SetFunctionMode command rejected"
+                    )
+                    return False
+
+                self.blocking_command_ids.add(command_id)
 
             # Add subarray membership, which powers on this FSP's function mode devices
             [[result_code], [command_id]] = fsp_proxy.AddSubarrayMembership(

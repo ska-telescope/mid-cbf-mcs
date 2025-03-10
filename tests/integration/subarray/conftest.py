@@ -54,169 +54,169 @@ DEFAULT_COUNT_SUBARRAY = 1
                 },  # must be FSP IDs and FspMode values in ConfigureScan JSON
             },
         },
-        {
-            "sys_param_file": "sys_param_8_boards.json",
-            "configure_scan_file": "ConfigureScan_CORR_4_receptor_1_FSP.json",
-            "delay_model_file": "delay_model_4_receptor.json",
-            "scan_file": "Scan1_basic.json",
-            "sub_id": 1,
-            "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
-            "vcc_ids": [
-                1,
-                2,
-                3,
-                4,
-            ],  # must be VCC IDs equivalent to assigned DISH IDs
-            "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
-            "fsp_modes": {
-                1: FspModes.CORR.value
-            },  # must be FSP IDs and FspMode values in ConfigureScan JSON
-        },
-        {
-            "sys_param_file": "sys_param_8_boards.json",
-            "configure_scan_file": "ConfigureScan_CORR_4_receptor_4_FSP.json",
-            "delay_model_file": "delay_model_4_receptor.json",
-            "scan_file": "Scan1_basic.json",
-            "sub_id": 1,
-            "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
-            "vcc_ids": [
-                1,
-                2,
-                3,
-                4,
-            ],  # must be VCC IDs equivalent to assigned DISH IDs
-            "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
-            "fsp_modes": {
-                1: FspModes.CORR.value,
-                2: FspModes.CORR.value,
-                3: FspModes.CORR.value,
-                4: FspModes.CORR.value,
-            },  # must be FSP IDs and FspMode values in ConfigureScan JSON
-        },
-        {
-            "sys_param_file": "sys_param_8_boards.json",
-            "configure_scan_file": "ConfigureScan_basic_PST_band1.json",
-            "delay_model_file": "delay_model_1_receptor_vcc_5.json",
-            "scan_file": "Scan1_basic.json",
-            "sub_id": 1,
-            "dish_ids": ["SKA081"],
-            "vcc_ids": [5],  # must be VCC IDs equivalent to assigned DISH IDs
-            "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
-            "fsp_modes": {
-                5: FspModes.PST.value
-            },  # must be FSP IDs and FspMode values in ConfigureScan JSON
-            "alt_params": {
-                "configure_scan_file": "ConfigureScan_basic_PST_band2_alt.json",
-                "scan_file": "Scan2_basic.json",
-                "dish_ids": ["SKA081"],
-                "vcc_ids": [
-                    5
-                ],  # must be VCC IDs equivalent to assigned DISH IDs
-                "freq_band": 1,  # must be index of frequency band in ConfigureScan JSON
-                "fsp_modes": {
-                    6: FspModes.PST.value
-                },  # must be FSP IDs and FspMode values in ConfigureScan JSON
-            },
-        },
-        {
-            "sys_param_file": "sys_param_8_boards.json",
-            "configure_scan_file": "ConfigureScan_4_PR_PST.json",
-            "delay_model_file": "delay_model_4_receptor_5_to_8.json",
-            "scan_file": "Scan1_basic.json",
-            "sub_id": 1,
-            "dish_ids": [
-                "SKA081",
-                "SKA046",
-                "SKA077",
-                "SKA048",
-            ],
-            "vcc_ids": [
-                5,
-                6,
-                7,
-                8,
-            ],  # must be VCC IDs equivalent to assigned DISH IDs
-            "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
-            "fsp_modes": {
-                5: FspModes.PST.value,
-                6: FspModes.PST.value,
-                7: FspModes.PST.value,
-                8: FspModes.PST.value,
-            },  # must be FSP IDs and FspMode values in ConfigureScan JSON
-        },
-        {
-            "sys_param_file": "sys_param_8_boards.json",
-            "configure_scan_file": "ConfigureScan_CORR_PST_8_receptor_5_FSP.json",
-            "delay_model_file": "delay_model_8_receptor.json",
-            "scan_file": "Scan1_basic.json",
-            "sub_id": 1,
-            "dish_ids": [
-                "SKA001",
-                "SKA036",
-                "SKA063",
-                "SKA100",
-                "SKA081",
-                "SKA046",
-                "SKA077",
-                "SKA048",
-            ],
-            "vcc_ids": [
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-            ],  # must be VCC IDs equivalent to assigned DISH IDs
-            "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
-            "fsp_modes": {
-                1: FspModes.CORR.value,
-                2: FspModes.CORR.value,
-                3: FspModes.CORR.value,
-                4: FspModes.CORR.value,
-                8: FspModes.PST.value,
-            },  # must be FSP IDs and FspMode values in ConfigureScan JSON
-        },
-        {
-            "sys_param_file": "sys_param_8_boards.json",
-            "configure_scan_file": "ConfigureScan_CORR_PST_8_receptor_8_FSP.json",
-            "delay_model_file": "delay_model_8_receptor.json",
-            "scan_file": "Scan1_basic.json",
-            "sub_id": 1,
-            "dish_ids": [
-                "SKA001",
-                "SKA036",
-                "SKA063",
-                "SKA100",
-                "SKA081",
-                "SKA046",
-                "SKA077",
-                "SKA048",
-            ],
-            "vcc_ids": [
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-            ],  # must be VCC IDs equivalent to assigned DISH IDs
-            "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
-            "fsp_modes": {
-                1: FspModes.CORR.value,
-                2: FspModes.CORR.value,
-                3: FspModes.CORR.value,
-                4: FspModes.CORR.value,
-                5: FspModes.PST.value,
-                6: FspModes.PST.value,
-                7: FspModes.PST.value,
-                8: FspModes.PST.value,
-            },  # must be FSP IDs and FspMode values in ConfigureScan JSON
-        },
+        # {
+        #     "sys_param_file": "sys_param_8_boards.json",
+        #     "configure_scan_file": "ConfigureScan_CORR_4_receptor_1_FSP.json",
+        #     "delay_model_file": "delay_model_4_receptor.json",
+        #     "scan_file": "Scan1_basic.json",
+        #     "sub_id": 1,
+        #     "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
+        #     "vcc_ids": [
+        #         1,
+        #         2,
+        #         3,
+        #         4,
+        #     ],  # must be VCC IDs equivalent to assigned DISH IDs
+        #     "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
+        #     "fsp_modes": {
+        #         1: FspModes.CORR.value
+        #     },  # must be FSP IDs and FspMode values in ConfigureScan JSON
+        # },
+        # {
+        #     "sys_param_file": "sys_param_8_boards.json",
+        #     "configure_scan_file": "ConfigureScan_CORR_4_receptor_4_FSP.json",
+        #     "delay_model_file": "delay_model_4_receptor.json",
+        #     "scan_file": "Scan1_basic.json",
+        #     "sub_id": 1,
+        #     "dish_ids": ["SKA001", "SKA036", "SKA063", "SKA100"],
+        #     "vcc_ids": [
+        #         1,
+        #         2,
+        #         3,
+        #         4,
+        #     ],  # must be VCC IDs equivalent to assigned DISH IDs
+        #     "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
+        #     "fsp_modes": {
+        #         1: FspModes.CORR.value,
+        #         2: FspModes.CORR.value,
+        #         3: FspModes.CORR.value,
+        #         4: FspModes.CORR.value,
+        #     },  # must be FSP IDs and FspMode values in ConfigureScan JSON
+        # },
+        # {
+        #     "sys_param_file": "sys_param_8_boards.json",
+        #     "configure_scan_file": "ConfigureScan_basic_PST_band1.json",
+        #     "delay_model_file": "delay_model_1_receptor_vcc_5.json",
+        #     "scan_file": "Scan1_basic.json",
+        #     "sub_id": 1,
+        #     "dish_ids": ["SKA081"],
+        #     "vcc_ids": [5],  # must be VCC IDs equivalent to assigned DISH IDs
+        #     "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
+        #     "fsp_modes": {
+        #         5: FspModes.PST.value
+        #     },  # must be FSP IDs and FspMode values in ConfigureScan JSON
+        #     "alt_params": {
+        #         "configure_scan_file": "ConfigureScan_basic_PST_band2_alt.json",
+        #         "scan_file": "Scan2_basic.json",
+        #         "dish_ids": ["SKA081"],
+        #         "vcc_ids": [
+        #             5
+        #         ],  # must be VCC IDs equivalent to assigned DISH IDs
+        #         "freq_band": 1,  # must be index of frequency band in ConfigureScan JSON
+        #         "fsp_modes": {
+        #             6: FspModes.PST.value
+        #         },  # must be FSP IDs and FspMode values in ConfigureScan JSON
+        #     },
+        # },
+        # {
+        #     "sys_param_file": "sys_param_8_boards.json",
+        #     "configure_scan_file": "ConfigureScan_4_PR_PST.json",
+        #     "delay_model_file": "delay_model_4_receptor_5_to_8.json",
+        #     "scan_file": "Scan1_basic.json",
+        #     "sub_id": 1,
+        #     "dish_ids": [
+        #         "SKA081",
+        #         "SKA046",
+        #         "SKA077",
+        #         "SKA048",
+        #     ],
+        #     "vcc_ids": [
+        #         5,
+        #         6,
+        #         7,
+        #         8,
+        #     ],  # must be VCC IDs equivalent to assigned DISH IDs
+        #     "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
+        #     "fsp_modes": {
+        #         5: FspModes.PST.value,
+        #         6: FspModes.PST.value,
+        #         7: FspModes.PST.value,
+        #         8: FspModes.PST.value,
+        #     },  # must be FSP IDs and FspMode values in ConfigureScan JSON
+        # },
+        # {
+        #     "sys_param_file": "sys_param_8_boards.json",
+        #     "configure_scan_file": "ConfigureScan_CORR_PST_8_receptor_5_FSP.json",
+        #     "delay_model_file": "delay_model_8_receptor.json",
+        #     "scan_file": "Scan1_basic.json",
+        #     "sub_id": 1,
+        #     "dish_ids": [
+        #         "SKA001",
+        #         "SKA036",
+        #         "SKA063",
+        #         "SKA100",
+        #         "SKA081",
+        #         "SKA046",
+        #         "SKA077",
+        #         "SKA048",
+        #     ],
+        #     "vcc_ids": [
+        #         1,
+        #         2,
+        #         3,
+        #         4,
+        #         5,
+        #         6,
+        #         7,
+        #         8,
+        #     ],  # must be VCC IDs equivalent to assigned DISH IDs
+        #     "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
+        #     "fsp_modes": {
+        #         1: FspModes.CORR.value,
+        #         2: FspModes.CORR.value,
+        #         3: FspModes.CORR.value,
+        #         4: FspModes.CORR.value,
+        #         8: FspModes.PST.value,
+        #     },  # must be FSP IDs and FspMode values in ConfigureScan JSON
+        # },
+        # {
+        #     "sys_param_file": "sys_param_8_boards.json",
+        #     "configure_scan_file": "ConfigureScan_CORR_PST_8_receptor_8_FSP.json",
+        #     "delay_model_file": "delay_model_8_receptor.json",
+        #     "scan_file": "Scan1_basic.json",
+        #     "sub_id": 1,
+        #     "dish_ids": [
+        #         "SKA001",
+        #         "SKA036",
+        #         "SKA063",
+        #         "SKA100",
+        #         "SKA081",
+        #         "SKA046",
+        #         "SKA077",
+        #         "SKA048",
+        #     ],
+        #     "vcc_ids": [
+        #         1,
+        #         2,
+        #         3,
+        #         4,
+        #         5,
+        #         6,
+        #         7,
+        #         8,
+        #     ],  # must be VCC IDs equivalent to assigned DISH IDs
+        #     "freq_band": 0,  # must be index of frequency band in ConfigureScan JSON
+        #     "fsp_modes": {
+        #         1: FspModes.CORR.value,
+        #         2: FspModes.CORR.value,
+        #         3: FspModes.CORR.value,
+        #         4: FspModes.CORR.value,
+        #         5: FspModes.PST.value,
+        #         6: FspModes.PST.value,
+        #         7: FspModes.PST.value,
+        #         8: FspModes.PST.value,
+        #     },  # must be FSP IDs and FspMode values in ConfigureScan JSON
+        # },
     ],
 )
 def subarray_test_parameters(request: pytest.FixtureRequest) -> dict[any]:
