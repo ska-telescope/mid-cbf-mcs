@@ -91,7 +91,7 @@ class SlimComponentManager(CbfComponentManager):
                 dp.adminMode = AdminMode.ONLINE
                 self.attr_event_subscribe(
                     proxy=dp,
-                    attr_name="longRunningCommandResult",
+                    attr_name="lrcFinished",
                     callback=self.results_callback,
                 )
                 self._dp_links.append(dp)
@@ -449,7 +449,7 @@ class SlimComponentManager(CbfComponentManager):
     ) -> tuple[ResultCode, str]:
         """
         Triggers the configured SLIM links to connect and starts polling each link's health state.
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortsCommand's do().
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -565,7 +565,7 @@ class SlimComponentManager(CbfComponentManager):
 
         :param config_str: a string in YAML format describing the links to be created.
         :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortsCommand's do().
         """
         self.logger.debug("Entering SlimComponentManager.configure()")
         task_callback(status=TaskStatus.IN_PROGRESS)

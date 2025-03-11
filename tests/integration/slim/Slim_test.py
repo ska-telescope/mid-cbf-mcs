@@ -100,7 +100,7 @@ class TestSlim:
             assert result_code == [ResultCode.QUEUED]
 
             lru_change_event_callbacks[
-                "longRunningCommandResult"
+                "lrcFinished"
             ].assert_change_event(
                 (f"{command_id[0]}", '[0, "On completed OK"]')
             )
@@ -147,7 +147,7 @@ class TestSlim:
 
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+        change_event_callbacks["lrcFinished"].assert_change_event(
             (f"{command_id[0]}", '[0, "Configure completed OK"]')
         )
 
@@ -180,7 +180,7 @@ class TestSlim:
         result_code, command_id = device_under_test.Off()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+        change_event_callbacks["lrcFinished"].assert_change_event(
             (f"{command_id[0]}", '[0, "Off completed OK"]')
         )
         change_event_callbacks["State"].assert_change_event(DevState.OFF)
@@ -216,7 +216,7 @@ class TestSlim:
             assert result_code == [ResultCode.QUEUED]
 
             lru_change_event_callbacks[
-                "longRunningCommandResult"
+                "lrcFinished"
             ].assert_change_event(
                 (f"{command_id[0]}", '[0, "Off completed OK"]')
             )

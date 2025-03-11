@@ -304,7 +304,7 @@ class TestVcc:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "ConfigureBand completed OK"]',
@@ -326,7 +326,7 @@ class TestVcc:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.FAILED.value}, "frequency_band {frequency_band} is invalid."]',
@@ -398,7 +398,7 @@ class TestVcc:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{return_value[1][0]}",
                 f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -428,7 +428,7 @@ class TestVcc:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -531,7 +531,7 @@ class TestVcc:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -575,7 +575,7 @@ class TestVcc:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -691,7 +691,7 @@ class TestVcc:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -753,7 +753,7 @@ class TestVcc:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -843,7 +843,7 @@ class TestVcc:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -906,7 +906,7 @@ class TestVcc:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',

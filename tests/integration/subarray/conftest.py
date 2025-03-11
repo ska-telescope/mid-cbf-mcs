@@ -203,7 +203,7 @@ def tango_event_tracer(
         tracer.subscribe_event(proxy, "adminMode")
         tracer.subscribe_event(proxy, "state")
         tracer.subscribe_event(proxy, "obsState")
-        tracer.subscribe_event(proxy, "longRunningCommandResult")
+        tracer.subscribe_event(proxy, "lrcFinished")
         tracer.subscribe_event(proxy, "receptors")
         tracer.subscribe_event(proxy, "sysParam")
 

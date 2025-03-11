@@ -304,7 +304,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :param outlet: outlet ID to turn on
         :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommand's do().
         :return: a tuple containing a return code and a string
                  message indicating status
 
@@ -402,7 +402,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :param outlet: outlet ID to turn off
         :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommand's do().
         :return: a tuple containing a return code and a string
                 message indicating status
 

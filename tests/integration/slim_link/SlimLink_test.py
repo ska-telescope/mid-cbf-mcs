@@ -79,7 +79,7 @@ class TestSlimLink:
         result_code, command_id = device_under_test.ConnectTxRx()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+        change_event_callbacks["lrcFinished"].assert_change_event(
             (f"{command_id[0]}", '[0, "ConnectTxRx completed OK"]')
         )
 
@@ -125,7 +125,7 @@ class TestSlimLink:
         result_code, command_id = device_under_test.DisconnectTxRx()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+        change_event_callbacks["lrcFinished"].assert_change_event(
             (f"{command_id[0]}", '[0, "DisconnectTxRx completed OK"]')
         )
 

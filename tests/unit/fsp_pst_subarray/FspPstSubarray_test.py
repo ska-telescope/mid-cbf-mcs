@@ -241,7 +241,7 @@ class TestFspPstSubarray:
         assert return_value[0] == ResultCode.QUEUED
         attr_values.append(
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -265,7 +265,7 @@ class TestFspPstSubarray:
 
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -337,7 +337,7 @@ class TestFspPstSubarray:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -392,7 +392,7 @@ class TestFspPstSubarray:
 
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -435,7 +435,7 @@ class TestFspPstSubarray:
 
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -508,7 +508,7 @@ class TestFspPstSubarray:
 
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -583,7 +583,7 @@ class TestFspPstSubarray:
 
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -655,7 +655,7 @@ class TestFspPstSubarray:
             ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
             ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "ConfigureScan completed OK"]',
@@ -698,7 +698,7 @@ class TestFspPstSubarray:
         attr_values = [
             ("obsState", ObsState.SCANNING, ObsState.READY, 1),
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "Scan completed OK"]',

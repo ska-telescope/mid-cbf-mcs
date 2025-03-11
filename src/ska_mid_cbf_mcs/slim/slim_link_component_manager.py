@@ -530,7 +530,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         and disabling serial loopback. Begin monitoring the Tx and Rx.
 
         :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortsCommand's do().
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -671,7 +671,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         becomes inactive. Serial loopback is re-established.
 
         :param task_callback: Calls device's _command_tracker.update_command_info(). Set by SubmittedSlowCommand's do().
-        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortCommandsCommand's do().
+        :param task_abort_event: Calls self._task_executor._abort_event. Set by AbortsCommand's do().
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.

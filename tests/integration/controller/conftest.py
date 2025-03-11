@@ -225,7 +225,7 @@ def tango_event_tracer(
     """
     tracer = TangoEventTracer()
 
-    tracer.subscribe_event(controller, "longRunningCommandResult")
+    tracer.subscribe_event(controller, "lrcFinished")
 
     for proxy in [controller] + talon_lru + power_switch + [slim_fs, slim_vis]:
         tracer.subscribe_event(proxy, "adminMode")

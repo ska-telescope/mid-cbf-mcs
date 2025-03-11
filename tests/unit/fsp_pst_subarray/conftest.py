@@ -48,7 +48,7 @@ def tango_event_tracer(
     tracer = TangoEventTracer()
 
     change_event_attr_list = [
-        "longRunningCommandResult",
+        "lrcFinished",
         "healthState",
         "obsState",
         "adminMode",
@@ -88,7 +88,7 @@ def tango_event_tracer_unhealthy(
     tracer = TangoEventTracer()
 
     change_event_attr_list = [
-        "longRunningCommandResult",
+        "lrcFinished",
         "healthState",
         "obsState",
         "adminMode",

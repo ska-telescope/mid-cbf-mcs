@@ -372,7 +372,7 @@ class TestPowerSwitch:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(f"{command_id[0]}", msg),
             )
 
@@ -385,7 +385,7 @@ class TestPowerSwitch:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(f"{command_id[0]}", msg),
             )
 
@@ -426,7 +426,7 @@ class TestPowerSwitch:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{command_id[0]}",
                     '[0, "TurnOffOutlet completed OK"]',
@@ -475,7 +475,7 @@ class TestPowerSwitch:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[6, "Command is not allowed"]',
@@ -519,7 +519,7 @@ class TestPowerSwitch:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{command_id[0]}",
                     f'[3, "Outlet {i} failed to power off after sleep."]',
@@ -563,7 +563,7 @@ class TestPowerSwitch:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[3, "TurnOffOutlet FAILED"]',
@@ -607,7 +607,7 @@ class TestPowerSwitch:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{command_id[0]}",
                     '[0, "TurnOnOutlet completed OK"]',
@@ -658,7 +658,7 @@ class TestPowerSwitch:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[6, "Command is not allowed"]',
@@ -702,7 +702,7 @@ class TestPowerSwitch:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{command_id[0]}",
                     f'[3, "Outlet {str(i)} failed to power on after sleep."]',
@@ -746,7 +746,7 @@ class TestPowerSwitch:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[3, "TurnOnOutlet FAILED"]',

@@ -339,7 +339,7 @@ class ControllerComponentManager(CbfComponentManager):
         and set the AdminMode to ONLINE
 
         :param fqdn: FQDN of the device
-        :param subscribe_results: True if should subscribe to the device's longRunningCommandResult attribute;
+        :param subscribe_results: True if should subscribe to the device's lrcFinished attribute;
             defaults to False
         :param subscribe_state: True if should subscribe to the device's state attribute;
             defaults to False
@@ -374,7 +374,7 @@ class ControllerComponentManager(CbfComponentManager):
             if subscribe_results:
                 self.attr_event_subscribe(
                     proxy=proxy,
-                    attr_name="longRunningCommandResult",
+                    attr_name="lrcFinished",
                     callback=self.results_callback,
                 )
 

@@ -256,7 +256,7 @@ class TestTalonLRU:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 f'[{result_code.value}, "{message}"]',
@@ -296,7 +296,7 @@ class TestTalonLRU:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[6, "Command is not allowed"]',
@@ -366,7 +366,7 @@ class TestTalonLRU:
             (power_switch_1.stimulusMode, power_switch_2.stimulusMode)
         )
 
-        change_event_callbacks["longRunningCommandResult"].assert_change_event(
+        change_event_callbacks["lrcFinished"].assert_change_event(
             (f"{command_id[0]}", f'[{result_code.value}, "{message}"]')
         )
 

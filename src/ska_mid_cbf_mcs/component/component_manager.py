@@ -486,7 +486,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         """
         Callback for LRC command result events.
         All subdevices that may block our LRC thread with their own LRC execution
-        have their `longRunningCommandResult` attribute subscribed to with this method
+        have their `lrcFinished` attribute subscribed to with this method
         as the change event callback.
 
         :param event_data: Tango attribute change event data
@@ -541,11 +541,11 @@ class CbfComponentManager(TaskExecutorComponentManager):
 
         When issuing an LRC (or multiple) on subordinate devices from an LRC thread,
         command result events will be stored in self._received_lrc_results; use this
-        method to wait for all blocking command ID `longRunningCommandResult` events.
+        method to wait for all blocking command ID `lrcFinished` events.
 
         All subdevices that may block our LRC thread with their own LRC execution
         have the `results_callback` method above provided as the change event callback
-        for their `longRunningCommandResult` attribute subscription, which will store
+        for their `lrcFinished` attribute subscription, which will store
         command IDs and results as change events are received.
 
 
@@ -562,7 +562,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         # ...
         # Continue until we must wait for nested LRCs to complete
         # ...
-        # Then wait for all of their longRunningCommandResult attributes to update
+        # Then wait for all of their lrcFinished attributes to update
         lrc_status = self.wait_for_blocking_results()
         if lrc_status != TaskStatus.COMPLETED:
             # LRC timeout/abort handling
@@ -767,7 +767,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         self: CbfComponentManager, proxy: context.DeviceProxy
     ) -> None:
         """
-        Unsubscribe from a proxy's longRunningCommandResult attribute.
+        Unsubscribe from a proxy's lrcFinished attribute.
 
         :param proxy: DeviceProxy
         """
@@ -776,7 +776,7 @@ class CbfComponentManager(TaskExecutorComponentManager):
         dev_events = self.event_ids.pop(dev_name, None)
         if dev_events is None:
             self.logger.debug(
-                f"No longRunningCommandResult event subscription for {dev_name}"
+                f"No lrcFinished event subscription for {dev_name}"
             )
             return
         for attr_name, event_id in dev_events.items():

@@ -164,7 +164,7 @@ class TestCbfController:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=controller,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.OK.value}, "InitSysParam completed OK"]',
@@ -247,7 +247,7 @@ class TestCbfController:
         expected_events = [
             ("state", DevState.ON, DevState.OFF, 1),
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (f"{command_id[0]}", '[0, "On completed OK"]'),
                 None,
                 1,
@@ -297,7 +297,7 @@ class TestCbfController:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=controller,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
@@ -369,7 +369,7 @@ class TestCbfController:
         expected_events = [
             ("state", DevState.OFF, DevState.ON, 1),
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (f"{command_id[0]}", '[0, "Off completed OK"]'),
                 None,
                 1,

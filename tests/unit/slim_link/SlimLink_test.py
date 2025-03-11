@@ -157,7 +157,7 @@ class TestSlimLink:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[0, "ConnectTxRx completed OK"]',
@@ -207,7 +207,7 @@ class TestSlimLink:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[6, "Command is not allowed"]',
@@ -235,7 +235,7 @@ class TestSlimLink:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[3, "DsSlimTxRx device names have not been set."]',
@@ -279,7 +279,7 @@ class TestSlimLink:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[0, "ConnectTxRx completed OK"]',
@@ -504,7 +504,7 @@ class TestSlimLink:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[0, "DisconnectTxRx completed OK"]',
@@ -553,7 +553,7 @@ class TestSlimLink:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[6, "Command is not allowed"]',
@@ -581,7 +581,7 @@ class TestSlimLink:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="longRunningCommandResult",
+            attribute_name="lrcFinished",
             attribute_value=(
                 f"{command_id[0]}",
                 '[3, "Rx proxy is not set. SlimLink must be connected before it can be disconnected."]',

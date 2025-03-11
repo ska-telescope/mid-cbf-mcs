@@ -220,7 +220,7 @@ class TestCbfSubarray:
             # Check that the queued command succeeded
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{command_id[0]}",
                         f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
@@ -255,7 +255,7 @@ class TestCbfSubarray:
             # Check that the queued command succeeded
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{command_id[0]}",
                         f'[{ResultCode.OK.value}, "RemoveAllReceptors completed OK"]',
@@ -281,7 +281,7 @@ class TestCbfSubarray:
                 # Check that the queued command succeeded
                 attr_values.append(
                     (
-                        "longRunningCommandResult",
+                        "lrcFinished",
                         (
                             f"{command_id[0]}",
                             f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
@@ -319,7 +319,7 @@ class TestCbfSubarray:
             # Check that the queued command succeeded
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{command_id[0]}",
                         f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
@@ -381,7 +381,7 @@ class TestCbfSubarray:
         # Check that the queued command failed
         attr_values = [
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id[0]}",
                     f"[{ResultCode.FAILED.value}, "
@@ -445,7 +445,7 @@ class TestCbfSubarray:
         # Check that the queued command succeeded
         attr_values = [
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
@@ -467,7 +467,7 @@ class TestCbfSubarray:
 
         attr_values.append(
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "RemoveReceptors completed OK"]',
@@ -531,7 +531,7 @@ class TestCbfSubarray:
 
         attr_values = [
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
@@ -555,7 +555,7 @@ class TestCbfSubarray:
         # Check that the queued command failed
         attr_values.append(
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id[0]}",
                     f"[{ResultCode.FAILED.value}, "
@@ -613,7 +613,7 @@ class TestCbfSubarray:
         # Check that the queued command failed
         attr_values = [
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
@@ -630,7 +630,7 @@ class TestCbfSubarray:
 
         attr_values.append(
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
@@ -738,7 +738,7 @@ class TestCbfSubarray:
                 if command_name == "Scan":
                     attr_values.append(
                         (
-                            "longRunningCommandResult",
+                            "lrcFinished",
                             (
                                 f"{return_value[1][0]}",
                                 f'[{ResultCode.FAILED.value}, "Failed to validate Scan input JSON"]',
@@ -750,7 +750,7 @@ class TestCbfSubarray:
                 elif command_name == "EndScan":
                     attr_values.append(
                         (
-                            "longRunningCommandResult",
+                            "lrcFinished",
                             (
                                 f"{return_value[1][0]}",
                                 f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
@@ -763,7 +763,7 @@ class TestCbfSubarray:
 
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -841,7 +841,7 @@ class TestCbfSubarray:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
+                attribute_name="lrcFinished",
                 attribute_value=(
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -886,7 +886,7 @@ class TestCbfSubarray:
 
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -966,7 +966,7 @@ class TestCbfSubarray:
 
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -1052,7 +1052,7 @@ class TestCbfSubarray:
 
             attr_values.append(
                 (
-                    "longRunningCommandResult",
+                    "lrcFinished",
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -1108,7 +1108,7 @@ class TestCbfSubarray:
 
         attr_values = [
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
@@ -1169,7 +1169,7 @@ class TestCbfSubarray:
 
         attr_values = [
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
@@ -1227,7 +1227,7 @@ class TestCbfSubarray:
 
         attr_values = [
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "Restart completed OK"]',
@@ -1290,7 +1290,7 @@ class TestCbfSubarray:
 
         attr_values = [
             (
-                "longRunningCommandResult",
+                "lrcFinished",
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "Restart completed OK"]',

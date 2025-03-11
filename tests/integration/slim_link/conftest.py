@@ -41,7 +41,7 @@ def slim_link_change_event_callbacks(
     :return: the change event callback object
     """
     change_event_attr_list = [
-        "longRunningCommandResult",
+        "lrcFinished",
         "State",
         "healthState",
     ]

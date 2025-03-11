@@ -527,7 +527,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param argin: The list of DISH (receptor) IDs to be assigned
         :param task_callback: callback for driving status of task executor's
             current LRC task
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param task_abort_event: event indicating Abort has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -613,7 +613,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for vcc_proxy in vcc_proxies:
             self.attr_event_subscribe(
                 proxy=vcc_proxy,
-                attr_name="longRunningCommandResult",
+                attr_name="lrcFinished",
                 callback=self.results_callback,
             )
 
@@ -777,7 +777,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param argin: The list of DISH (receptor) IDs to be removed
         :param task_callback: callback for driving status of task executor's
             current LRC task
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param task_abort_event: event indicating Abort has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -869,7 +869,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param task_callback: callback for driving status of task executor's
             current LRC task
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param task_abort_event: event indicating Abort has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -943,7 +943,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param command_name: name of command to issue to proxy group
         :param argin: optional command input argument
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param task_abort_event: event indicating Abort has been issued
 
         :return: TaskStatus
         """
@@ -1466,7 +1466,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     fsp_proxy = self._all_fsp_proxies[fsp_id]
                     self.attr_event_subscribe(
                         proxy=fsp_proxy,
-                        attr_name="longRunningCommandResult",
+                        attr_name="lrcFinished",
                         callback=self.results_callback,
                     )
                     self._assigned_fsp_proxies.add(fsp_proxy)
@@ -1524,7 +1524,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             try:
                 self.attr_event_subscribe(
                     proxy=fsp_mode_proxy,
-                    attr_name="longRunningCommandResult",
+                    attr_name="lrcFinished",
                     callback=self.results_callback,
                 )
 
@@ -1692,7 +1692,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param argin: JSON string with the configure scan parameters
         :param task_callback: callback for driving status of task executor's
             current LRC task
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param task_abort_event: event indicating Abort has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -1916,7 +1916,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         :param argin: The scan ID as JSON formatted string.
         :param task_callback: callback for driving status of task executor's
             current LRC task
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param task_abort_event: event indicating Abort has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -2013,7 +2013,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param task_callback: callback for driving status of task executor's
             current LRC task
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param task_abort_event: event indicating Abort has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -2070,7 +2070,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param task_callback: callback for driving status of task executor's
             current LRC task
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param task_abort_event: event indicating Abort has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -2140,7 +2140,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param task_callback: callback for driving status of task executor's
             current LRC task
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param task_abort_event: event indicating Abort has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -2193,7 +2193,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param task_callback: callback for driving status of task executor's
             current LRC task
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param task_abort_event: event indicating Abort has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -2305,7 +2305,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
 
         :param task_callback: callback for driving status of task executor's
             current LRC task
-        :param task_abort_event: event indicating AbortCommands has been issued
+        :param task_abort_event: event indicating Abort has been issued
         """
         # set task status in progress, check for abort event
         task_callback(status=TaskStatus.IN_PROGRESS)
