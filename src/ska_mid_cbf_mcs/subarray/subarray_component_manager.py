@@ -18,7 +18,6 @@ from functools import partial
 from threading import Event, Lock, Thread
 from typing import Callable, Optional
 
-import ska_tango_base.long_running_commands_api as lrc_api
 import tango
 from ska_control_model import (
     AdminMode,
