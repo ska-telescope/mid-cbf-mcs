@@ -99,9 +99,7 @@ class TestSlim:
             result_code, command_id = lru.On()
             assert result_code == [ResultCode.QUEUED]
 
-            lru_change_event_callbacks[
-                "lrcFinished"
-            ].assert_change_event(
+            lru_change_event_callbacks["lrcFinished"].assert_change_event(
                 (f"{command_id[0]}", '[0, "On completed OK"]')
             )
             lru_change_event_callbacks["State"].assert_change_event(
@@ -215,9 +213,7 @@ class TestSlim:
             result_code, command_id = lru.Off()
             assert result_code == [ResultCode.QUEUED]
 
-            lru_change_event_callbacks[
-                "lrcFinished"
-            ].assert_change_event(
+            lru_change_event_callbacks["lrcFinished"].assert_change_event(
                 (f"{command_id[0]}", '[0, "Off completed OK"]')
             )
             lru_change_event_callbacks["State"].assert_change_event(
