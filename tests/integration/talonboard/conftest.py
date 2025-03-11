@@ -36,7 +36,7 @@ def talon_board_change_event_callbacks(
     device_under_test: context.DeviceProxy,
 ) -> MockTangoEventCallbackGroup:
     change_event_attr_list = [
-        "lrcFinished",
+        "longRunningCommandResult",
         "State",
     ]
     change_event_callbacks = MockTangoEventCallbackGroup(

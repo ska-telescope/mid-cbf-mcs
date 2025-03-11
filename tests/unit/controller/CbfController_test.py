@@ -221,7 +221,7 @@ class TestCbfController:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="lrcFinished",
+                attribute_name="longRunningCommandResult",
                 attribute_value=(
                     f"{command_id[0]}",
                     '[0, "InitSysParam completed OK"]',
@@ -235,7 +235,7 @@ class TestCbfController:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="lrcFinished",
+                attribute_name="longRunningCommandResult",
                 attribute_value=(
                     f"{command_id[0]}",
                     '[3, "Retrieving the init_sys_param file failed"]',
@@ -246,7 +246,7 @@ class TestCbfController:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="lrcFinished",
+                attribute_name="longRunningCommandResult",
                 attribute_value=(
                     f"{command_id[0]}",
                     '[3, "Duplicated Dish ID in the init_sys_param json"]',
@@ -259,7 +259,7 @@ class TestCbfController:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="lrcFinished",
+                attribute_name="longRunningCommandResult",
                 attribute_value=(
                     f"{command_id[0]}",
                     '[3, "Validating init_sys_param file retrieved from tm_data_filepath against ska-telmodel schema failed"]',
@@ -270,7 +270,7 @@ class TestCbfController:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="lrcFinished",
+                attribute_name="longRunningCommandResult",
                 attribute_value=(
                     f"{command_id[0]}",
                     '[3, "Validating init_sys_param file against ska-telmodel schema failed"]',
@@ -298,7 +298,7 @@ class TestCbfController:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 '[6, "Command is not allowed"]',
@@ -343,7 +343,7 @@ class TestCbfController:
 
             attr_values.append(
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{return_value[1][0]}",
                         f'[{ResultCode.OK.value}, "{command_name} completed OK"]',

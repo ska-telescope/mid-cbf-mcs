@@ -153,7 +153,7 @@ class TestCbfSubarray:
             ("obsState", ObsState.RESOURCING, ObsState.EMPTY, 1),
             ("obsState", ObsState.IDLE, ObsState.RESOURCING, 1),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "AddReceptors completed OK"]',
@@ -294,7 +294,7 @@ class TestCbfSubarray:
             ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
             ("obsState", ObsState.READY, ObsState.CONFIGURING, 1),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "ConfigureScan completed OK"]',
@@ -428,7 +428,7 @@ class TestCbfSubarray:
         expected_events = [
             ("obsState", ObsState.SCANNING, ObsState.READY, 1),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "Scan completed OK"]',
@@ -563,7 +563,7 @@ class TestCbfSubarray:
         expected_events = [
             ("obsState", ObsState.READY, ObsState.SCANNING, 1),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "EndScan completed OK"]',
@@ -678,7 +678,7 @@ class TestCbfSubarray:
         expected_events = [
             ("obsState", ObsState.IDLE, ObsState.READY, 1),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "GoToIdle completed OK"]',
@@ -744,7 +744,7 @@ class TestCbfSubarray:
             ("obsState", ObsState.CONFIGURING, ObsState.IDLE, 1),
             ("obsState", ObsState.IDLE, ObsState.CONFIGURING, 1),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{command_id}",
                     f'[{ResultCode.FAILED.value}, "Failed to validate ConfigureScan input JSON"]',
@@ -803,7 +803,7 @@ class TestCbfSubarray:
         expected_events = [
             ("obsState", ObsState.IDLE, ObsState.READY, 1),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "GoToIdle completed OK"]',
@@ -875,7 +875,7 @@ class TestCbfSubarray:
             ("obsState", ObsState.RESOURCING, ObsState.IDLE, 1),
             ("obsState", ObsState.EMPTY, ObsState.RESOURCING, 1),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "RemoveAllReceptors completed OK"]',
@@ -978,7 +978,7 @@ class TestCbfSubarray:
 
         subarray_expected_events = [
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{abort_command_id}",
                     f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
@@ -987,7 +987,7 @@ class TestCbfSubarray:
                 1,
             ),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{obsreset_command_id}",
                     f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
@@ -1018,7 +1018,7 @@ class TestCbfSubarray:
                 ("obsState", ObsState.RESETTING, ObsState.ABORTED, 1),
                 ("obsState", ObsState.IDLE, ObsState.RESETTING, 1),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{abort_command_id}",
                         f'[{ResultCode.OK.value}, "Abort completed OK"]',
@@ -1027,7 +1027,7 @@ class TestCbfSubarray:
                     1,
                 ),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{obsreset_command_id}",
                         f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
@@ -1076,7 +1076,7 @@ class TestCbfSubarray:
                 ("obsState", ObsState.RESETTING, ObsState.ABORTED, 2),
                 ("obsState", ObsState.IDLE, ObsState.RESETTING, 2),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{abort_command_id}",
                         f'[{ResultCode.OK.value}, "Abort completed OK"]',
@@ -1085,7 +1085,7 @@ class TestCbfSubarray:
                     1,
                 ),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{obsreset_command_id}",
                         f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
@@ -1161,7 +1161,7 @@ class TestCbfSubarray:
                 ("obsState", ObsState.RESETTING, ObsState.ABORTED, 3),
                 ("obsState", ObsState.IDLE, ObsState.RESETTING, 3),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{abort_command_id}",
                         f'[{ResultCode.OK.value}, "Abort completed OK"]',
@@ -1170,7 +1170,7 @@ class TestCbfSubarray:
                     1,
                 ),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{obsreset_command_id}",
                         f'[{ResultCode.OK.value}, "ObsReset completed OK"]',
@@ -1327,7 +1327,7 @@ class TestCbfSubarray:
 
         subarray_expected_events = [
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{abort_command_id}",
                     f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
@@ -1336,7 +1336,7 @@ class TestCbfSubarray:
                 1,
             ),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{restart_command_id}",
                     f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
@@ -1367,7 +1367,7 @@ class TestCbfSubarray:
                 ("obsState", ObsState.RESTARTING, ObsState.ABORTED, 1),
                 ("obsState", ObsState.EMPTY, ObsState.RESTARTING, 1),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{abort_command_id}",
                         f'[{ResultCode.OK.value}, "Abort completed OK"]',
@@ -1376,7 +1376,7 @@ class TestCbfSubarray:
                     1,
                 ),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{restart_command_id}",
                         f'[{ResultCode.OK.value}, "Restart completed OK"]',
@@ -1429,7 +1429,7 @@ class TestCbfSubarray:
                 ("obsState", ObsState.RESTARTING, ObsState.ABORTED, 2),
                 ("obsState", ObsState.EMPTY, ObsState.RESTARTING, 2),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{abort_command_id}",
                         f'[{ResultCode.OK.value}, "Abort completed OK"]',
@@ -1438,7 +1438,7 @@ class TestCbfSubarray:
                     1,
                 ),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{restart_command_id}",
                         f'[{ResultCode.OK.value}, "Restart completed OK"]',
@@ -1518,7 +1518,7 @@ class TestCbfSubarray:
                 ("obsState", ObsState.RESTARTING, ObsState.ABORTED, 3),
                 ("obsState", ObsState.EMPTY, ObsState.RESTARTING, 3),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{abort_command_id}",
                         f'[{ResultCode.OK.value}, "Abort completed OK"]',
@@ -1527,7 +1527,7 @@ class TestCbfSubarray:
                     1,
                 ),
                 (
-                    "lrcFinished",
+                    "longRunningCommandResult",
                     (
                         f"{restart_command_id}",
                         f'[{ResultCode.OK.value}, "Restart completed OK"]',
@@ -1820,7 +1820,7 @@ class TestCbfSubarray:
             ("obsState", ObsState.CONFIGURING, ObsState.READY, 1),
             ("obsState", ObsState.READY, ObsState.CONFIGURING, 2),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{command_id}",
                     f'[{ResultCode.OK.value}, "ConfigureScan completed OK"]',
@@ -1972,7 +1972,7 @@ class TestCbfSubarray:
             ("obsState", ObsState.SCANNING, ObsState.READY, 2),
             ("obsState", ObsState.READY, ObsState.SCANNING, 2),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{scan_command_id}",
                     f'[{ResultCode.OK.value}, "Scan completed OK"]',
@@ -1981,7 +1981,7 @@ class TestCbfSubarray:
                 1,
             ),
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{end_scan_command_id}",
                     f'[{ResultCode.OK.value}, "EndScan completed OK"]',

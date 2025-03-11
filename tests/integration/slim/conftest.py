@@ -94,7 +94,7 @@ def slim_change_event_callbacks(
     :param device_under_test: the device whose change events will be subscribed to.
     :return: the change event callback object
     """
-    change_event_attr_list = ["lrcFinished", "State"]
+    change_event_attr_list = ["longRunningCommandResult", "State"]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list, timeout=15.0
     )
@@ -114,7 +114,7 @@ def lru_change_event_callbacks(
     :param test_proxies: the device proxies used in this scope.
     :return: the change event callback object for TalonLru devices
     """
-    change_event_attr_list = ["lrcFinished", "State"]
+    change_event_attr_list = ["longRunningCommandResult", "State"]
     change_event_callbacks = MockTangoEventCallbackGroup(
         *change_event_attr_list, timeout=15.0
     )

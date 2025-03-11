@@ -18,6 +18,7 @@ from functools import partial
 from threading import Event, Lock, Thread
 from typing import Callable, Optional
 
+import ska_tango_base.long_running_commands_api as lrc_api
 import tango
 from ska_control_model import (
     AdminMode,
@@ -613,7 +614,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
         for vcc_proxy in vcc_proxies:
             self.attr_event_subscribe(
                 proxy=vcc_proxy,
-                attr_name="lrcFinished",
+                attr_name="longRunningCommandResult",
                 callback=self.results_callback,
             )
 
@@ -1466,7 +1467,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
                     fsp_proxy = self._all_fsp_proxies[fsp_id]
                     self.attr_event_subscribe(
                         proxy=fsp_proxy,
-                        attr_name="lrcFinished",
+                        attr_name="longRunningCommandResult",
                         callback=self.results_callback,
                     )
                     self._assigned_fsp_proxies.add(fsp_proxy)
@@ -1524,7 +1525,7 @@ class CbfSubarrayComponentManager(CbfObsComponentManager):
             try:
                 self.attr_event_subscribe(
                     proxy=fsp_mode_proxy,
-                    attr_name="lrcFinished",
+                    attr_name="longRunningCommandResult",
                     callback=self.results_callback,
                 )
 

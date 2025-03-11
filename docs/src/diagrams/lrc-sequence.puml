@@ -60,7 +60,7 @@ sub_ex      ->  sub_ex          : wait_for_blocking_results()
 vcc_queue   ->  vcc_ex          : _configure_band()
 vcc_ex      ->  hps_vcc         : ConfigureBand()
 vcc_ex      ->  hps_vccband     : SetInternalParameters()
-vcc_ex     -->  sub_ex          : lrcFinished
+vcc_ex     -->  sub_ex          : longRunningCommandResult
 note over sub_ex                : blocking_commands = 0
 
 sub_ex      ->  vcc_main        : ConfigureScan()
@@ -70,7 +70,7 @@ sub_ex      ->  sub_ex          : wait_for_blocking_results()
 vcc_queue   ->  vcc_ex          : _configure_scan()
 vcc_ex      ->  hps_vccband     : ConfigureScan()
 note over vcc_ex                : ObsState: READY
-vcc_ex     -->  sub_ex          : lrcFinished
+vcc_ex     -->  sub_ex          : longRunningCommandResult
 note over sub_ex                : blocking_commands = 0
 
 @enduml

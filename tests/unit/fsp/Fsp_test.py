@@ -164,7 +164,7 @@ class TestFsp:
 
         attr_values = [
             (
-                "lrcFinished",
+                "longRunningCommandResult",
                 (
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "SetFunctionMode completed OK"]',
@@ -216,7 +216,7 @@ class TestFsp:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.FAILED.value}, "Failed to validate FSP function mode {function_mode.name}"]',
@@ -250,7 +250,7 @@ class TestFsp:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
@@ -292,7 +292,7 @@ class TestFsp:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
@@ -353,7 +353,7 @@ class TestFsp:
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
                     device_name=device_under_test,
-                    attribute_name="lrcFinished",
+                    attribute_name="longRunningCommandResult",
                     attribute_value=(
                         f"{command_id[0]}",
                         f'[{ResultCode.FAILED.value}, "Unable to add subarray membership for subarray ID {sub_id}"]',
@@ -371,7 +371,7 @@ class TestFsp:
                     test_utils.EVENT_TIMEOUT
                 ).has_change_event_occurred(
                     device_name=device_under_test,
-                    attribute_name="lrcFinished",
+                    attribute_name="longRunningCommandResult",
                     attribute_value=(
                         f"{command_id[0]}",
                         f'[{ResultCode.OK.value}, "AddSubarrayMembership completed OK"]',
@@ -417,7 +417,7 @@ class TestFsp:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="lrcFinished",
+                attribute_name="longRunningCommandResult",
                 attribute_value=(
                     f"{command_id[0]}",
                     f'[{ResultCode.NOT_ALLOWED.value}, "Command is not allowed"]',
@@ -463,7 +463,7 @@ class TestFsp:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 f'[{ResultCode.FAILED.value}, "FSP does not belong to subarray 0"]',
@@ -485,7 +485,7 @@ class TestFsp:
                 test_utils.EVENT_TIMEOUT
             ).has_change_event_occurred(
                 device_name=device_under_test,
-                attribute_name="lrcFinished",
+                attribute_name="longRunningCommandResult",
                 attribute_value=(
                     f"{command_id[0]}",
                     f'[{ResultCode.OK.value}, "RemoveSubarrayMembership completed OK"]',

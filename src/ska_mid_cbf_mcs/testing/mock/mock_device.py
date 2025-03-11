@@ -123,11 +123,11 @@ class MockDeviceBuilder:
         returns ([ResultCode], [command_id]).
 
         The `result_code` and `message` parameters are necessary to push an expected
-        change to the `lrcFinished` attribute, while `attr_values`
+        change to the `longRunningCommandResult` attribute, while `attr_values`
         can be used to supply further attribute change events that might be expected
         during the mocked LRC.
         As a helpful standard, `attr_values` can at baseline be a dictionary with
-        an empty or None value for `lrcFinished`, e.g.
+        an empty or None value for `longRunningCommandResult`, e.g.
 
         ```
         builder = MockDeviceBuilder()
@@ -136,7 +136,7 @@ class MockDeviceBuilder:
             result_code=ResultCode.OK,
             message="On completed OK",
             queued=True,
-            attr_values={"lrcFinished": ""},
+            attr_values={"longRunningCommandResult": ""},
         )
         ```
 

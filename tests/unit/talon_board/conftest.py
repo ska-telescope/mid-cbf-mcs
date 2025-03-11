@@ -53,7 +53,7 @@ def tango_event_tracer(
     tracer = TangoEventTracer()
 
     change_event_attr_list = [
-        "lrcFinished",
+        "longRunningCommandResult",
         "adminMode",
         "state",
     ]

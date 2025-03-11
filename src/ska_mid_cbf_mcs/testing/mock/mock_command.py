@@ -52,9 +52,9 @@ class MockCommand:
         - "name": str - LRC name
         - "queued": bool - True if the LRC should return ResultCode.QUEUED, False
           if it should return ResultCode.REJECTED
-        - "result_code": ResultCode - what ResultCode to push to the `lrcFinished`
+        - "result_code": ResultCode - what ResultCode to push to the `longRunningCommandResult`
           attribute change event callback
-        - "message": str - what message string to push to the `lrcFinished`
+        - "message": str - what message string to push to the `longRunningCommandResult`
           attribute change event callback
         - "attr_values": dict - optional dictionary of attribute names and values to push
           change events for
@@ -95,7 +95,7 @@ class MockCommand:
 
             # Add LRC result value and push all attribute change events
             command_id = f"{time.time()}_{uuid.uuid4().fields[-1]}_{name}"
-            attr_values["lrcFinished"] = (
+            attr_values["longRunningCommandResult"] = (
                 f"{command_id}",
                 f"[{result_code.value}, {message}]",
             )

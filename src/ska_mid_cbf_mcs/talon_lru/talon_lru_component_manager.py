@@ -140,7 +140,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         for dp in device_proxies:
             self.attr_event_subscribe(
                 proxy=dp,
-                attr_name="lrcFinished",
+                attr_name="longRunningCommandResult",
                 callback=self.results_callback,
             )
 

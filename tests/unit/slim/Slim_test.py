@@ -141,7 +141,7 @@ class TestSlim:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 '[0, "On completed OK"]',
@@ -188,7 +188,7 @@ class TestSlim:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 '[0, "Configure completed OK"]',
@@ -227,7 +227,7 @@ class TestSlim:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 '[3, "Too many links defined in the link configuration. Not enough SlimLink devices exist."]',
@@ -268,7 +268,7 @@ class TestSlim:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test_fail,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 '[3, "Nested LRC SlimLink.ConnectTxRx() rejected"]',
@@ -305,7 +305,7 @@ class TestSlim:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test_fail,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 '[6, "Command is not allowed"]',
@@ -346,7 +346,7 @@ class TestSlim:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 '[0, "Off completed OK"]',
@@ -419,7 +419,7 @@ class TestSlim:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 '[0, "Off completed OK"]',
@@ -440,7 +440,7 @@ class TestSlim:
             test_utils.EVENT_TIMEOUT
         ).has_change_event_occurred(
             device_name=device_under_test,
-            attribute_name="lrcFinished",
+            attribute_name="longRunningCommandResult",
             attribute_value=(
                 f"{command_id[0]}",
                 '[6, "Command is not allowed"]',

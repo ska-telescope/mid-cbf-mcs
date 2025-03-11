@@ -60,7 +60,7 @@ def tango_event_tracer(
     tracer = TangoEventTracer()
 
     change_event_attr_list = [
-        "lrcFinished",
+        "longRunningCommandResult",
         "obsState",
         "receptors",
         "sysParam",
@@ -102,7 +102,7 @@ def mock_vcc_builder() -> unittest.mock.Mock:
     builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
-    builder.add_attribute("lrcFinished", ("", ""))
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_lrc(
         name="ConfigureBand",
         result_code=ResultCode.OK,

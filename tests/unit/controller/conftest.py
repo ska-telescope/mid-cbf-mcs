@@ -52,7 +52,7 @@ def tango_event_tracer(
     tracer = TangoEventTracer()
 
     change_event_attr_list = [
-        "lrcFinished",
+        "longRunningCommandResult",
         "adminMode",
         "state",
     ]
@@ -81,7 +81,7 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
-    builder.add_attribute("lrcFinished", ("", ""))
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_attribute("functionMode", 1)
     builder.add_lrc(
         name="SetFunctionMode",
@@ -109,7 +109,7 @@ def mock_subarray() -> unittest.mock.Mock:
     with open(json_file_path + "source_init_sys_param.json") as f:
         sp = f.read()
     builder.add_attribute("sourceSysParam", sp)
-    builder.add_attribute("lrcFinished", ("", ""))
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     return builder
 
 
@@ -120,7 +120,7 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
-    builder.add_attribute("lrcFinished", ("", ""))
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_lrc(
         name="On",
         result_code=ResultCode.OK,
@@ -168,7 +168,7 @@ def mock_slim_mesh() -> unittest.mock.Mock:
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("simulationMode", SimulationMode.TRUE)
     builder.add_attribute("healthState", HealthState.OK)
-    builder.add_attribute("lrcFinished", ("", ""))
+    builder.add_attribute("longRunningCommandResult", ("", ""))
     builder.add_lrc(
         name="On",
         result_code=ResultCode.OK,

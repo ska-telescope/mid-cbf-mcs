@@ -95,7 +95,9 @@ class TestVcc:
             result_code, command_id = lru.On()
             assert result_code == [ResultCode.QUEUED]
 
-            lru_change_event_callbacks["lrcFinished"].assert_change_event(
+            lru_change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
                 (f"{command_id[0]}", '[0, "On completed OK"]')
             )
             lru_change_event_callbacks["State"].assert_change_event(
@@ -194,7 +196,7 @@ class TestVcc:
         )
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["lrcFinished"].assert_change_event(
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[0, "ConfigureBand completed OK"]')
         )
 
@@ -212,7 +214,7 @@ class TestVcc:
             ObsState.CONFIGURING
         )
 
-        change_event_callbacks["lrcFinished"].assert_change_event(
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[0, "ConfigureScan completed OK"]')
         )
 
@@ -243,7 +245,7 @@ class TestVcc:
         result_code, command_id = device_under_test.Scan(scan_id)
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["lrcFinished"].assert_change_event(
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[0, "Scan completed OK"]')
         )
 
@@ -272,7 +274,7 @@ class TestVcc:
         result_code, command_id = device_under_test.EndScan()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["lrcFinished"].assert_change_event(
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[0, "EndScan completed OK"]')
         )
         change_event_callbacks["obsState"].assert_change_event(ObsState.READY)
@@ -297,7 +299,7 @@ class TestVcc:
         result_code, command_id = device_under_test.GoToIdle()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["lrcFinished"].assert_change_event(
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (f"{command_id[0]}", '[0, "GoToIdle completed OK"]')
         )
 
@@ -348,7 +350,9 @@ class TestVcc:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks["lrcFinished"].assert_change_event(
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
                 (
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -389,7 +393,9 @@ class TestVcc:
             assert return_value[0] == ResultCode.QUEUED
 
             # check that the queued command succeeded
-            change_event_callbacks["lrcFinished"].assert_change_event(
+            change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
                 (
                     f"{return_value[1][0]}",
                     f'[{ResultCode.OK.value}, "{command_name} completed OK"]',
@@ -442,7 +448,9 @@ class TestVcc:
             result_code, command_id = lru.Off()
             assert result_code == [ResultCode.QUEUED]
 
-            lru_change_event_callbacks["lrcFinished"].assert_change_event(
+            lru_change_event_callbacks[
+                "longRunningCommandResult"
+            ].assert_change_event(
                 (f"{command_id[0]}", '[0, "Off completed OK"]')
             )
             lru_change_event_callbacks["State"].assert_change_event(

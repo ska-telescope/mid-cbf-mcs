@@ -377,7 +377,7 @@ command_id is not generated, and instead replaced with a message to explain the 
 An LRC's immediate result_code indicates only whether the command was added to the ``TaskExecutor``'s queue, 
 or was rejected, for example, due to the ``TaskExecutor``'s queue being full. Once queued, commands are 
 executed within a separate "task-executor thread" running in parallel to the main control thread.
-The actual results of LRCs come from published ``lrcFinished`` attribute change events. 
+The actual results of LRCs come from published ``longRunningCommandResult`` attribute change events. 
 The value of this attribute is a tuple of ``(command_id, result_code_message)``, a slightly odd format
 since result_code_message is a ``list(int, str)`` cast into a string, containing the result_code integer 
 *and* message string; for example: ``command_id, result_code_message = 
@@ -413,7 +413,7 @@ but all it does is return ``True``, in order to defer judgement to the component
 Another implication of parallelism in MCS is that multiple commands can be queued 
 without regard for their results, or even for how long they take to run (at least until their results are needed), 
 which solves the hacky update-command-timeouts workaround. Instead, once queued, LRCs rely on change events to 
-communicate their progress. The relevant devices' ``lrcFinished`` attributes are subscribed to during 
+communicate their progress. The relevant devices' ``longRunningCommandResult`` attributes are subscribed to during 
 component manager initialization, and a callback mechanism detects these events and keeps track of who is waiting 
 on what results, which opens the door for even further complexity:  when a 'parent' LRC calls a 'child' command 
 on one of its components that is also an LRC - a nested LRC call. 
@@ -435,7 +435,7 @@ After ``CbfSubarray`` queues the ``Vcc`` command, it is free to continue executi
 rely on ``Vcc``'s result, but once it reaches this blocking point, it must wait.
 
 MCS keeps track of these blocking commands by adding their command IDs to a set as they are queued, 
-and removing them when change events for the ``lrcFinished`` attribute are received. 
+and removing them when change events for the ``longRunningCommandResult`` attribute are received. 
 This way, when ``CbfSubarray`` reaches its blocking point, it calls a function that waits until the set is emptied 
 (indicating ``Vcc`` has finished), else the timeout is reached and the parent command fails.
 
@@ -445,7 +445,7 @@ it to the ``blocking_commands`` set. Without locking the resource during this ad
 callbacks would be free to manipulate the ``blocking_commands`` set as well, which could lead to a 
 non-deterministic result. For instance, since ``CbfSubarray``'s ``ConfigureScan()`` is the first of 
 several commands issued, it is possible that the next command, ``Scan()``, will queue up and attempt 
-to be added to ``blocking_commands`` at the same moment that ``ConfigureBand()``'s' ``lrcFinished`` 
+to be added to ``blocking_commands`` at the same moment that ``ConfigureBand()``'s' ``longRunningCommandResult`` 
 change event is received, which would simultaneously try to remove ``ConfigureBand()`` from ``CbfSubarray``'s ``blocking_commands``. 
 Using a lock to access ``blocking_commands`` restores determinism because when the add operation locks the set, 
 the remove operation will see that it is locked and wait patiently for it to unlock, or vice versa.

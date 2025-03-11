@@ -56,7 +56,7 @@ class TestTalonBoard:
         result_code, command_id = device_under_test.On()
         assert result_code == [ResultCode.QUEUED]
 
-        change_event_callbacks["lrcFinished"].assert_change_event(
+        change_event_callbacks["longRunningCommandResult"].assert_change_event(
             (
                 f"{command_id[0]}",
                 '[0, "On completed OK"]',

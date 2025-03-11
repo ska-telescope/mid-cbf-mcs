@@ -91,7 +91,7 @@ class SlimComponentManager(CbfComponentManager):
                 dp.adminMode = AdminMode.ONLINE
                 self.attr_event_subscribe(
                     proxy=dp,
-                    attr_name="lrcFinished",
+                    attr_name="longRunningCommandResult",
                     callback=self.results_callback,
                 )
                 self._dp_links.append(dp)
