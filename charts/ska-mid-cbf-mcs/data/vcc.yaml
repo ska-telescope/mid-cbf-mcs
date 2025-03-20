@@ -1,7 +1,7 @@
 name: vcc
 function: coarse-channelisation
 domain: sensing
-command: "Vcc"
+command: "FHSSimVCC"
 instances: ["vcc"]
 depends_on:
   - device: sys/database/2
@@ -18,11 +18,11 @@ livenessProbe:
   successThreshold: 1
   failureThreshold: 3
 server:
-  name: "Vcc"
+  name: "FHSSimVCC"
   instances:
   - name: "vcc"
     classes:
-    - name: "Vcc"
+    - name: "FHSSimVCC"
       devices:
       - name: "mid_csp_cbf/vcc/001"
         properties:

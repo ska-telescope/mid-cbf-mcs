@@ -208,7 +208,7 @@ class Slim(CbfDevice):
             SLIM Test Command. Checks the BER and health status of the mesh's configured links.
 
             :return: A tuple containing a return code and a string
-                message contaiing a report on the health of the Mesh or error message
+                message containing a report on the health of the Mesh or error message
                 if exception is caught.
             :rtype: (ResultCode, str)
             """

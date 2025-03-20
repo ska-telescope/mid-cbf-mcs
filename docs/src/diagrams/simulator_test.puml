@@ -1,0 +1,85 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+  ParticipantBorderColor DodgerBlue
+  ParticipantBackgroundColor DeepSkyBlue
+  ActorBorderColor DarkGreen
+  ActorBackgroundColor Green
+  BoxBorderColor LightBlue
+  BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+
+title Example Simulator Test Failure Sequence\n\nSimulate VCC belonging to another subarray,\nthen being released and available\n
+
+participant "pytest" as pyt #Thistle
+box "\nMCS\n"
+    participant "Mid.CBF\nSubarray" as subarray
+    collections "FHS VCC\nSimulator" as vcc
+end box
+
+note over subarray           : DeviceID: 1\nObsState: EMPTY\nsimulationMode: TRUE
+note over vcc                : DeviceID: 1\nDishID: "SKA001"\nadminMode.OFFLINE\nsubarrayMembership: 0
+
+group #SeaShell Update FHS VCC Behaviour
+
+  pyt         ->  vcc        : UpdateBehaviour(\n\t{\n\t\t"subarrayMembership": 2\n\t}\n)
+  note over vcc              : subarrayMembership: 2
+
+end group
+
+group #SeaShell Test Subarray AddReceptors
+
+  pyt         ->  subarray   : AddReceptors(["SKA001"]])
+
+  group #LightCyan AddReceptors:
+
+    note over subarray       : ObsState: RESOURCING
+    subarray    -> subarray  : Validate DISH ID
+    subarray    -x vcc       : Check VCC subarrayMembership\nFAIL
+    note over subarray       : ObsState: EMPTY
+
+  end group
+
+  pyt        <--  subarray   : FAILURE
+
+end group
+
+group #SeaShell Update FHS VCC Behaviour
+
+  pyt         ->  vcc        : UpdateBehaviour(\n\t{\n\t\t"subarrayMembership": 0\n\t}\n)
+  note over vcc              : subarrayMembership: 0
+
+end group
+
+group #SeaShell Test Subarray AddReceptors
+
+  pyt         ->  subarray    : AddReceptors(["SKA001"]])
+
+  group #LightCyan AddReceptors:
+
+    note over subarray       : ObsState: RESOURCING
+    subarray    -> subarray  : Validate DISH ID
+    subarray    -> vcc       : Check VCC subarrayMembership\nSUCCESS
+    subarray    -> vcc       : adminMode = ONLINE
+    note over vcc            : adminMode: ONLINE\nOpState: ON
+    subarray    ->  vcc      : subarrayMembership = 1
+    note over vcc            : subarrayMembership: 1
+    note over subarray       : ObsState: IDLE
+
+  end group
+
+  pyt        <--  subarray   : SUCCESS
+
+end group
+
+@enduml

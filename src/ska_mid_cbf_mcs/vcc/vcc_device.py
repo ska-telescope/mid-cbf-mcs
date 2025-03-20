@@ -15,7 +15,6 @@ import tango
 
 # Tango imports
 from ska_tango_base.base.base_device import DevVarLongStringArrayType
-from ska_tango_base.base.test_mode_overrides import TestModeOverrideMixin
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango.server import attribute, command, device_property
 
@@ -25,7 +24,7 @@ from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 __all__ = ["Vcc", "main"]
 
 
-class Vcc(CbfObsDevice, TestModeOverrideMixin):
+class Vcc(CbfObsDevice):
     """
     Vcc TANGO device class for the prototype
     """
