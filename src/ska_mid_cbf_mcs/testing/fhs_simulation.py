@@ -18,10 +18,10 @@ Generic simulated Tango device for Mid.CBF
 from __future__ import annotations
 
 import json
-from pydantic.v1.utils import deep_update
 from threading import Event
 from typing import Callable, Optional
 
+from pydantic.v1.utils import deep_update
 from ska_control_model import (
     AdminMode,
     CommunicationStatus,
