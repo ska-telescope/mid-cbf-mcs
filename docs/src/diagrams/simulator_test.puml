@@ -27,58 +27,127 @@ box "\nMCS\n"
     collections "FHS VCC\nSimulator" as vcc
 end box
 
-note over subarray           : DeviceID: 1\nObsState: EMPTY\nsimulationMode: TRUE
-note over vcc                : DeviceID: 1\nDishID: "SKA001"\nadminMode.OFFLINE\nsubarrayMembership: 0
+note over subarray           : DeviceID: 1\nObsState.EMPTY\nSimulationMode.TRUE
+note over vcc                : DeviceID: 1\nDishID: "SKA001"\nadminMode.OFFLINE\nsubarrayMembership: 0\nObsState.IDLE
 
-group #SeaShell Update FHS VCC Behaviour
+group Test Subarray AddReceptors failure
 
-  pyt         ->  vcc        : UpdateBehaviour(\n\t{\n\t\t"subarrayMembership": 2\n\t}\n)
-  note over vcc              : subarrayMembership: 2
+  group #SeaShell Update FHS VCC Simulator Behaviour
 
-end group
-
-group #SeaShell Test Subarray AddReceptors
-
-  pyt         ->  subarray   : AddReceptors(["SKA001"]])
-
-  group #LightCyan AddReceptors:
-
-    note over subarray       : ObsState: RESOURCING
-    subarray    -> subarray  : Validate DISH ID
-    subarray    -x vcc       : Check VCC subarrayMembership\nFAIL
-    note over subarray       : ObsState: EMPTY
+    pyt         ->  vcc        : test_overrides: {\n\t"attributes": {\n\t\t"subarrayMembership": 2\n\t}\t\n}
+    note over vcc              : subarrayMembership: 2
 
   end group
 
-  pyt        <--  subarray   : FAILURE
+  group #SeaShell AddReceptors
 
-end group
+    pyt         ->  subarray   : AddReceptors(["SKA001"]])
 
-group #SeaShell Update FHS VCC Behaviour
+    group #LightCyan AddReceptors:
 
-  pyt         ->  vcc        : UpdateBehaviour(\n\t{\n\t\t"subarrayMembership": 0\n\t}\n)
-  note over vcc              : subarrayMembership: 0
+      note over subarray       : ObsState.RESOURCING
+      subarray    -> subarray  : Validate DISH ID
+      subarray    -x vcc       : Check VCC subarrayMembership\nFAIL
+      note over subarray       : ObsState.EMPTY
 
-end group
+    end group
 
-group #SeaShell Test Subarray AddReceptors
-
-  pyt         ->  subarray    : AddReceptors(["SKA001"]])
-
-  group #LightCyan AddReceptors:
-
-    note over subarray       : ObsState: RESOURCING
-    subarray    -> subarray  : Validate DISH ID
-    subarray    -> vcc       : Check VCC subarrayMembership\nSUCCESS
-    subarray    -> vcc       : adminMode = ONLINE
-    note over vcc            : adminMode: ONLINE\nOpState: ON
-    subarray    ->  vcc      : subarrayMembership = 1
-    note over vcc            : subarrayMembership: 1
-    note over subarray       : ObsState: IDLE
+    pyt        <--  subarray   : ResultCode.FAILED, "Failed to assign SKA001"
 
   end group
 
-  pyt        <--  subarray   : SUCCESS
+end group
+
+group Test Subarray AddReceptors success
+
+  group #SeaShell Update FHS VCC Simulator Behaviour
+
+    pyt         ->  vcc        : test_overrides: {\n\t"attributes": {\n\t\t"subarrayMembership": 0\n\t}\t\n}
+    note over vcc              : subarrayMembership: 0
+
+  end group
+
+  group #SeaShell AddReceptors
+
+    pyt         ->  subarray    : AddReceptors(["SKA001"])
+
+    group #LightCyan AddReceptors:
+
+      note over subarray       : ObsState.RESOURCING
+      subarray    -> subarray  : Validate DISH ID
+      subarray    -> vcc       : Check VCC subarrayMembership\nSUCCESS
+      subarray    -> vcc       : adminMode = ONLINE
+      note over vcc            : adminMode: ONLINE\nOpState: ON
+      subarray    ->  vcc      : subarrayMembership = 1
+      note over vcc            : subarrayMembership: 1
+      note over subarray       : ObsState.IDLE
+
+    end group
+
+    pyt        <--  subarray   : ResultCode.OK, "AddReceptors completed OK"
+
+  end group
+
+end group
+
+group Test Subarray ConfigureScan failure
+
+  group #SeaShell Update FHS VCC Simulator Behaviour
+
+    pyt         ->  vcc        : test_overrides: {\n\t"commands": {\n\t\t"ConfigureScan": {\n\t\t\t"result_code": "FAILED",\n\t\t\t"message": "ConfigureScan command failed.",\n\t\t\t"component_state": {\n\t\t\t\t"configured": False\n\t\t\t}\n\t\t}\n\t}\n}
+    note over vcc              : command_overrides updated
+
+  end group
+
+  group #SeaShell Test Subarray ConfigureScan
+
+    pyt         ->  subarray    : ConfigureScan("{...}")
+
+    group #LightCyan ConfigureScan:
+
+      note over subarray       : ObsState.CONFIGURING
+      note over subarray       : (...)
+      subarray  ->  vcc        : ConfigureScan("{...}")
+      note over vcc            : ObsState.CONFIGURING\ncommand_overrides induces failure\nObsState.IDLE
+      subarray  <-- vcc        : ResultCode.FAILED\n"ConfigureScan command failed"
+      note over subarray       : ObsState.IDLE
+
+    end group
+
+    pyt        <--  subarray   : ResultCode.FAILURE: "Failed to configure VCC 1"
+
+  end group
+
+end group
+
+group Test Subarray ConfigureScan success
+
+  group #SeaShell Update FHS VCC Simulator Behaviour
+
+    pyt         ->  vcc        : test_overrides: {\n\t"commands": {\n\t\t"ConfigureScan": {\n\t\t\t"result_code": "OK",\n\t\t\t"message": "ConfigureScan completed OK",\n\t\t\t"component_state": {\n\t\t\t\t"configured": True\n\t\t\t}\n\t\t}\n\t}\n}
+    note over vcc              : command_overrides updated
+
+  end group
+
+  group #SeaShell Test Subarray ConfigureScan
+
+    pyt         ->  subarray    : ConfigureScan("{...}")
+
+    group #LightCyan ConfigureScan:
+
+      note over subarray       : ObsState.CONFIGURING
+      note over subarray       : (...)
+      subarray  ->  vcc        : ConfigureScan("{...}")
+      note over vcc            : ObsState.CONFIGURING\ncommand_overrides induces success\nObsState.READY
+      subarray  <-- vcc        : ResultCode.OK\n"ConfigureScan completed OK"
+      note over subarray       : (...)
+      note over subarray       : ObsState.READY
+
+    end group
+
+    pyt        <--  subarray   : ResultCode.OK: "ConfigureScan completed OK"
+
+  end group
 
 end group
 
