@@ -218,6 +218,9 @@ class TestFspPstSubarray:
         with open(test_data_path + config_file_name) as f:
             json_str = f.read().replace("\n", "")
 
+        assert device_under_test.lastScanConfiguration == ""
+        assert device_under_test.lastHpsScanConfiguration == ""
+
         # Dict to store return code and unique IDs of queued commands
         command_dict = {}
 
@@ -274,8 +277,6 @@ class TestFspPstSubarray:
                     1,
                 )
             )
-        assert device_under_test.lastScanConfiguration == ""
-        assert device_under_test.lastHpsScanConfiguration == ""
 
         for name, value, previous, n in attr_values:
             assert_that(event_tracer).within_timeout(
