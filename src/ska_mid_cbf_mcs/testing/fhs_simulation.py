@@ -136,9 +136,9 @@ class FHSSimCM(TaskExecutorComponentManager):
 
     def is_sim_command_allowed(self: FHSSimCM) -> bool:
         """
-        Check if the On command is allowed.
+        Check if the simulated command is allowed.
 
-        :return: True if the On command is allowed, else False.
+        :return: True if the simulated command is allowed, else False.
         """
 
         return self.command_allowed
