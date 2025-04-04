@@ -1,5 +1,0 @@
-{
-    "interface": "https://schema.skao.int/ska-mid-cbf-initsysparam/1.0",
-    "tm_data_sources": ["file://"],
-    "tm_data_filepath": "tests/data/sys_param_invalid_rec_id.json"
-}

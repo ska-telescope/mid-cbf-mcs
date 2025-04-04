@@ -82,7 +82,7 @@ class CbfDevice(SKABaseDevice):
     # Device Properties
     # -----------------
 
-    DeviceID = device_property(dtype="uint16", default_value=1)
+    DeviceID = device_property(dtype="uint16", default_value=0)
 
     # ----------
     # Attributes

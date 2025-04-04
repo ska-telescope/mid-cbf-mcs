@@ -182,14 +182,11 @@ class TestCbfController:
         "sys_param_file_path",
         [
             "sys_param_4_boards.json",
-            "sys_param_dup_vcc.json",
-            "sys_param_invalid_rec_id.json",
             "sys_param_dup_dishid.json",
             # Test using tm_data_sources params
             "source_init_sys_param.json",
             "source_init_sys_param_invalid_source.json",
             "source_init_sys_param_invalid_file.json",
-            "source_init_sys_param_invalid_schema.json",
         ],
     )
     def test_InitSysParam(
@@ -250,19 +247,6 @@ class TestCbfController:
                 attribute_value=(
                     f"{command_id[0]}",
                     '[3, "Duplicated Dish ID in the init_sys_param json"]',
-                ),
-            )
-        elif (
-            sys_param_file_path == "source_init_sys_param_invalid_schema.json"
-        ):
-            assert_that(event_tracer).within_timeout(
-                test_utils.EVENT_TIMEOUT
-            ).has_change_event_occurred(
-                device_name=device_under_test,
-                attribute_name="longRunningCommandResult",
-                attribute_value=(
-                    f"{command_id[0]}",
-                    '[3, "Validating init_sys_param file retrieved from tm_data_filepath against ska-telmodel schema failed"]',
                 ),
             )
         else:

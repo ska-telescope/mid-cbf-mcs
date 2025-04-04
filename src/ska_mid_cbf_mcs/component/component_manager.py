@@ -19,7 +19,7 @@ from time import sleep
 from typing import Callable, Optional, cast
 
 import tango
-from pydantic.utils import deep_update
+from pydantic.v1.utils import deep_update
 from ska_control_model import (
     CommunicationStatus,
     HealthState,
