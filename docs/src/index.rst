@@ -32,6 +32,13 @@ MID CBF MCS Documentation
 
    api/index
 
+.. DESIGN =================================================================
+.. toctree::
+   :maxdepth: 2
+   :caption: Mid.CBF AA* Design
+
+   design/design
+
 
 Indices and tables
 ==================
