@@ -23,6 +23,9 @@ UNRELEASED CHANGES
 * CIP-3612: CreateDescriptor command input changed to JSON string input for Spead-Descriptor v1.7.0
 * SKB-803: Updated the artifacts PVC so that storageClassName and volumeMode can be configured from values
 * SKB-800: Subarray Scan command returns failure when receiving an invalid input JSON
+* CIP-3379: FHS Simulator prototype
+  * Created prototype simulator for FHS devices and simulator for MCS Vcc device as proof-of-concept
+  * Upgraded to ska-tango-base v1.3.1
 
 1.1.1
 **********
