@@ -1,0 +1,137 @@
+@startuml deployment
+
+title Mid.CBF Deployment
+
+actor maintainer as maintainer
+
+box "SKAO Gitlab" #orange
+participant "ska-mid-cbf-deployment" as skaMidCbfDeployment
+participant "deployment-pipeline" as deploymentPipeline
+end box
+
+box "CAR"
+participant "CAR" as car
+end box
+
+box "SKAO Cluster" #lightblue
+participant "SKA Control Plane" as skaCluster
+participant "Bitstream-Volume" as bitstreamVolume
+participant "LMC" as lmc
+participant "MCS" as mcs
+end box
+
+box "FHS Bittware Servers" #lightyellow
+participant "FHS-BMCs" as fhsBmcs
+participant "FHS-Servers" as fhsServers
+participant "FHS-Worker-Nodes" as fhsWorkerNodes
+participant "FPGAs" as fpgas
+end box
+
+box "FHS Worker Nodes" #lightgreen
+participant "FHS-Server Monitor" as fhsServerMonitor
+participant "FPGA Card Control & Monitor" as fpgaCardCtrlMonitor
+participant "FHS Controller" as fhsController
+participant "bitstream-download-job" as bitstreamDownloadJob
+participant "FHS-Device-Servers (VCC/FSP)" as fhsDeviceServers
+participant "Emulators" as emulators
+participant "Injector" as injector
+participant "RabbitMQ" as rabbitMq
+
+end box
+
+maintainer->skaMidCbfDeployment: runs command to start deployment pipeline
+deploymentPipeline->car:requests mid.cbf helm charts
+car-->deploymentPipeline: mid.cbf helm charts
+deploymentPipeline->skaCluster: Deploy MCS from umbrella chart
+deploymentPipeline->skaCluster: Provision Volume for bitstream storage
+skaCluster->bitstreamVolume: provision volume
+skaCluster->mcs: pod created and initialized
+lmc->mcs: send On() Command
+activate mcs
+note over mcs
+Until On is recieved from MCS, the FHS servers are all in a low power state
+end note
+mcs->fhsBmcs: send On() command to FHS BMCs
+fhsBmcs->fhsServers: start up FHS servers
+activate fhsServers
+loop Until On/Ready
+mcs->fhsBmcs: get server status
+fhsBmcs-->mcs: server status
+end
+group Worker Node Configuration
+note over fhsServers
+Upon start up , fhs server automatically configures the FHS Worker node with
+a taint / toleration based on its physical connection (VCC/FSP) using a script.
+It is registered with the ska control plane then is uncordoned and becomes available 
+for scheduling
+end note
+fhsServers->fhsWorkerNodes: Create FHS worker node (Cordoned)
+activate fhsWorkerNodes
+fhsServers->fhsWorkerNodes: Assign taints / tolerations
+fhsWorkerNodes->skaCluster: Register Node With SKA Control Plane
+fhsServers->fhsWorkerNodes: Uncordon node, ready for scheduling
+end
+deploymentPipeline->fhsWorkerNodes: Deploy FHS Device Servers from umbrella chart
+deploymentPipeline->fhsServerMonitor: Deploy FHS Server Monitor from umbrella chart
+deploymentPipeline->fpgaCardCtrlMonitor: Deploy FHS Server Monitor from umbrella chart
+deploymentPipeline->fhsController: Deploy FHS Controller from umbrella chart
+
+
+activate fhsServerMonitor
+fhsWorkerNodes->fhsServerMonitor: FHS Server Monitor Pod created
+
+activate fpgaCardCtrlMonitor
+fhsWorkerNodes->fpgaCardCtrlMonitor: FPGA Ctrl Monitor Pod created
+fpgaCardCtrlMonitor->bitstreamVolume: mount volume
+
+
+activate fhsDeviceServers
+fhsWorkerNodes->fhsDeviceServers: Device Server Pods Created
+fhsDeviceServers->bitstreamVolume: Mount bitstream volume
+
+loop Bitstream Download Job Completion
+fhsServerMonitor->fhsServerMonitor
+fpgaCardCtrlMonitor->fpgaCardCtrlMonitor
+fhsDeviceServers->fhsDeviceServers
+end
+
+fhsWorkerNodes->bitstreamDownloadJob: start bitstream download job
+activate bitstreamDownloadJob
+bitstreamDownloadJob->bitstreamVolume: mount volume
+bitstreamDownloadJob->car: Download required bitstreams
+car-->bitstreamVolume: Downloaded bitstreams to volume
+deactivate bitstreamDownloadJob
+
+fpgaCardCtrlMonitor->fhsServers: mount fpga device to load bitstream to
+note over fpgaCardCtrlMonitor
+The bitstreams version for use is found in the helm chart under the vcc / fsp unit
+Engineering mode versions can be downloaded and installed as well
+end note
+fpgaCardCtrlMonitor->fpgas: load the bistreams to the fpga bitstream parition
+fpgaCardCtrlMonitor->fpgas: install bitstream on server
+
+fhsWorkerNodes->fhsServerMonitor: Start FHS-Monitor Device Servers
+loop FHS-Monitor
+fhsServerMonitor->fhsBmcs: get server health
+fhsBmcs-->fhsServerMonitor: server health stats
+end
+
+alt emulator_mode = false
+fhsDeviceServers->bitstreamVolume: load FW bitstream API from bitstream drivers folder
+fhsDeviceServers->fpgas: Bind to FPGA device in container
+fhsDeviceServers->fpgas: Initialize device communications
+else emulator_mode = true
+fhsWorkerNodes->emulators: Emulator Pods Created
+activate emulators
+fhsWorkerNodes->injector: Injector Pod Created
+activate injector
+fhsWorkerNodes->rabbitMq: RabbitMQ Pod Created
+activate rabbitMq
+emulators->rabbitMq: Emulators connect to RabbitMQ for message processing
+loop message processing
+rabbitMq-->emulators: Messages
+end
+fhsDeviceServers->bitstreamVolume: load Emulator bitstream API from bitstream emulators folder
+end
+
+@enduml

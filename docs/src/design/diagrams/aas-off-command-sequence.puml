@@ -17,7 +17,7 @@ skinparam database {
   BackgroundColor LightGreen
   BorderColor DarkGreen
 }
-title On Command Sequence\n
+title Off Command Sequence\n
 participant "CSP_Mid\n.LMC" as lmc #Thistle
 box "\nMCS\n"
   participant "Mid.CBF\nController" as controller
@@ -33,30 +33,18 @@ box "\nPower\n"
 end box
 box "\nFHS\n"
   participant "FHS\nBMC" as bmc #LightGreen
-  participant "FHS\nController" as fhs_ctrl
+  participant "FHS\nMaster" as hpsmaster
 end box
 
-hnote over controller          : AdminMode: ON\nOpState: OFF
-note over pdu                 : PDU is controlled\noutside of MCS
-lmc -> controller  ++         : On()
+note over controller            : AdminMode: ON\nOpState: OFF
+lmc -> controller               : Off()
 
-loop #LightCyan each FHS
-  controller    ->  fhs       : On()
-  fhs           ->  bmc ++    : On() 
-  fhs           <-- bmc --    : success
+group #LightCyan For each FHS:
+  controller    ->  fhs         : Off()
+  fhs           ->  bmc ++      : Off() 
+  bmc           --> fhs --      : success
   
-  hnote over fhs               : OpState: UNKNOWN
-end group
-
-loop #LightCyan each FHS until contact made or timeout
-  fhs     ->   fhs_ctrl ++     : Are you there?
-  alt#Gold Contact made
-      fhs   <-  fhs_ctrl  -- : yes
-      fhs   ->  fhs_ctrl ++  : subscribe to health state events
-      fhs   <-- fhs_ctrl --  : success
-  else #LightSalmon No contact made
-      fhs   --> fhs          : add FHS to list to try again
-  end
+  note over fhs                 : OpState: UNKNOWN
 
 end group
 

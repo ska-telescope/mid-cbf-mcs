@@ -1,0 +1,58 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title Monitoring Sequence\n
+participant "CSP_Mid\n.LMC" as lmc #Thistle
+box "\nMCS\n"
+  participant "Mid.CBF\nController" as controller
+  participant "Talon\nDX" as tdx
+  participant "FPGA Host\nServer (FHS)" as fhs
+  participant "Power\nSwitch" as ps
+  participant "Network\nSwitch" as ns
+end box
+box "\nPower\n"
+  participant "PDU\n" as pdu #Orange
+end box
+box "\nNetwork\n"
+  participant "Network\nSwitch" as switch #Orange
+end box
+box "\nFHS\n"
+  participant "FHS\nBMC" as bmc #LightGreen
+  participant "FHS\nMaster" as fhsmaster
+end box
+
+note over controller            : AdminMode: ON\nOpState: OFF
+
+loop #LightCyan each PDU
+  ps            ->  pdu ++      : Read status & current
+  pdu           --> ps  --      : result
+end group
+
+loop #LightCyan each Network Switch
+  ns            ->  switch ++      : Read status & current
+  ns           <-- switch --      : result
+end group
+
+group #LightCyan For each FHS:
+  note over fhs: TBD -- update to show\nhealth state & other events
+  fhs           <-- fhsmaster --      : health state change event
+  
+end group
+
+@enduml

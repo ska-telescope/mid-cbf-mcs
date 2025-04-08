@@ -493,7 +493,7 @@ is used in the source code.
 
 
 Improvements to Control Flow
----------------------------
+----------------------------
 The upgrade to ``ska-tango-base`` v1.0.0 provided an opportunity to reduce technical debt and 
 consolidate the MCS code base in general. 
 
