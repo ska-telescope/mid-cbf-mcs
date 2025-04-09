@@ -17,6 +17,13 @@ skinparam database {
   BackgroundColor LightGreen
   BorderColor DarkGreen
 }
+
+legend right
+    |=            |= Type        |
+    |<#DodgerBlue>| Tango Device |
+    |<#LightGreen>| Hardware     |
+endlegend
+
 title On Command Sequence\n
 participant "CSP_Mid\n.LMC" as lmc #Thistle
 box "\nMCS\n"
@@ -26,39 +33,44 @@ box "\nMCS\n"
   participant "Power\nSwitch" as ps
 end box
 box "\nNetwork\n"
-  participant "Network\nSwitch" as switch #Orange
+  participant "Network\nSwitch" as switch #LightGreen
 end box
 box "\nPower\n"
-  participant "PDU\n" as pdu #Orange
+  participant "PDU\n" as pdu #LightGreen
 end box
 box "\nFHS\n"
   participant "FHS\nBMC" as bmc #LightGreen
   participant "FHS\nController" as fhs_ctrl
 end box
 
-hnote over controller          : AdminMode: ON\nOpState: OFF
+rnote over controller         : AdminMode: ON\nOpState: OFF
 note over pdu                 : PDU is controlled\noutside of MCS
 lmc -> controller  ++         : On()
 
 loop #LightCyan each FHS
-  controller    ->  fhs       : On()
-  fhs           ->  bmc ++    : On() 
-  fhs           <-- bmc --    : success
-  
-  hnote over fhs               : OpState: UNKNOWN
-end group
+  controller    ->  fhs++     : On()
+  fhs           ->  bmc++     : On() 
+  alt#Gold #LightCyan BMC On() successful
+    fhs         <-- bmc --    : success
+    rnote over fhs            : OpState: ???
+  else #LightSalmon BMC On() failed 
+    rnote over fhs            : OpState: UNKNOWN\nHealthState: UNKNOWN
+  end
+  controller   <-- fhs--      : Result
+end loop
 
 loop #LightCyan each FHS until contact made or timeout
   fhs     ->   fhs_ctrl ++     : Are you there?
-  alt#Gold Contact made
+  alt#Gold  #LightCyan Contact made
       fhs   <-  fhs_ctrl  -- : yes
       fhs   ->  fhs_ctrl ++  : subscribe to health state events
       fhs   <-- fhs_ctrl --  : success
+      rnote over fhs         : HealthState: OK
   else #LightSalmon No contact made
       fhs   --> fhs          : add FHS to list to try again
+      rnote over fhs         : HealthState: UNKNOWN
   end
-
-end group
+end loop
 
 lmc           <--  controller   : Success
 

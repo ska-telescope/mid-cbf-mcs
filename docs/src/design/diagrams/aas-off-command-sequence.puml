@@ -17,6 +17,13 @@ skinparam database {
   BackgroundColor LightGreen
   BorderColor DarkGreen
 }
+
+legend right
+    |=            |= Type        |
+    |<#DodgerBlue>| Tango Device |
+    |<#LightGreen>| Hardware     |
+endlegend
+
 title Off Command Sequence\n
 participant "CSP_Mid\n.LMC" as lmc #Thistle
 box "\nMCS\n"
@@ -26,28 +33,39 @@ box "\nMCS\n"
   participant "Power\nSwitch" as ps
 end box
 box "\nNetwork\n"
-  participant "Network\nSwitch" as switch #Orange
+  participant "Network\nSwitch" as switch #LightGreen
 end box
 box "\nPower\n"
-  participant "PDU\n" as pdu #Orange
+  participant "PDU\n" as pdu #LightGreen
 end box
 box "\nFHS\n"
   participant "FHS\nBMC" as bmc #LightGreen
-  participant "FHS\nMaster" as hpsmaster
+  participant "FHS\nController" as hpsmaster
 end box
 
 note over controller            : AdminMode: ON\nOpState: OFF
-lmc -> controller               : Off()
+note over pdu                 : PDU is controlled\noutside of MCS
 
-group #LightCyan For each FHS:
-  controller    ->  fhs         : Off()
-  fhs           ->  bmc ++      : Off() 
-  bmc           --> fhs --      : success
-  
-  note over fhs                 : OpState: UNKNOWN
+lmc -> controller ++            : Off()
 
-end group
+loop #LightCyan each FHS
+  controller    ->  fhs++     : Off()
+  fhs           ->  bmc++     : Off() 
+  alt#Gold  #LightCyan BMC Off() successful
+      fhs   <-- bmc--         : success
+      rnote over fhs
+        OpState: OFF
+        HealthState: OK(?)
+      end rnote
+  else #LightSalmon BMC Off() failed
+      rnote over fhs
+        OpState: UNKNOWN
+        HealthState: FAILED(?)
+      end rnote
+  end
+  controller  <-- fhs--      : Result
+end loop
 
-lmc           <--  controller   : Success
+lmc  <--  controller--         : Success
 
 @enduml
